@@ -121,6 +121,13 @@ export const ENGRAVING = {
 export interface GalleryImage {
   src: string
   alt: string
+  /** Desktop grid: span both columns (hero image). */
+  span?: 2
+  /** Small label on the tile, e.g. "360 view". */
+  badge?: string
+  badgePosition?: "top" | "bottom"
+  /** "contain" for cut-out product shots on the tile background. */
+  fit?: "cover" | "contain"
 }
 
 /** Ring Review gallery (setting + stone), in Figma order. */
@@ -135,6 +142,26 @@ export const REVIEW_GALLERY: GalleryImage[] = [
   { src: "/images/review/gallery-8.jpg", alt: "Decorative crown option" },
   { src: "/images/review/gallery-9.jpg", alt: "Decorative crown option, top view" },
 ]
+
+/** Finishing Touches gallery (Test 4 · B). Crown tiles are inserted when a crown is chosen. */
+export const FINISHING_GALLERY = {
+  hero: {
+    src: "/images/finishing/hero.jpg",
+    alt: "Timeless Solitaire ring with 1.21 ct round diamond",
+    span: 2,
+    badge: `Previewing: ${STONE.origin} · ${STONE.shape} · ${STONE.carat} ct`,
+    badgePosition: "bottom",
+  } satisfies GalleryImage,
+  ringSide: REVIEW_GALLERY[6],
+  tiles: [
+    { src: "/images/finishing/video-360.jpg", alt: "360° view of the 1.21 ct round diamond", badge: "360 view", badgePosition: "bottom" },
+    { src: "/images/finishing/diamond-top.jpg", alt: "1.21 ct round diamond, top view" },
+    { src: "/images/review/gallery-4-source.jpg", alt: "At the Source: we work directly with our diamond partners" },
+    { src: "/images/finishing/size-guide.jpg", alt: "Carat size guide on the hand, 1 ct to 5 ct" },
+    { src: "/images/review/gallery-5-profile.png", alt: "Diamond profile: table 57%, depth 66%, girdle very thick, culet none" },
+    { src: "/images/review/gallery-6-top.png", alt: "Diamond measurements: 6.17mm × 6.17mm" },
+  ] satisfies GalleryImage[],
+}
 
 export const DELIVERY = {
   shipBy: "By Thu, Nov 19",

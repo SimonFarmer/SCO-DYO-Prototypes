@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
+import { useSearchParams } from "react-router"
 import {
   CROWNS,
   DEFAULT_RING_SIZE,
@@ -36,35 +37,54 @@ interface RingBuild extends BuildState {
   setEngraving: (engraving: Engraving | null) => void
   setCrownId: (id: string | null) => void
   reset: () => void
+  /** Clears both variants' builds (used when launching a prototype from the index). */
+  resetAll: () => void
 }
 
-const STORAGE_KEY = "dyo-ring-build"
-const INITIAL: BuildState = { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null }
+type BuildKey = "A" | "B"
 
-function load(): BuildState {
+/**
+ * Starting state per variant, following the Figma frames:
+ * A (Ring Review) shows size 6.5 preselected; B (Finishing Touches) starts with no size.
+ */
+const INITIAL: Record<BuildKey, BuildState> = {
+  A: { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null },
+  B: { ringSize: null, engraving: null, crownId: null },
+}
+
+const storageKey = (key: BuildKey) => `dyo-ring-build-${key}`
+
+function load(key: BuildKey): BuildState {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY)
-    return raw ? { ...INITIAL, ...JSON.parse(raw) } : INITIAL
+    const raw = sessionStorage.getItem(storageKey(key))
+    return raw ? { ...INITIAL[key], ...JSON.parse(raw) } : INITIAL[key]
   } catch {
-    return INITIAL
+    return INITIAL[key]
   }
 }
 
 const RingBuildContext = createContext<RingBuild | null>(null)
 
-/** The ring being built: setting + stone (pre-chosen) plus finishing touches. */
+/**
+ * The ring being built: setting + stone (pre-chosen) plus finishing touches.
+ * Each variant keeps its own build (keyed by ?variant=), so switching variants never leaks choices.
+ */
 export function RingBuildProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<BuildState>(load)
+  const [params] = useSearchParams()
+  const key: BuildKey = params.get("variant")?.toUpperCase() === "B" ? "B" : "A"
+  const [builds, setBuilds] = useState<Record<BuildKey, BuildState>>(() => ({ A: load("A"), B: load("B") }))
+  const state = builds[key]
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+      sessionStorage.setItem(storageKey(key), JSON.stringify(state))
     } catch {
       /* storage unavailable: state still works in memory */
     }
-  }, [state])
+  }, [key, state])
 
   const value = useMemo<RingBuild>(() => {
+    const update = (patch: Partial<BuildState>) => setBuilds((b) => ({ ...b, [key]: { ...b[key], ...patch } }))
     const crown = CROWNS.find((c) => c.id === state.crownId) ?? null
     const engravingStyle = state.engraving
       ? (ENGRAVING.styles.find((s) => s.id === state.engraving!.styleId) ?? null)
@@ -83,12 +103,13 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
       engravingStyle,
       lineItems,
       total: lineItems.reduce((sum, item) => sum + item.price, 0),
-      setRingSize: (ringSize) => setState((s) => ({ ...s, ringSize })),
-      setEngraving: (engraving) => setState((s) => ({ ...s, engraving })),
-      setCrownId: (crownId) => setState((s) => ({ ...s, crownId })),
-      reset: () => setState(INITIAL),
+      setRingSize: (ringSize) => update({ ringSize }),
+      setEngraving: (engraving) => update({ engraving }),
+      setCrownId: (crownId) => update({ crownId }),
+      reset: () => update(INITIAL[key]),
+      resetAll: () => setBuilds(INITIAL),
     }
-  }, [state])
+  }, [key, state])
 
   return <RingBuildContext.Provider value={value}>{children}</RingBuildContext.Provider>
 }
