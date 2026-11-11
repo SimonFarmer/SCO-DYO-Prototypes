@@ -58,4 +58,5 @@ The moderated flow test (5) comes later and reuses the winning variants.
   mock data) so the tests can be split across the team.
 
 ## Workflow
+- Repo: https://github.com/SimonFarmer/SCO-DYO-Prototypes
 - Branch per feature; merge via pull request.
