@@ -11,6 +11,15 @@
 /* Design tokens — generated from SCO Pattern Library Figma Variables (npm run tokens) */
 @import "./styles/tokens.css";
 @import "./styles/theme.css";
+@import "./styles/typography.css";
+
+/* Engraving style typefaces (product content, not UI type) */
+@import "@fontsource/great-vibes";
+@import "@fontsource/pinyon-script";
+@import "@fontsource/limelight";
+@import "@fontsource/cormorant-garamond/500.css";
+@import "@fontsource/dancing-script/600.css";
+@import "@fontsource/poiret-one";
 
 @custom-variant dark (&:is(.dark *));
 

@@ -1,0 +1,46 @@
+/*
+ * Pattern Library text styles as utilities.
+ * Hand-written (not generated): text styles aren't Figma Variables, but every
+ * value below is a token except letter-spacing, which has no variable
+ * (see DESIGN_SYSTEM.md → Typography).
+ */
+
+/* Label/XS/semibold — eyebrows, buttons, field labels */
+@utility type-label-xs {
+  @apply text-xxs leading-3 font-semibold uppercase tracking-[1px];
+}
+
+/* Label/S/semibold — main navigation */
+@utility type-label-s {
+  @apply text-xs-2 leading-3 font-semibold uppercase tracking-[1px];
+}
+
+/* Caption/leading-normal */
+@utility type-caption {
+  @apply text-xs leading-4;
+}
+
+/* Spec rows (Figma uses 10px; closest token is text-xxs) */
+@utility type-spec {
+  @apply text-xxs leading-4 font-medium;
+}
+
+/* Headings/H2/leading-normal/medium */
+@utility type-h2 {
+  @apply font-heading text-4xl leading-11 font-medium tracking-[-0.025em];
+}
+
+/* Headings/H3/leading-normal/medium */
+@utility type-h3 {
+  @apply font-heading text-3xl leading-10 font-medium tracking-[-0.025em];
+}
+
+/* Headings/H4/leading-normal/medium */
+@utility type-h4 {
+  @apply font-heading text-2xl leading-9 font-medium tracking-[-0.6px];
+}
+
+/* Headings/H5/leading-normal/medium */
+@utility type-h5 {
+  @apply font-heading text-xl leading-7 font-medium tracking-[-0.6px];
+}

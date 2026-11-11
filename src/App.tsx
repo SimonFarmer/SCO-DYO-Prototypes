@@ -1,12 +1,22 @@
-import { BrowserRouter, Routes } from "react-router"
+import { BrowserRouter, Route, Routes } from "react-router"
+import { NotInTestProvider } from "@/components/prototype/not-in-test"
+import { Home } from "@/pages/home"
+import { Test4 } from "@/pages/test-4"
+import { AddedToBag } from "@/pages/test-4/added-to-bag"
+import { RingBuildProvider } from "@/state/ring-build"
 
-/**
- * App shell. Routes for each test prototype are added as they're briefed.
- */
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes />
+      <NotInTestProvider>
+        <RingBuildProvider>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/test-4" element={<Test4 />} />
+            <Route path="/test-4/added" element={<AddedToBag />} />
+          </Routes>
+        </RingBuildProvider>
+      </NotInTestProvider>
     </BrowserRouter>
   )
 }
