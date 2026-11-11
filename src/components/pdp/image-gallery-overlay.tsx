@@ -131,7 +131,7 @@ export function ImageGalleryOverlay({ media, open, onOpenChange, startIndex }: I
             {item.kind === "video" && (
               <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <span className="flex size-14 items-center justify-center rounded-full bg-white">
-                  <img src="/assets/icons/play.svg" alt="" className="size-6" />
+                  <img src="/images/icons/play.svg" alt="" className="size-6" />
                 </span>
               </span>
             )}

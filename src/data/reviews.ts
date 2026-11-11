@@ -20,7 +20,7 @@ export interface Review {
   photos?: string[]
 }
 
-const P = "/assets/reviews"
+const P = "/images/reviews"
 
 export const SETTING_REVIEWS: Review[] = [
   {

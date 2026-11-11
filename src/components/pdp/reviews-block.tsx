@@ -13,6 +13,7 @@ import {
   type Review,
 } from "@/data/reviews"
 import { cn } from "@/lib/utils"
+import { useNotInTest } from "@/components/prototype/not-in-test"
 
 /*
  * Pattern Library "Reviews Block" — Viewport=1440px, Variant=Default (Figma ceWHNjl5yoEXdjK2b3Oo5J, 39665:17722).
@@ -20,7 +21,6 @@ import { cn } from "@/lib/utils"
  */
 
 const PAGE_SIZE = 3
-const inert = (e: React.MouseEvent) => e.preventDefault()
 
 function Stars({ rating, className }: { rating: number; className?: string }) {
   return (
@@ -28,7 +28,7 @@ function Stars({ rating, className }: { rating: number; className?: string }) {
       {Array.from({ length: 5 }, (_, i) => (
         <img
           key={i}
-          src={i < Math.round(rating) ? "/assets/reviews/star-filled.svg" : "/assets/reviews/star-outline.svg"}
+          src={i < Math.round(rating) ? "/images/reviews/star-filled.svg" : "/images/reviews/star-outline.svg"}
           alt=""
           className="size-6"
         />
@@ -84,6 +84,7 @@ function ReviewSummary({ reviews }: { reviews: Review[] }) {
   })
   const photos = reviews.flatMap((r) => r.photos ?? [])
 
+  const notInTest = useNotInTest()
   return (
     <div className="flex flex-col gap-4">
       <p className="border-b border-border-subtle pb-4 type-label-xs font-semibold text-primary">{total} Ratings</p>
@@ -98,7 +99,7 @@ function ReviewSummary({ reviews }: { reviews: Review[] }) {
             </div>
             <Stars rating={average} className="h-4" />
           </div>
-          <Button size="wide" className="w-full">
+          <Button className="px-6 w-full" onClick={() => notInTest("Writing a review")}>
             Write a review
           </Button>
         </div>
@@ -330,15 +331,15 @@ function AnswerForm({ onSubmit, onCancel }: { onSubmit: (text: string) => void; 
           autoFocus
         />
         <p className="flex items-center gap-1 type-caption text-primary">
-          <img src="/assets/reviews/info-icon.svg" alt="" className="size-3.5" />
+          <img src="/images/reviews/info-icon.svg" alt="" className="size-3.5" />
           Do not include HTML, links, references to other stores, pricing, or contact info.
         </p>
       </div>
       <div className="flex gap-2">
-        <Button size="wide" disabled={!text.trim()} onClick={() => onSubmit(text.trim())}>
+        <Button className="px-6" disabled={!text.trim()} onClick={() => onSubmit(text.trim())}>
           Submit
         </Button>
-        <Button variant="ghost" size="wide" onClick={onCancel}>
+        <Button variant="ghost" className="px-6" onClick={onCancel}>
           Cancel
         </Button>
       </div>
@@ -355,12 +356,17 @@ function QuestionItem({ question }: { question: Question }) {
   const comments = question.comments ?? []
   const visibleComments = showAll ? comments : comments.slice(0, 4)
 
+  const notInTest = useNotInTest()
+  const inert = (what: string) => (e: React.MouseEvent) => {
+    e.preventDefault()
+    notInTest(what)
+  }
   return (
     <article className="flex flex-col border-t border-border-subtle pt-4">
       <div className="flex items-start pb-4">
         <div className="flex w-14 shrink-0 justify-center">
           {question.comments ? (
-            <img src="/assets/reviews/icon-question.svg" alt="" className="size-5" />
+            <img src="/images/reviews/icon-question.svg" alt="" className="size-5" />
           ) : (
             <button
               type="button"
@@ -372,7 +378,7 @@ function QuestionItem({ question }: { question: Question }) {
               }}
               className={cn("flex flex-col items-center py-1 text-base font-bold text-primary", voted && "opacity-60")}
             >
-              <img src="/assets/reviews/icon-vote-up.svg" alt="" className="size-5" />
+              <img src="/images/reviews/icon-vote-up.svg" alt="" className="size-5" />
               {votes}
             </button>
           )}
@@ -405,10 +411,10 @@ function QuestionItem({ question }: { question: Question }) {
                       {a.role && <RolePill>{a.role}</RolePill>}
                     </span>,
                     formatReviewDate(a.date),
-                    <a key="reply" href="#" onClick={inert} className="font-medium underline">
+                    <a key="reply" href="#" onClick={inert("Replying")} className="font-medium underline">
                       Reply
                     </a>,
-                    <a key="flag" href="#" onClick={inert} className="font-medium underline">
+                    <a key="flag" href="#" onClick={inert("Flagging an answer")} className="font-medium underline">
                       Inaccurate
                     </a>,
                   ]}
@@ -425,7 +431,7 @@ function QuestionItem({ question }: { question: Question }) {
             {visibleComments.map((c) => (
               <li key={c.author} className="flex py-4 pr-4">
                 <span className="flex w-12 shrink-0 justify-center pt-px">
-                  <img src="/assets/reviews/icon-quote.svg" alt="" className="size-4" />
+                  <img src="/images/reviews/icon-quote.svg" alt="" className="size-4" />
                 </span>
                 <span className="flex flex-col gap-1">
                   <span className="text-base text-secondary-foreground">{c.text}</span>
@@ -440,7 +446,7 @@ function QuestionItem({ question }: { question: Question }) {
         <div className="border-t border-muted p-2.5">
           {comments.length > 4 ? (
             <button type="button" onClick={() => setShowAll((s) => !s)} className="flex items-center gap-1 py-1 text-xs font-medium text-primary">
-              <img src="/assets/reviews/icon-expand.svg" alt="" className="size-4" />
+              <img src="/images/reviews/icon-expand.svg" alt="" className="size-4" />
               {showAll ? "Show fewer comments" : `See all ${comments.length} comments`}
             </button>
           ) : (
@@ -450,7 +456,7 @@ function QuestionItem({ question }: { question: Question }) {
               onClick={() => setAnswering((a) => !a)}
               className="flex items-center gap-1 py-1 text-xs font-medium text-primary"
             >
-              <img src="/assets/reviews/icon-answer.svg" alt="" className="size-4" />
+              <img src="/images/reviews/icon-answer.svg" alt="" className="size-4" />
               Answer
             </button>
           )}
@@ -484,6 +490,11 @@ function QuestionsAndAnswers({ questions }: { questions: Question[] }) {
       : matches
   }, [questions, q, sort])
 
+  const notInTest = useNotInTest()
+  const inert = (what: string) => (e: React.MouseEvent) => {
+    e.preventDefault()
+    notInTest(what)
+  }
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
@@ -493,10 +504,10 @@ function QuestionsAndAnswers({ questions }: { questions: Question[] }) {
         <Input id="qa" value={query} onChange={(e) => setQuery(e.target.value)} />
         <div className="flex flex-wrap items-center gap-4">
           <span className="flex items-center gap-2 type-caption text-primary">
-            <img src="/assets/reviews/info-icon.svg" alt="" className="size-3.5" />
+            <img src="/images/reviews/info-icon.svg" alt="" className="size-3.5" />
             Start typing and see existing answers.
           </span>
-          <a href="#" onClick={inert} className="text-xs font-medium text-primary underline">
+          <a href="#" onClick={inert("Q&A guidelines")} className="text-xs font-medium text-primary underline">
             Learn more
           </a>
         </div>
@@ -510,7 +521,7 @@ function QuestionsAndAnswers({ questions }: { questions: Question[] }) {
             className="flex items-center gap-1 text-xs font-medium text-muted-foreground"
           >
             {sort === "common" ? "Most Common" : "Most Recent"}
-            <img src="/assets/reviews/icon-sort-caret.svg" alt="" className="size-2.5" />
+            <img src="/images/reviews/icon-sort-caret.svg" alt="" className="size-2.5" />
           </button>
         </div>
       </div>

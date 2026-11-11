@@ -68,7 +68,7 @@ export function ProductInfoDrawer({ setting, metal, open, onOpenChange, tab, onT
         </Tabs>
 
         <footer className="shrink-0 border-t border-muted bg-white px-5 py-5 md:px-10">
-          <SheetClose render={<Button variant="outline" size="wide" className="w-full" />}>Close</SheetClose>
+          <SheetClose render={<Button variant="outline" className="px-6 w-full" />}>Close</SheetClose>
         </footer>
       </SheetContent>
     </Sheet>

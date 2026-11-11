@@ -2,7 +2,8 @@ import { useState } from "react"
 import { HeartStraight } from "@phosphor-icons/react"
 import { Badge } from "@/components/ui/badge"
 import { METALS, type MetalId, type ProductCardData } from "@/data/products"
-import { cn, formatPrice } from "@/lib/utils"
+import { formatPrice } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 interface ProductCardProps {
   product: ProductCardData

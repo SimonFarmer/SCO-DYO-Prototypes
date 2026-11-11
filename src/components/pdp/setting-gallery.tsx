@@ -36,7 +36,7 @@ function MediaTile({ item, onOpen }: { item: GalleryMedia; onOpen: () => void })
       {item.kind === "video" && (
         <span className="absolute inset-0 flex items-center justify-center">
           <span className="flex size-14 items-center justify-center rounded-full bg-white">
-            <img src="/assets/icons/play.svg" alt="" className="size-6" />
+            <img src="/images/icons/play.svg" alt="" className="size-6" />
           </span>
         </span>
       )}
@@ -74,7 +74,7 @@ export function ThumbnailGallery({ media, className }: { media: GalleryMedia[]; 
         {active.kind === "video" && (
           <span className="absolute inset-0 flex items-center justify-center">
             <span className="flex size-14 items-center justify-center rounded-full bg-white">
-              <img src="/assets/icons/play.svg" alt="" className="size-6" />
+              <img src="/images/icons/play.svg" alt="" className="size-6" />
             </span>
           </span>
         )}

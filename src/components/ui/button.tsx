@@ -3,31 +3,29 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 /**
- * Pattern Library "Button" — square corners, Label XS (11px / 1px tracking / uppercase / semibold).
- * Outline border uses border-subtle (#D5D5D2), the token Figma binds as shadcn `--input`.
+ * Pattern Library button: square, Label/XS type (11px semibold, uppercase, 1px tracking).
  */
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center gap-2 border border-transparent bg-clip-padding type-label-xs font-semibold whitespace-nowrap transition-all outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 border border-transparent bg-clip-padding type-label-xs whitespace-nowrap transition-colors outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-primary text-primary-foreground hover:bg-primary/85",
         outline:
           "border-border-subtle bg-background text-primary hover:bg-secondary aria-expanded:bg-secondary",
         secondary: "bg-secondary text-secondary-foreground hover:bg-accent",
         ghost: "text-primary hover:bg-secondary aria-expanded:bg-secondary",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        /** Underlined text button ("Price explained", "View product details") */
-        link: "border-0 px-0 text-primary underline decoration-from-font underline-offset-auto hover:text-secondary-foreground",
+        destructive: "bg-destructive text-white hover:bg-destructive/85",
+        link: "h-auto border-0 px-0 text-primary underline underline-offset-2 hover:no-underline",
       },
       size: {
-        default: "h-10 px-4 py-2",
+        default: "h-10 px-4",
         sm: "h-8 px-3",
-        lg: "h-10 px-14 py-2",
-        wide: "h-10 px-6 py-2",
-        inline: "h-auto p-0 gap-0.5",
+        lg: "h-12 px-6",
         icon: "size-10",
         "icon-sm": "size-8",
+        "icon-xs": "size-6",
+        "icon-lg": "size-12",
       },
     },
     defaultVariants: {

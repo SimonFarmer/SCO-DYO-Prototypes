@@ -3,12 +3,14 @@ import { CaretRight } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { UGC_PHOTOS, VALUE_PROPS, descriptionFor, type MetalId, type Setting } from "@/data/products"
+import { useNotInTest } from "@/components/prototype/not-in-test"
 
 /** "About this setting" — description + detail rows, lifestyle image on the right. */
 export const ProductDetailsBlock = forwardRef<HTMLElement, { setting: Setting; metal: MetalId }>(function ProductDetailsBlock(
   { setting, metal },
   ref,
 ) {
+  const notInTest = useNotInTest()
   return (
     <section ref={ref} id="product-details" className="scroll-mt-4 bg-secondary px-margin py-14">
       <div className="grid gap-8 lg:grid-cols-[762fr_542fr] lg:gap-2">
@@ -19,7 +21,7 @@ export const ProductDetailsBlock = forwardRef<HTMLElement, { setting: Setting; m
             {setting.detailSections.map((label, i, all) => (
               <li key={label} className={i < all.length - 1 ? "border-b border-border-subtle" : undefined}>
                 {/* Opening a details drawer is out of this prototype's scope (Test 1 compares detail variants separately). */}
-                <button type="button" className="flex w-full items-center gap-4 py-4 text-left">
+                <button type="button" onClick={() => notInTest(label)} className="flex w-full items-center gap-4 py-4 text-left">
                   <span className="flex-1 truncate text-sm leading-none font-medium text-foreground">{label}</span>
                   <CaretRight className="size-4 text-primary" />
                 </button>
@@ -28,7 +30,7 @@ export const ProductDetailsBlock = forwardRef<HTMLElement, { setting: Setting; m
           </ul>
         </div>
         <img
-          src="/assets/product-details/lifestyle-hand.png"
+          src="/images/product-details/lifestyle-hand.png"
           alt="Solitaire ring worn on hand"
           className="aspect-square w-full object-cover"
           loading="lazy"
@@ -40,6 +42,7 @@ export const ProductDetailsBlock = forwardRef<HTMLElement, { setting: Setting; m
 
 /** "How We Do Right by You" value-prop rail — bleeds off the right edge. */
 export function ValuePropsBlock() {
+  const notInTest = useNotInTest()
   return (
     <section className="flex flex-col gap-8 bg-secondary pb-14 pl-margin">
       <SectionHeading eyebrow="We are more than a jeweler" title="How We Do Right by You" className="pr-margin" />
@@ -61,7 +64,10 @@ export function ValuePropsBlock() {
               </h3>
               <a
                 href="#"
-                onClick={(e) => e.preventDefault()}
+                onClick={(e) => {
+                  e.preventDefault()
+                  notInTest(card.cta)
+                }}
                 className="w-fit type-label-xs leading-5 font-semibold text-primary underline"
               >
                 {card.cta}
@@ -76,11 +82,12 @@ export function ValuePropsBlock() {
 
 /** Next-step teaser: image + "Our Diamonds & Gemstones" + CTA. */
 export function FeatureBlock() {
+  const notInTest = useNotInTest()
   return (
     <section className="bg-primary-foreground px-margin py-14">
       <div className="grid gap-8 lg:grid-cols-[542fr_762fr] lg:gap-2">
         <img
-          src="/assets/feature-block/diamonds-loupe.jpg"
+          src="/images/feature-block/diamonds-loupe.jpg"
           alt="Diamonds under a jeweler's loupe"
           className="aspect-square w-full object-cover"
           loading="lazy"
@@ -95,7 +102,7 @@ export function FeatureBlock() {
               From lab grown to natural, the 4Cs to certification — everything you need to shop with confidence.
             </p>
           </div>
-          <Button size="lg" className="w-fit">
+          <Button className="w-fit px-14" onClick={() => notInTest("The diamond guide")}>
             Read The Guide
           </Button>
         </div>
@@ -106,15 +113,19 @@ export function FeatureBlock() {
 
 /** "As Seen on You" user-generated photo row. */
 export function UgcBlock() {
+  const notInTest = useNotInTest()
   return (
     <section className="flex flex-col bg-secondary px-margin py-14">
       <div className="flex w-full flex-col gap-8">
         <SectionHeading eyebrow="As Seen on You" title="#ShaneCo" />
         <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
           {UGC_PHOTOS.map((photo) => (
-            <a key={photo.src} href="#" onClick={(e) => e.preventDefault()} className="relative aspect-square overflow-clip bg-opacity-50">
+            <a key={photo.src} href="#" onClick={(e) => {
+              e.preventDefault()
+              notInTest("Customer photos")
+            }} className="relative aspect-square overflow-clip bg-opacity-50">
               <img src={photo.src} alt={photo.alt} className="size-full object-cover" loading="lazy" />
-              <img src="/assets/ugc/instagram-badge.svg" alt="" className="absolute top-1 right-1 size-5" />
+              <img src="/images/ugc/instagram-badge.svg" alt="" className="absolute top-1 right-1 size-5" />
             </a>
           ))}
         </div>

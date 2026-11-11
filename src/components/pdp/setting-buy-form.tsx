@@ -20,7 +20,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { METALS, descriptionFor, monthlyPayment, type MetalId, type Setting } from "@/data/products"
-import { cn, formatPrice } from "@/lib/utils"
+import { formatPrice } from "@/lib/format"
+import { cn } from "@/lib/utils"
+import { useNotInTest } from "@/components/prototype/not-in-test"
 
 interface SettingBuyFormProps {
   setting: Setting
@@ -45,6 +47,7 @@ function MetalSelector({
   value: MetalId
   onChange: (m: MetalId) => void
 }) {
+  const notInTest = useNotInTest()
   return (
     <div className="flex flex-col gap-6">
       <h2 className="type-h4 font-medium text-primary">Select your Metal</h2>
@@ -71,7 +74,7 @@ function MetalSelector({
       </div>
       <p className="text-sm leading-none font-semibold text-muted-foreground">{METALS[value].label}</p>
       <div className="flex flex-col gap-2 bg-bg-input-50 p-3">
-        <Button variant="link" size="inline" className="w-fit">
+        <Button variant="link" className="h-auto gap-0.5 px-0 w-fit" onClick={() => notInTest("Metal education")}>
           Learn about Metals
           <Info />
         </Button>
@@ -84,11 +87,12 @@ function MetalSelector({
 }
 
 function FinancingCard({ price }: { price: number }) {
+  const notInTest = useNotInTest()
   return (
     <div className="flex items-start gap-3 bg-bg-input-50 p-3">
       {/* Figma: 52px tile, fill #5C0017 — no tokens; closest are size-12 and tertiary (signature-burgundy-900). */}
       <div className="flex size-12 shrink-0 items-center justify-center rounded-xs bg-tertiary">
-        <img src="/assets/misc/finance-badge.png" alt="Shane Co. credit card" className="aspect-[208/134] w-full rounded-xs object-cover" />
+        <img src="/images/misc/finance-badge.png" alt="Shane Co. credit card" className="aspect-[208/134] w-full rounded-xs object-cover" />
       </div>
       <div className="flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-1">
@@ -97,7 +101,7 @@ function FinancingCard({ price }: { price: number }) {
             {formatPrice(monthlyPayment(price))}/mo suggested payments with 12-month special financing.
           </p>
         </div>
-        <Button variant="link" size="inline" className="w-fit">
+        <Button variant="link" className="h-auto gap-0.5 px-0 w-fit" onClick={() => notInTest("Financing")}>
           Learn More
         </Button>
       </div>
@@ -106,11 +110,12 @@ function FinancingCard({ price }: { price: number }) {
 }
 
 function BuyActions({ onSelect }: { onSelect?: () => void }) {
+  const notInTest = useNotInTest()
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex w-full flex-col gap-2">
         <div className="flex gap-2">
-          <Button className="flex-1" onClick={onSelect}>
+          <Button className="flex-1" onClick={onSelect ?? (() => notInTest("Selecting the setting"))}>
             Select this Setting
           </Button>
           <DropdownMenu>
@@ -118,25 +123,25 @@ function BuyActions({ onSelect }: { onSelect?: () => void }) {
               <EllipsisVertical />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              {/* Out of scope for Test 1 — items are inert. */}
-              <DropdownMenuItem disabled>Edit Ring Size</DropdownMenuItem>
-              <DropdownMenuItem disabled>Review your design</DropdownMenuItem>
-              <DropdownMenuItem disabled>Share</DropdownMenuItem>
+              {/* Out of scope for Test 1. */}
+              <DropdownMenuItem onClick={() => notInTest("Editing ring size")}>Edit Ring Size</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => notInTest("Reviewing your design")}>Review your design</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => notInTest("Sharing")}>Share</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="wide" className="flex-1">
+          <Button variant="outline" className="px-6 flex-1" onClick={() => notInTest("Saving")}>
             <HeartStraight />
             Save
           </Button>
-          <Button variant="outline" size="wide" className="flex-1">
+          <Button variant="outline" className="px-6 flex-1" onClick={() => notInTest("Drop a hint")}>
             <EnvelopeSimple />
             Drop a Hint
           </Button>
         </div>
       </div>
-      <Button variant="link" size="inline" className="gap-2 py-2">
+      <Button variant="link" className="h-auto gap-2 px-0 py-2" onClick={() => notInTest("Chat")}>
         <MessageCircle />
         Chat with a Jewelry Consultant
       </Button>
@@ -173,6 +178,7 @@ function DyoAssurances() {
 
 function DeliveryOptions() {
   const [open, setOpen] = useState(false)
+  const notInTest = useNotInTest()
   return (
     <div className="flex flex-col">
       <div className="flex items-start justify-between bg-primary-foreground p-4">
@@ -193,7 +199,10 @@ function DeliveryOptions() {
       </button>
       <a
         href="#"
-        onClick={(e) => e.preventDefault()}
+        onClick={(e) => {
+          e.preventDefault()
+          notInTest("Store pickup")
+        }}
         className="flex items-start gap-3 border-t border-muted bg-white p-4"
       >
         <span className="flex flex-1 flex-col gap-2">
@@ -222,6 +231,7 @@ export function SettingBuyForm({
   beforeDelivery,
 }: SettingBuyFormProps) {
   const variant = setting.variants.find((v) => v.metal === metal) ?? setting.variants[0]
+  const notInTest = useNotInTest()
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-8">
@@ -239,7 +249,7 @@ export function SettingBuyForm({
               <span className="text-sm leading-none font-medium text-muted-foreground" aria-hidden>
                 ∙
               </span>
-              <Button variant="link" size="inline">
+              <Button variant="link" className="h-auto gap-0.5 px-0" onClick={() => notInTest("Pricing details")}>
                 Price explained
                 <Info />
               </Button>
@@ -249,12 +259,12 @@ export function SettingBuyForm({
             // Figma 7342:118223 — two lines of the description, truncated with an ellipsis.
             <div className="flex flex-col gap-2">
               <p className="line-clamp-2 text-sm font-medium text-muted-foreground">{descriptionFor(setting, metal)}</p>
-              <Button variant="link" size="inline" className="w-fit py-2" onClick={onViewDetails}>
+              <Button variant="link" className="h-auto gap-0.5 px-0 w-fit py-2" onClick={onViewDetails}>
                 View full product details
               </Button>
             </div>
           ) : (
-            <Button variant="link" size="inline" className="w-fit py-2" onClick={onViewDetails}>
+            <Button variant="link" className="h-auto gap-0.5 px-0 w-fit py-2" onClick={onViewDetails}>
               View product details
             </Button>
           )}

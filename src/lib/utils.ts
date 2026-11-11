@@ -1,11 +1,12 @@
-import { clsx, type ClassValue } from "clsx"
-import { extendTailwindMerge } from "tailwind-merge"
+import { createCn } from "cn/config"
 
 /**
- * tailwind-merge that knows the SCO Pattern Library token names, so e.g.
- * `text-xxs` (font size) and `text-primary` (colour) don't cancel each other out.
+ * Class merger that knows the Pattern Library's non-default theme keys, so
+ * e.g. `cn("text-xxs", "text-foreground")` keeps both (size vs colour) and
+ * `cn("px-4", "px-margin")` resolves to the layout token.
+ * Keep in sync with src/styles/theme.css when tokens are added.
  */
-const twMerge = extendTailwindMerge<"border-w" | "typography">({
+export const cn = createCn({
   extend: {
     theme: {
       text: ["xxs", "xs-2"],
@@ -26,28 +27,5 @@ const twMerge = extendTailwindMerge<"border-w" | "typography">({
         "category-wayfinder-hero",
       ],
     },
-    classGroups: {
-      "border-w": [{ "border-w": ["0", "50", "100", "200", "300"] }],
-      typography: [
-        { type: ["h1", "h2", "h3", "h4", "h5", "label-xs", "label-s", "label-m", "caption"] },
-      ],
-    },
-    // A `type-*` text style sets size, line height, tracking and family, so it overrides
-    // those utilities when it comes later (e.g. a component's default `text-base`).
-    conflictingClassGroups: {
-      typography: ["font-size", "leading", "tracking", "font-family"],
-    },
   },
 })
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
-
-export function formatPrice(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value)
-}
