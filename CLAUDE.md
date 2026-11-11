@@ -15,6 +15,8 @@ tested on both mobile and desktop. Features are briefed piecemeal: build only wh
   https://www.figma.com/design/Q4Wp6ls6O4nBvicBjbosQI
 - **Design system:** Figma "SCO Pattern Library"
   https://www.figma.com/design/ceWHNjl5yoEXdjK2b3Oo5J
+  Day-to-day reference: `DESIGN_SYSTEM.md` (generated from the Figma Variables;
+  lists every token class). Use it instead of re-reading the Variables from Figma.
 - Pull specs from Figma via the figma-console MCP (Desktop Bridge) before building a component.
 
 ## Tests in scope
@@ -58,5 +60,7 @@ The moderated flow test (5) comes later and reuses the winning variants.
   mock data) so the tests can be split across the team.
 
 ## Workflow
-- Repo: https://github.com/SimonFarmer/SCO-DYO-Prototypes
-- Branch per feature; merge via pull request.
+- Local only for now: versioned with local git (no GitHub remote in use).
+- Branch per feature; merge into `main` locally when done.
+- Design tokens: when the Pattern Library Variables change, re-export the snapshot
+  and run `npm run tokens` (regenerates the CSS and `DESIGN_SYSTEM.md`).

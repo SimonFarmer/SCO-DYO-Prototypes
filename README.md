@@ -13,7 +13,7 @@ npm run tokens   # regenerate CSS from the Figma Variables snapshot
 
 ## Design tokens
 
-Every style value comes from the **SCO Pattern Library** Figma Variables.
+Every style value comes from the **SCO Pattern Library** Figma Variables. The full class reference is in [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) (generated).
 
 | File | What it is |
 | --- | --- |
