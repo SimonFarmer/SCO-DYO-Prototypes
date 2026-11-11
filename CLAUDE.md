@@ -60,7 +60,8 @@ The moderated flow test (5) comes later and reuses the winning variants.
   mock data) so the tests can be split across the team.
 
 ## Workflow
-- Local only for now: versioned with local git (no GitHub remote in use).
-- Branch per feature; merge into `main` locally when done.
+- GitHub remote: https://github.com/SimonFarmer/SCO-DYO-Prototypes (public).
+  Pushes use the GitHub CLI login (`gh auth login`, `gh auth setup-git`).
+- Branch per feature; push the branch and merge into `main` via pull request.
 - Design tokens: when the Pattern Library Variables change, re-export the snapshot
   and run `npm run tokens` (regenerates the CSS and `DESIGN_SYSTEM.md`).
