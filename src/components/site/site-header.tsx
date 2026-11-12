@@ -7,7 +7,10 @@ import {
   UserCircleIcon,
   type Icon,
 } from "@phosphor-icons/react"
+import { useRef } from "react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { useStickyOnIntent } from "@/components/site/use-sticky-on-intent"
+import { cn } from "@/lib/utils"
 
 const NAV = ["Engagement Rings", "Wedding Bands", "Diamonds", "Gemstones", "Fine Jewelry", "Personalize"]
 
@@ -34,11 +37,20 @@ function UtilityLink({ icon: IconCmp, label }: { icon: Icon; label: string }) {
   )
 }
 
-/** Global site header (inert: outside every test's scope). */
+/** Global site header (inert: outside every test's scope). Sticky on intent: hides on scroll down, returns on scroll up. */
 export function SiteHeader() {
   const notInTest = useNotInTest()
+  const ref = useRef<HTMLElement>(null)
+  const visible = useStickyOnIntent(ref)
   return (
-    <header className="border-b border-border-subtle bg-background lg:border-b-0">
+    <header
+      ref={ref}
+      data-visible={visible}
+      className={cn(
+        "sticky top-0 z-40 border-b border-border-subtle bg-background transition-transform duration-300 ease-out lg:border-b-0",
+        !visible && "-translate-y-full",
+      )}
+    >
       {/* Mobile: logo + tagline, as on the non-DYO mobile PDP */}
       <div className="flex h-22 items-center justify-center lg:hidden">
         <button type="button" onClick={() => notInTest("The homepage")} className="cursor-pointer">

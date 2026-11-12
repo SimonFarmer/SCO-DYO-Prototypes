@@ -23,6 +23,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Visible height of the sticky-on-intent site header (set at runtime by SiteHeader).
+   Sticky page elements offset by it, e.g. `top-(--header-offset)`. */
+:root {
+  --header-offset: 0px;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
