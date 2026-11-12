@@ -2,7 +2,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { formatPrice } from "@/lib/format"
 
 /** Two-up preview under an upsell overlay's header (ring + chosen option) with a caption. */
-export function OptionPreview({ images, caption }: { images: { src: string; alt: string }[]; caption: string }) {
+export function OptionPreview({
+  images,
+  caption,
+  note,
+}: {
+  images: { src: string; alt: string }[]
+  caption: string
+  /** Supporting line under the caption. */
+  note?: string
+}) {
   return (
     <div className="flex flex-col gap-3 border-b border-muted px-10 py-6 max-lg:px-margin">
       <div className="grid grid-cols-2 gap-2">
@@ -15,7 +24,10 @@ export function OptionPreview({ images, caption }: { images: { src: string; alt:
           />
         ))}
       </div>
-      <p className="type-label-xs text-primary" aria-live="polite">{caption}</p>
+      <div className="flex flex-col gap-1">
+        <p className="type-label-xs text-primary" aria-live="polite">{caption}</p>
+        {note && <p className="type-caption text-muted-foreground">{note}</p>}
+      </div>
     </div>
   )
 }

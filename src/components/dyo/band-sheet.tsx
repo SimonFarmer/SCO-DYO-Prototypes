@@ -9,7 +9,7 @@ import { OverlaySheet } from "./overlay-sheet"
  * The first band is preselected so the preview shows the set straight away.
  */
 export function BandSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const { bandId, setBandId } = useRingBuild()
+  const { bandId, setBandId, ringSize, setting } = useRingBuild()
   const current = bandId ?? WEDDING_BANDS[0].id
   const [pending, setPending] = useState(current)
 
@@ -43,6 +43,11 @@ export function BandSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
             { src: selected.image, alt: selected.name },
           ]}
           caption={`Preview: ${selected.name}`}
+          note={
+            ringSize
+              ? `Size ${ringSize}, ${setting.metal}: matched to your engagement ring’s size and metal.`
+              : `${setting.metal}: matched to your engagement ring’s metal. Its size will match your ring size.`
+          }
         />
       }
     >

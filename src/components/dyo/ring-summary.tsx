@@ -64,6 +64,8 @@ const Rule = () => <div className="h-px bg-border-subtle" />
 
 interface RingSummaryProps {
   readOnly?: boolean
+  /** Ring thumbnail beside the summary (end screen). The Ring Review frames have none. */
+  thumbnail?: boolean
   onEditCrown?: () => void
   onEditEngraving?: () => void
   /**
@@ -86,6 +88,7 @@ interface RingSummaryProps {
  */
 export function RingSummary({
   readOnly = false,
+  thumbnail = false,
   onEditCrown,
   onEditEngraving,
   personalization = "inline",
@@ -136,7 +139,9 @@ export function RingSummary({
 
   return (
     <div className="flex gap-8 max-md:gap-4">
-      <img src={setting.image} alt={setting.name} className="size-26 shrink-0 bg-secondary object-cover max-md:size-20" />
+      {thumbnail && (
+        <img src={setting.image} alt={setting.name} className="size-26 shrink-0 bg-secondary object-cover max-md:size-20" />
+      )}
       <div className="flex min-w-0 flex-1 flex-col gap-5">
         <div className="flex items-start justify-between gap-4 max-md:flex-col max-md:gap-2">
           <div className="flex flex-col gap-2">

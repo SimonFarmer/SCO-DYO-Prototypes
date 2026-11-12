@@ -138,7 +138,7 @@ export const WEDDING_BANDS: WeddingBand[] = [
   { id: "pave-twist", name: "Pave Twist Diamond Band", price: 3197, metal: SETTING.metal, image: "/images/bands/pave-twist.png" },
   { id: "augusta", name: "Augusta Diamond Band", price: 1487, metal: SETTING.metal, image: "/images/bands/augusta.png" },
   { id: "louisa", name: "Louisa Diamond Band", price: 1145, metal: SETTING.metal, image: "/images/bands/louisa.png" },
-  { id: "delicate", name: "Delicate Diamond Band", price: 777, metal: SETTING.metal, image: "/images/bands/delicate.png" },
+  { id: "delicate", name: "Delicate Diamond Band", price: 375, metal: SETTING.metal, image: "/images/bands/delicate.png" },
   { id: "alouette", name: "Alouette Diamond Infinity Band", price: 3177, metal: SETTING.metal, image: "/images/bands/alouette.png" },
   { id: "echo", name: "Echo Diamond Infinity Band", price: 2075, metal: SETTING.metal, image: "/images/bands/echo.png" },
 ]
