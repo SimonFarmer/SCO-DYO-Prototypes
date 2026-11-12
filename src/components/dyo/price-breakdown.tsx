@@ -14,9 +14,10 @@ function Row({ label, detail, price }: { label: string; detail: string; price: n
   )
 }
 
-/** Running price summary (Figma "Price Explained"): one row per component, then the ring total. */
+/** Running price summary (Figma "Price Explained"): one row per component, then the total. */
 export function PriceBreakdown() {
-  const { setting, stone, ringSize, crown, engraving, engravingStyle, total } = useRingBuild()
+  const { setting, stone, ringSize, crown, engraving, engravingStyle, band, bandEngraving, bandEngravingStyle, total } =
+    useRingBuild()
   return (
     <div className="flex flex-col gap-3 border border-border-subtle bg-bg-input-50 p-4" aria-live="polite">
       <Row
@@ -29,9 +30,18 @@ export function PriceBreakdown() {
       {engraving && (
         <Row label="Engraving" detail={`“${engraving.text}” · ${engravingStyle?.name}`} price={ENGRAVING.price} />
       )}
+      {band && <Row label="Wedding Band" detail={`${band.name} · ${band.metal}`} price={band.price} />}
+      {bandEngraving && (
+        <Row
+          label="Wedding Band Engraving"
+          detail={`“${bandEngraving.text}” · ${bandEngravingStyle?.name}`}
+          price={ENGRAVING.price}
+        />
+      )}
       <div className="h-px bg-border-subtle" />
       <div className="flex items-center justify-between gap-2 text-sm leading-5 font-semibold text-primary">
-        <span>Ring Total:</span>
+        {/* With a wedding band the total covers the set, not just the ring. */}
+        <span>{band ? "Total:" : "Ring Total:"}</span>
         <span>{formatPrice(total)}</span>
       </div>
     </div>

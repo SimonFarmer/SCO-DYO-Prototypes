@@ -4,7 +4,6 @@ import { DyoStepper } from "@/components/dyo/dyo-stepper"
 import { SectionDivider, StepIntro } from "@/components/dyo/finishing-sections"
 import { ProductGallery } from "@/components/dyo/product-gallery"
 import { RingSummary } from "@/components/dyo/ring-summary"
-import { Breadcrumb } from "@/components/site/breadcrumb"
 import { SiteHeader } from "@/components/site/site-header"
 import { REVIEW_GALLERY } from "@/data/dyo"
 import { useRingBuild } from "@/state/ring-build"
@@ -23,24 +22,19 @@ export function RingReviewB() {
   // Ring size is chosen on Finishing Touches; without it, send the shopper back there.
   if (!ringSize) return <Navigate to={FINISHING} replace />
 
-  const backTo = (open: "crown" | "engraving" | "size") => navigate(`${FINISHING}&open=${open}`)
+  const backTo = (open: "crown" | "engraving" | "size" | "band" | "band-engraving") => navigate(`${FINISHING}&open=${open}`)
 
   return (
     <div className="min-h-svh bg-background">
       <SiteHeader />
       <DyoStepper current={3} mobileLabel="Review" />
       <PageColumns
-        gallery={
-          <>
-            <Breadcrumb items={["Home", "Diamonds", "Brilliant Round Natural Diamond"]} className="max-lg:bg-background max-lg:px-margin max-lg:py-3" />
-            <ProductGallery images={REVIEW_GALLERY} />
-          </>
-        }
+        gallery={<ProductGallery images={REVIEW_GALLERY} />}
       >
         <StepIntro
           eyebrow="Step 3 of 3 · Finishing Touches"
           title="Review Your Ring"
-          subtitle="Check your choices, then add your ring to your bag."
+          onBack={() => navigate(FINISHING)}
         />
         <SectionDivider />
         <section aria-label="Ring summary">
@@ -49,6 +43,8 @@ export function RingReviewB() {
             onEditRingSize={() => backTo("size")}
             onEditCrown={() => backTo("crown")}
             onEditEngraving={() => backTo("engraving")}
+            onEditBand={() => backTo("band")}
+            onEditBandEngraving={() => backTo("band-engraving")}
             onAddPersonalization={() => navigate(FINISHING)}
           />
         </section>

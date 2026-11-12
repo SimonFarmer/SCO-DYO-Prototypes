@@ -75,6 +75,9 @@ interface RingSummaryProps {
   onEditRingSize?: () => void
   /** Shown in the grouped layout when nothing is added (Variant B: back to Finishing Touches). */
   onAddPersonalization?: () => void
+  /** Wedding band edit links (Variant B: back to Finishing Touches with the overlay open). */
+  onEditBand?: () => void
+  onEditBandEngraving?: () => void
 }
 
 /**
@@ -88,8 +91,25 @@ export function RingSummary({
   personalization = "inline",
   onEditRingSize,
   onAddPersonalization,
+  onEditBand,
+  onEditBandEngraving,
 }: RingSummaryProps) {
-  const { setting, stone, ringSize, crown, engraving, engravingStyle, total, setCrownId, setEngraving } = useRingBuild()
+  const {
+    setting,
+    stone,
+    ringSize,
+    crown,
+    engraving,
+    engravingStyle,
+    band,
+    bandEngraving,
+    bandEngravingStyle,
+    total,
+    setCrownId,
+    setEngraving,
+    setBandId,
+    setBandEngraving,
+  } = useRingBuild()
   const notInTest = useNotInTest()
 
   const crownActions = !readOnly && (
@@ -212,6 +232,38 @@ export function RingSummary({
                 </div>
               </>
             )
+          )}
+
+          {band && (
+            <>
+              <Rule />
+              <LineItem
+                eyebrow="Wedding Band"
+                title={band.name}
+                price={band.price}
+                actions={!readOnly && (
+                  <>
+                    <SummaryLink onClick={onEditBand}>Edit Band</SummaryLink>
+                    <SummaryLink onClick={() => setBandId(null)}>Remove Band</SummaryLink>
+                  </>
+                )}
+              >
+                <SpecRows rows={[["Metal", band.metal], ["Ring Size", ringSize ?? "Not selected"]]} />
+              </LineItem>
+              {bandEngraving && (
+                <div className="flex flex-col gap-3">
+                  <ItemHeading title="Wedding Band Engraving" price={ENGRAVING.price} />
+                  <SpecRows rows={[["Style", bandEngravingStyle?.name], ["Text", bandEngraving.text]]} />
+                  {!readOnly && (
+                    <div className="flex flex-wrap gap-x-4 gap-y-2">
+                      <SummaryLink onClick={onEditBandEngraving}>Edit Engraving</SummaryLink>
+                      <SummaryLink onClick={() => setBandEngraving(null)}>Remove Engraving</SummaryLink>
+                    </div>
+                  )}
+                  {finalSale}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

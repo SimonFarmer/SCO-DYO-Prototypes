@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { CaretRightIcon } from "@phosphor-icons/react"
+import { CaretRightIcon, CheckIcon } from "@phosphor-icons/react"
 import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
@@ -50,34 +50,33 @@ export function OptionBlock({
 }
 
 /**
- * Added state of an option block (Figma "Decorative Crown Block", selected):
- * label + price, the chosen item, and Edit / Remove links.
+ * Selected state of an upsell block (Figma "Decorative Crown Block", selected):
+ * dark border, label, the chosen item with its price, Edit / Remove, and a green check.
  */
 export function AddedOptionBlock({
   label,
-  price,
   detail,
+  price,
   media,
   onEdit,
   onRemove,
 }: {
   label: string
-  price: number
   detail: ReactNode
+  price: number
   media: ReactNode
   onEdit: () => void
   onRemove: () => void
 }) {
   return (
-    <div className="flex w-full gap-3 border border-primary bg-primary-foreground p-3">
-      <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden bg-secondary">{media}</span>
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <span className="type-label-xs text-primary">{label}</span>
-          <span className="type-caption font-semibold text-muted-foreground">{formatPrice(price)}</span>
-        </div>
-        <p className="type-caption font-semibold text-muted-foreground">{detail}</p>
-        <div className="flex gap-6">
+    <div className="flex w-full items-center gap-3 border border-border bg-primary-foreground p-3">
+      <span className="flex size-12 shrink-0 items-center justify-center self-start overflow-hidden bg-secondary">{media}</span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="type-label-xs text-primary">{label}</span>
+        <p className="type-caption text-muted-foreground">
+          {detail} · <span className="font-semibold">{formatPrice(price)}</span>
+        </p>
+        <div className="flex gap-6 pt-1">
           <button type="button" onClick={onEdit} className="cursor-pointer type-label-xs text-primary underline">
             Edit
           </button>
@@ -86,6 +85,9 @@ export function AddedOptionBlock({
           </button>
         </div>
       </div>
+      <span className="flex size-3 shrink-0 items-center justify-center rounded-full bg-success text-primary-foreground" aria-label="Added">
+        <CheckIcon weight="bold" className="size-2" />
+      </span>
     </div>
   )
 }

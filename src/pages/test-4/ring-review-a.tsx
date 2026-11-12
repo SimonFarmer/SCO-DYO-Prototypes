@@ -10,7 +10,6 @@ import {
 } from "@/components/dyo/finishing-sections"
 import { ProductGallery } from "@/components/dyo/product-gallery"
 import { RingSummary } from "@/components/dyo/ring-summary"
-import { Breadcrumb } from "@/components/site/breadcrumb"
 import { SiteHeader } from "@/components/site/site-header"
 import { REVIEW_GALLERY } from "@/data/dyo"
 import { PageColumns } from "./page-columns"
@@ -29,12 +28,7 @@ export function RingReviewA() {
       <SiteHeader />
       <DyoStepper current={3} mobileLabel="Review" />
       <PageColumns
-        gallery={
-          <>
-            <Breadcrumb items={["Home", "Diamonds", "Brilliant Round Natural Diamond"]} className="max-lg:bg-background max-lg:px-margin max-lg:py-3" />
-            <ProductGallery images={REVIEW_GALLERY} />
-          </>
-        }
+        gallery={<ProductGallery images={REVIEW_GALLERY} />}
       >
         <StepIntro
           eyebrow="Step 3 of 3 · Finishing Touches"

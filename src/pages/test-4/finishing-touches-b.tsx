@@ -8,24 +8,24 @@ import {
   RingSizeSection,
   SectionDivider,
   StepIntro,
+  WeddingBandSection,
   useFinishingOverlays,
   type FinishingOverlay,
 } from "@/components/dyo/finishing-sections"
 import { PriceBreakdown } from "@/components/dyo/price-breakdown"
 import { ProductGallery } from "@/components/dyo/product-gallery"
 import { useNotInTest } from "@/components/prototype/not-in-test"
-import { Breadcrumb } from "@/components/site/breadcrumb"
 import { SiteHeader } from "@/components/site/site-header"
-import { FINISHING_GALLERY, type GalleryImage } from "@/data/dyo"
+import { CLASSIC_CROWN, FINISHING_GALLERY, type GalleryImage } from "@/data/dyo"
 import { useRingBuild } from "@/state/ring-build"
 import { PageColumns } from "./page-columns"
 
-const OVERLAYS: FinishingOverlay[] = ["size", "size-guide", "engraving", "crown"]
+const OVERLAYS: FinishingOverlay[] = ["size", "size-guide", "engraving", "crown", "band", "band-engraving"]
 
 /**
  * Test 4 · Variant B, screen 1 — Finishing Touches as its own step, before Ring Review.
  * Figma: Test 4 › "Ring Review (B)" (7366:137030) and the crown-added state (7366:137725).
- * ?open=crown|engraving|size opens an overlay on arrival (used by Edit links on Ring Review).
+ * ?open=crown|engraving|band|band-engraving|size opens an overlay on arrival (used by Edit links on Ring Review).
  */
 export function FinishingTouchesB() {
   const navigate = useNavigate()
@@ -53,8 +53,27 @@ export function FinishingTouchesB() {
         ? [FINISHING_GALLERY.ringSide, { src: crown.image, alt: crown.name, fit: "contain" as const }]
         : []),
       ...FINISHING_GALLERY.tiles,
+      // Figma 7366:137030: the standard crown closes the gallery, with a shortcut to upgrade it.
+      ...(crown
+        ? []
+        : [
+            {
+              src: CLASSIC_CROWN.image,
+              alt: CLASSIC_CROWN.name,
+              fit: "contain" as const,
+              badgePosition: "bottom" as const,
+              badge: (
+                <>
+                  Crown on ring ·{" "}
+                  <button type="button" className="cursor-pointer uppercase underline" onClick={() => open("crown")}>
+                    Upgrade
+                  </button>
+                </>
+              ),
+            },
+          ]),
     ],
-    [crown]
+    [crown, open]
   )
 
   const proceed = () => {
@@ -71,12 +90,7 @@ export function FinishingTouchesB() {
       <SiteHeader />
       <DyoStepper current={3} mobileLabel="Personalize" />
       <PageColumns
-        gallery={
-          <>
-            <Breadcrumb items={["Home", "Engagement Rings", "Timeless Solitaire Engagement Ring"]} className="max-lg:bg-background max-lg:px-margin max-lg:py-3" />
-            <ProductGallery images={gallery} />
-          </>
-        }
+        gallery={<ProductGallery images={gallery} />}
       >
         <StepIntro
           eyebrow="Step 3 of 3 · Finishing Touches"
@@ -85,6 +99,8 @@ export function FinishingTouchesB() {
         />
         <SectionDivider />
         <PersonalizeSection onOpen={open} />
+        <SectionDivider />
+        <WeddingBandSection onOpen={open} />
         <SectionDivider />
         <RingSizeSection id="ring-size" onOpen={open} error={sizeError} />
         <SectionDivider />

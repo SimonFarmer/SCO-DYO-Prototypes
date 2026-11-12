@@ -1,3 +1,5 @@
+import type { ReactNode } from "react"
+
 /**
  * Shared mock data for the DYO prototypes. Same products across every test and variant.
  * Keep it realistic: prices, 4Cs and sizes must stay internally consistent.
@@ -104,6 +106,45 @@ export const CROWNS: Crown[] = [
 
 export const CROWN_FROM_PRICE = Math.min(...CROWNS.map((c) => c.price))
 
+/** The setting's standard crown: preselected in the Upgrade Your Crown overlay, no cost. */
+export const CLASSIC_CROWN: Crown = {
+  id: "classic-4-prong",
+  name: "Classic 4-Prong Crown",
+  holds,
+  price: 0,
+  image: "/images/crowns/classic-prong.png",
+}
+
+/** Crown overlay options: the included classic crown first, then the paid upgrades. */
+export const CROWN_OPTIONS: Crown[] = [CLASSIC_CROWN, ...CROWNS]
+
+/** Ring front view used beside the crown in the crown preview. */
+export const CROWN_PREVIEW_RING = "/images/crowns/ring-preview.png"
+
+export interface WeddingBand {
+  id: string
+  name: string
+  price: number
+  metal: string
+  image: string
+  /** Band stacked with the engagement ring, where a shot exists. */
+  withRingImage?: string
+}
+
+/** Matching wedding bands for the Timeless Solitaire (Test 4 · B), in Figma order. */
+export const WEDDING_BANDS: WeddingBand[] = [
+  { id: "willow", name: "Willow Diamond Pave Infinity Band", price: 1515, metal: SETTING.metal, image: "/images/bands/willow.png", withRingImage: "/images/bands/ring-with-willow.png" },
+  { id: "lace", name: "Lace Diamond Pave Infinity Band", price: 1690, metal: SETTING.metal, image: "/images/bands/lace.png" },
+  { id: "pave-twist", name: "Pave Twist Diamond Band", price: 3197, metal: SETTING.metal, image: "/images/bands/pave-twist.png" },
+  { id: "augusta", name: "Augusta Diamond Band", price: 1487, metal: SETTING.metal, image: "/images/bands/augusta.png" },
+  { id: "louisa", name: "Louisa Diamond Band", price: 1145, metal: SETTING.metal, image: "/images/bands/louisa.png" },
+  { id: "delicate", name: "Delicate Diamond Band", price: 777, metal: SETTING.metal, image: "/images/bands/delicate.png" },
+  { id: "alouette", name: "Alouette Diamond Infinity Band", price: 3177, metal: SETTING.metal, image: "/images/bands/alouette.png" },
+  { id: "echo", name: "Echo Diamond Infinity Band", price: 2075, metal: SETTING.metal, image: "/images/bands/echo.png" },
+]
+
+export const BAND_FROM_PRICE = Math.min(...WEDDING_BANDS.map((b) => b.price))
+
 export const ENGRAVING = {
   price: 60,
   maxLength: 30,
@@ -123,8 +164,8 @@ export interface GalleryImage {
   alt: string
   /** Desktop grid: span both columns (hero image). */
   span?: 2
-  /** Small label on the tile, e.g. "360 view". */
-  badge?: string
+  /** Small label on the tile, e.g. "360 view" (may include a link). */
+  badge?: ReactNode
   badgePosition?: "top" | "bottom"
   /** "contain" for cut-out product shots on the tile background. */
   fit?: "cover" | "contain"

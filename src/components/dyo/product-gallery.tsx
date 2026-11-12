@@ -54,7 +54,7 @@ export function ProductGallery({ images }: { images: GalleryImage[] }) {
 
   return (
     <>
-      <div className="hidden grid-cols-2 gap-2 p-2 pt-0 lg:grid">
+      <div className="hidden grid-cols-2 gap-2 p-2 lg:grid">
         {images.map((img, i) => (
           <Tile key={img.src} img={img} eager={i < 2} />
         ))}
