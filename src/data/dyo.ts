@@ -1,3 +1,5 @@
+import type { ReactNode } from "react"
+
 /**
  * Shared mock data for the DYO prototypes. Same products across every test and variant.
  * Keep it realistic: prices, 4Cs and sizes must stay internally consistent.
@@ -104,6 +106,45 @@ export const CROWNS: Crown[] = [
 
 export const CROWN_FROM_PRICE = Math.min(...CROWNS.map((c) => c.price))
 
+/** The setting's standard crown: preselected in the Upgrade Your Crown overlay, no cost. */
+export const CLASSIC_CROWN: Crown = {
+  id: "classic-4-prong",
+  name: "Classic 4-Prong Crown",
+  holds,
+  price: 0,
+  image: "/images/crowns/classic-prong.png",
+}
+
+/** Crown overlay options: the included classic crown first, then the paid upgrades. */
+export const CROWN_OPTIONS: Crown[] = [CLASSIC_CROWN, ...CROWNS]
+
+/** Ring front view used beside the crown in the crown preview. */
+export const CROWN_PREVIEW_RING = "/images/crowns/ring-preview.png"
+
+export interface WeddingBand {
+  id: string
+  name: string
+  price: number
+  metal: string
+  image: string
+  /** Band stacked with the engagement ring, where a shot exists. */
+  withRingImage?: string
+}
+
+/** Matching wedding bands for the Timeless Solitaire (Test 4 · B), in Figma order. */
+export const WEDDING_BANDS: WeddingBand[] = [
+  { id: "willow", name: "Willow Diamond Pave Infinity Band", price: 1515, metal: SETTING.metal, image: "/images/bands/willow.png", withRingImage: "/images/bands/ring-with-willow.png" },
+  { id: "lace", name: "Lace Diamond Pave Infinity Band", price: 1690, metal: SETTING.metal, image: "/images/bands/lace.png" },
+  { id: "pave-twist", name: "Pave Twist Diamond Band", price: 3197, metal: SETTING.metal, image: "/images/bands/pave-twist.png" },
+  { id: "augusta", name: "Augusta Diamond Band", price: 1487, metal: SETTING.metal, image: "/images/bands/augusta.png" },
+  { id: "louisa", name: "Louisa Diamond Band", price: 1145, metal: SETTING.metal, image: "/images/bands/louisa.png" },
+  { id: "delicate", name: "Delicate Diamond Band", price: 375, metal: SETTING.metal, image: "/images/bands/delicate.png" },
+  { id: "alouette", name: "Alouette Diamond Infinity Band", price: 3177, metal: SETTING.metal, image: "/images/bands/alouette.png" },
+  { id: "echo", name: "Echo Diamond Infinity Band", price: 2075, metal: SETTING.metal, image: "/images/bands/echo.png" },
+]
+
+export const BAND_FROM_PRICE = Math.min(...WEDDING_BANDS.map((b) => b.price))
+
 export const ENGRAVING = {
   price: 60,
   maxLength: 30,
@@ -121,6 +162,13 @@ export const ENGRAVING = {
 export interface GalleryImage {
   src: string
   alt: string
+  /** Desktop grid: span both columns (hero image). */
+  span?: 2
+  /** Small label on the tile, e.g. "360 view" (may include a link). */
+  badge?: ReactNode
+  badgePosition?: "top" | "bottom"
+  /** "contain" for cut-out product shots on the tile background. */
+  fit?: "cover" | "contain"
 }
 
 /** Ring Review gallery (setting + stone), in Figma order. */
@@ -135,6 +183,26 @@ export const REVIEW_GALLERY: GalleryImage[] = [
   { src: "/images/review/gallery-8.jpg", alt: "Decorative crown option" },
   { src: "/images/review/gallery-9.jpg", alt: "Decorative crown option, top view" },
 ]
+
+/** Finishing Touches gallery (Test 4 · B). Crown tiles are inserted when a crown is chosen. */
+export const FINISHING_GALLERY = {
+  hero: {
+    src: "/images/finishing/hero.jpg",
+    alt: "Timeless Solitaire ring with 1.21 ct round diamond",
+    span: 2,
+    badge: `Previewing: ${STONE.origin} · ${STONE.shape} · ${STONE.carat} ct`,
+    badgePosition: "bottom",
+  } satisfies GalleryImage,
+  ringSide: REVIEW_GALLERY[6],
+  tiles: [
+    { src: "/images/finishing/video-360.jpg", alt: "360° view of the 1.21 ct round diamond", badge: "360 view", badgePosition: "bottom" },
+    { src: "/images/finishing/diamond-top.jpg", alt: "1.21 ct round diamond, top view" },
+    { src: "/images/review/gallery-4-source.jpg", alt: "At the Source: we work directly with our diamond partners" },
+    { src: "/images/finishing/size-guide.jpg", alt: "Carat size guide on the hand, 1 ct to 5 ct" },
+    { src: "/images/review/gallery-5-profile.png", alt: "Diamond profile: table 57%, depth 66%, girdle very thick, culet none" },
+    { src: "/images/review/gallery-6-top.png", alt: "Diamond measurements: 6.17mm × 6.17mm" },
+  ] satisfies GalleryImage[],
+}
 
 export const DELIVERY = {
   shipBy: "By Thu, Nov 19",

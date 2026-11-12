@@ -6,8 +6,22 @@ import { cn } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
 import { OverlaySheet } from "./overlay-sheet"
 
-export function EngravingSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const { engraving, setEngraving } = useRingBuild()
+/**
+ * Add Engraving overlay. `target="band"` engraves the matching wedding band (Test 4 · B)
+ * instead of the engagement ring; same price, styles and rules.
+ */
+export function EngravingSheet({
+  open,
+  onOpenChange,
+  target = "ring",
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  target?: "ring" | "band"
+}) {
+  const build = useRingBuild()
+  const engraving = target === "band" ? build.bandEngraving : build.engraving
+  const setEngraving = target === "band" ? build.setBandEngraving : build.setEngraving
   const [text, setText] = useState(engraving?.text ?? "")
   const [styleId, setStyleId] = useState(engraving?.styleId ?? ENGRAVING.styles[0].id)
 
@@ -28,7 +42,7 @@ export function EngravingSheet({ open, onOpenChange }: { open: boolean; onOpenCh
       open={open}
       onOpenChange={onOpenChange}
       fullScreenMobile
-      title="Add Engraving"
+      title={target === "band" ? "Add Wedding Band Engraving" : "Add Engraving"}
       titleSuffix={`+ ${formatPrice(ENGRAVING.price)}`}
       primaryLabel="Apply"
       primaryDisabled={!trimmed}
@@ -78,7 +92,7 @@ export function EngravingSheet({ open, onOpenChange }: { open: boolean; onOpenCh
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <p className="text-sm leading-5 font-semibold text-primary">Engraving preview</p>
-            <p className="type-caption text-primary">Engraving will be made on the inside, facing the stone</p>
+            <p className="type-caption text-primary">{target === "band" ? "Engraving will be made on the inside of the band" : "Engraving will be made on the inside, facing the stone"}</p>
           </div>
           <div className="relative overflow-hidden bg-secondary">
             <img src="/images/engraving/band.jpg" alt="" className="w-full" />

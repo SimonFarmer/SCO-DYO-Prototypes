@@ -2,10 +2,41 @@ import { useRef, useState } from "react"
 import type { GalleryImage } from "@/data/dyo"
 import { cn } from "@/lib/utils"
 
+function TileBadge({ img }: { img: GalleryImage }) {
+  if (!img.badge) return null
+  return (
+    <span
+      className={cn(
+        "absolute left-4 bg-primary px-2 py-1 type-label-xs text-primary-foreground",
+        img.badgePosition === "bottom" ? "bottom-4" : "top-4"
+      )}
+    >
+      {img.badge}
+    </span>
+  )
+}
+
+function Tile({ img, className, eager }: { img: GalleryImage; className?: string; eager?: boolean }) {
+  return (
+    <div className={cn("relative aspect-square bg-secondary", img.span === 2 && "lg:col-span-2", className)}>
+      <img
+        src={img.src}
+        alt={img.alt}
+        loading={eager ? "eager" : "lazy"}
+        className={cn(
+          "size-full",
+          img.fit === "contain" ? "object-contain p-10 mix-blend-multiply" : "object-cover"
+        )}
+      />
+      <TileBadge img={img} />
+    </div>
+  )
+}
+
 /**
  * Product gallery.
- * Desktop (lg+): two-column long-scroll grid. Mobile: swipeable carousel with dots,
- * following the non-DYO mobile PDP.
+ * Desktop (lg+): two-column long-scroll grid (a `span: 2` image becomes a full-width hero).
+ * Mobile: swipeable carousel with dots, following the non-DYO mobile PDP.
  */
 export function ProductGallery({ images }: { images: GalleryImage[] }) {
   const track = useRef<HTMLDivElement>(null)
@@ -23,14 +54,9 @@ export function ProductGallery({ images }: { images: GalleryImage[] }) {
 
   return (
     <>
-      <div className="hidden grid-cols-2 gap-2 p-2 pt-0 lg:grid">
-        {images.map((img) => (
-          <img
-            key={img.src}
-            src={img.src}
-            alt={img.alt}
-            className="aspect-square w-full bg-secondary object-cover"
-          />
+      <div className="hidden grid-cols-2 gap-2 p-2 lg:grid">
+        {images.map((img, i) => (
+          <Tile key={img.src} img={img} eager={i < 2} />
         ))}
       </div>
 
@@ -41,13 +67,7 @@ export function ProductGallery({ images }: { images: GalleryImage[] }) {
           className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {images.map((img, i) => (
-            <img
-              key={img.src}
-              src={img.src}
-              alt={img.alt}
-              loading={i === 0 ? "eager" : "lazy"}
-              className="aspect-square w-full shrink-0 snap-center bg-secondary object-cover"
-            />
+            <Tile key={img.src} img={img} eager={i === 0} className="w-full shrink-0 snap-center" />
           ))}
         </div>
         <div className="absolute right-3 bottom-3 flex items-center gap-1" role="tablist" aria-label="Gallery images">
