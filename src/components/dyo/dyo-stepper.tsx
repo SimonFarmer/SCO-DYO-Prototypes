@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { Fragment, useState } from "react"
 import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { formatPrice } from "@/lib/format"
@@ -8,9 +8,10 @@ import { useRingBuild } from "@/state/ring-build"
 type StepNumber = 1 | 2 | 3
 
 /** Shown for steps that are current or not started yet (Figma Drop 3b setting step). */
-const STEP_DESCRIPTION: Record<1 | 2, string> = {
+const STEP_DESCRIPTION: Record<StepNumber, string> = {
   1: "Select your setting",
   2: "Find your perfect stone",
+  3: "Size, personalize & review",
 }
 
 /** Numbered step marker. Done steps get a check badge; the current step is filled. */
@@ -26,7 +27,9 @@ function StepMarker({
   return (
     <span
       className={cn(
-        "relative flex size-8 shrink-0 items-center justify-center font-heading text-2xl leading-none font-medium",
+        // Playfair defaults to old-style figures (1/2/3 at different heights): use lining figures and
+        // trim the line box to cap height so each digit sits centred in the circle (Figma: lnum, text-box-trim).
+        "relative flex size-8 shrink-0 items-center justify-center font-heading text-2xl leading-8 font-medium tracking-[-0.6px] lining-nums proportional-nums [text-box:trim-both_cap_alphabetic]",
         shape === "circle" && "rounded-full",
         state === "current" ? "bg-primary text-primary-foreground" : "bg-secondary text-primary"
       )}
@@ -63,53 +66,49 @@ export function DyoStepper({ current }: { current: StepNumber }) {
 
   return (
     <>
-      {/* Desktop bar */}
-      <div className="hidden h-14.5 items-center gap-2 border-y border-border-subtle bg-primary-foreground px-margin lg:flex">
-        <p className="flex-1 type-h5 text-primary">Design Your Ring</p>
-        <ol className="flex items-center gap-4">
+      {/* Desktop bar (Figma 7336:177134): title column, then three equal steps split by dividers,
+          so the steps stretch with the viewport instead of sitting at fixed widths. */}
+      <div className="hidden items-center gap-2 border-y border-border-subtle bg-primary-foreground px-margin py-3 lg:flex">
+        <p className="w-card shrink-0 type-h5 text-primary">Design Your Ring</p>
+        <ol className="flex min-w-0 flex-1 items-center gap-4">
           {[
             { n: 1 as const, label: "Setting", price: setting.price, detail: setting.name },
             { n: 2 as const, label: "Stone", price: stone.price, detail: stone.title },
-          ].map((step) => (
-            <li key={step.n} className="flex items-center gap-4">
-              <div className="flex w-76 items-center gap-3">
-                <StepMarker n={step.n} state={stateOf(step.n)} shape="circle" />
-                {stateOf(step.n) === "done" ? (
-                  <div className="flex min-w-0 flex-col gap-1">
-                    <div className="flex items-center gap-3 type-label-xs text-primary">
-                      <span className="flex gap-2">
-                        <span>{step.label}:</span>
-                        <span>{formatPrice(step.price)}</span>
-                      </span>
-                      <button type="button" className="cursor-pointer underline" onClick={() => notInTest("Viewing a previous step")}>
-                        View
-                      </button>
-                      <button type="button" className="cursor-pointer underline" onClick={() => notInTest("Editing a previous step")}>
-                        Edit
-                      </button>
+            { n: 3 as const, label: "Finishing Touches", price: 0, detail: "" },
+          ].map((step) => {
+            const state = stateOf(step.n)
+            return (
+              <Fragment key={step.n}>
+                {step.n > 1 && <li aria-hidden className="w-px self-stretch bg-muted" />}
+                <li className="flex min-w-0 flex-1 items-center gap-3" aria-current={state === "current" ? "step" : undefined}>
+                  <StepMarker n={step.n} state={state} shape="circle" />
+                  {state === "done" && step.n < 3 ? (
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <div className="flex items-center gap-3 type-label-xs text-primary">
+                        <span className="flex gap-2">
+                          <span>{step.label}:</span>
+                          <span>{formatPrice(step.price)}</span>
+                        </span>
+                        <button type="button" className="cursor-pointer underline" onClick={() => notInTest("Viewing a previous step")}>
+                          View
+                        </button>
+                        <button type="button" className="cursor-pointer underline" onClick={() => notInTest("Editing a previous step")}>
+                          Edit
+                        </button>
+                      </div>
+                      <p className="truncate type-caption font-medium text-primary">{step.detail}</p>
                     </div>
-                    <p className="truncate type-caption font-medium text-primary">{step.detail}</p>
-                  </div>
-                ) : (
-                  // Current / upcoming step (Test 1 starts on step 1): title + description, no price.
-                  <div className="flex min-w-0 flex-col gap-1">
-                    <span className={cn("type-label-xs", stateOf(step.n) === "current" ? "text-primary" : "text-muted-foreground")}>
-                      {step.label}
-                    </span>
-                    <span className="truncate type-caption text-muted-foreground">{STEP_DESCRIPTION[step.n]}</span>
-                  </div>
-                )}
-              </div>
-              <span aria-hidden className="h-8 w-px bg-muted" />
-            </li>
-          ))}
-          <li className="flex w-76 items-center gap-3" aria-current="step">
-            <StepMarker n={3} state={stateOf(3)} shape="circle" />
-            <div className="flex flex-col gap-1">
-              <span className="type-label-xs text-muted-foreground">Finishing Touches</span>
-              <span className="type-caption text-muted-foreground">Size, personalize &amp; review</span>
-            </div>
-          </li>
+                  ) : (
+                    // Current / upcoming step: title + description, no price.
+                    <div className="flex min-w-0 flex-col gap-0.75">
+                      <span className="truncate type-label-xs text-primary">{step.label}</span>
+                      <span className="truncate type-caption text-muted-foreground">{STEP_DESCRIPTION[step.n]}</span>
+                    </div>
+                  )}
+                </li>
+              </Fragment>
+            )
+          })}
         </ol>
       </div>
 
