@@ -2,6 +2,14 @@ import { Link } from "react-router"
 import { useRingBuild } from "@/state/ring-build"
 
 const PROTOTYPES = [
+  {
+    test: "Test 1 · Settings PDP Gallery & Details",
+    links: [
+      { label: "Variant A: long-scroll gallery, details drawer", to: "/test-1?variant=A" },
+      { label: "Variant B: long-scroll gallery, 2-line teaser + drawer", to: "/test-1?variant=B" },
+      { label: "Variant C: thumbnail gallery, details tabs below the CTA", to: "/test-1?variant=C" },
+    ],
+  },
   { test: "Test 4 · Ring Personalization as a Separate Step", links: [{ label: "Variant A: options on Ring Review", to: "/test-4?variant=A" }] },
 ]
 
