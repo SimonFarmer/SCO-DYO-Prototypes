@@ -20,7 +20,7 @@ import {
   MATCHING_BANDS,
   RECENTLY_VIEWED,
   SIMILAR_STYLES,
-  TIMELESS_SOLITAIRE,
+  ELLA_CATHEDRAL,
   galleryFor,
   type MetalId,
 } from "@/data/products"
@@ -38,7 +38,7 @@ const COMPLETE_THE_LOOK = MATCHING_BANDS.slice(0, 3).map((p) => ({ ...p, badge: 
 export function Test1() {
   const variant = SETTING_PDP_VARIANTS[useVariant(VARIANT_IDS)]
 
-  const setting = TIMELESS_SOLITAIRE
+  const setting = ELLA_CATHEDRAL
   const [metal, setMetal] = useState<MetalId>(setting.defaultMetal)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [detailsTab, setDetailsTab] = useState<ProductInfoTab>("overview")

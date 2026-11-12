@@ -2,8 +2,8 @@ import { X } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetClose, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { SpecList, SpecRow, type ProductInfoTab } from "@/components/pdp/product-info"
-import { descriptionFor, galleryFor, type MetalId, type Setting } from "@/data/products"
+import { ProductOverview, SpecList, SpecRow, type ProductInfoTab } from "@/components/pdp/product-info"
+import { galleryFor, type MetalId, type Setting } from "@/data/products"
 
 interface ProductInfoDrawerProps {
   setting: Setting
@@ -43,7 +43,7 @@ export function ProductInfoDrawer({ setting, metal, open, onOpenChange, tab, onT
             </div>
             {/* Figma: 264px tall, image contained → h-64 (256px, closest token); shorter on mobile. */}
             <div className="h-44 w-full shrink-0 bg-secondary md:h-64">
-              <img src={hero.src} alt={hero.alt} className="size-full object-contain" />
+              <img src={hero.src} alt={hero.alt} className="size-full object-contain mix-blend-multiply" />
             </div>
           </header>
 
@@ -56,7 +56,7 @@ export function ProductInfoDrawer({ setting, metal, open, onOpenChange, tab, onT
 
           <div>
             <TabsContent value="overview" className="flex flex-col gap-10 p-5 md:p-10">
-              <p className="text-sm text-primary">{descriptionFor(setting, metal)}</p>
+              <ProductOverview setting={setting} metal={metal} />
               <dl className="border-t border-border-subtle">
                 <SpecRow label="Article No." value={variant.articleNo} last />
               </dl>

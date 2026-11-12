@@ -2,7 +2,8 @@ import { forwardRef } from "react"
 import { CaretRight } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { SectionHeading } from "@/components/shared/section-heading"
-import { UGC_PHOTOS, VALUE_PROPS, descriptionFor, type MetalId, type Setting } from "@/data/products"
+import { UGC_PHOTOS, VALUE_PROPS, galleryFor, type MetalId, type Setting } from "@/data/products"
+import { ProductOverview } from "@/components/pdp/product-info"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 
 /** "About this setting" — description + detail rows, lifestyle image on the right. */
@@ -11,12 +12,14 @@ export const ProductDetailsBlock = forwardRef<HTMLElement, { setting: Setting; m
   ref,
 ) {
   const notInTest = useNotInTest()
+  // Last styled/on-hand shot of the selected metal (the gallery ends with the shared size guide).
+  const lifestyle = galleryFor(setting, metal).filter((m) => m.kind === "image").at(-1)
   return (
     <section ref={ref} id="product-details" className="scroll-mt-4 bg-secondary px-margin py-14">
       <div className="grid gap-8 lg:grid-cols-[762fr_542fr] lg:gap-2">
         <div className="flex flex-col gap-6 lg:pt-14 lg:pr-16">
           <SectionHeading eyebrow="About this setting" title={setting.name} />
-          <p className="max-w-2xl text-base text-primary">{descriptionFor(setting, metal)}</p>
+          <ProductOverview setting={setting} metal={metal} className="max-w-2xl text-base" />
           <ul className="max-w-2xl">
             {setting.detailSections.map((label, i, all) => (
               <li key={label} className={i < all.length - 1 ? "border-b border-border-subtle" : undefined}>
@@ -30,8 +33,8 @@ export const ProductDetailsBlock = forwardRef<HTMLElement, { setting: Setting; m
           </ul>
         </div>
         <img
-          src="/images/product-details/lifestyle-hand.png"
-          alt="Solitaire ring worn on hand"
+          src={lifestyle?.src}
+          alt={lifestyle?.alt ?? ""}
           className="aspect-square w-full object-cover"
           loading="lazy"
         />

@@ -93,7 +93,7 @@ export function ImageGalleryOverlay({ media, open, onOpenChange, startIndex }: I
                     i === index ? "border-primary" : "border-transparent hover:border-border-subtle",
                   )}
                 >
-                  <img src={m.src} alt="" className="size-full object-cover" />
+                  <img src={m.src} alt="" className="size-full object-cover mix-blend-multiply" />
                   {m.kind === "video" && (
                     <span className="absolute inset-0 flex items-center justify-center">
                       <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
@@ -125,7 +125,7 @@ export function ImageGalleryOverlay({ media, open, onOpenChange, startIndex }: I
               src={item.src}
               alt={item.alt}
               draggable={false}
-              className="h-full max-h-full w-full object-contain transition-transform duration-200 ease-out select-none"
+              className="h-full max-h-full w-full object-contain mix-blend-multiply transition-transform duration-200 ease-out select-none"
               style={{ transform: zoomed ? `scale(${ZOOM})` : undefined, transformOrigin: `${origin.x}% ${origin.y}%` }}
             />
             {item.kind === "video" && (

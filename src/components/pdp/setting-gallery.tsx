@@ -32,7 +32,7 @@ function useOverlay() {
 function MediaTile({ item, onOpen }: { item: GalleryMedia; onOpen: () => void }) {
   return (
     <button type="button" onClick={onOpen} aria-label={`Enlarge: ${item.alt}`} className={cn(zoomTrigger, "aspect-[401/405]")}>
-      <img src={item.src} alt={item.alt} className="absolute inset-0 size-full object-cover" loading="lazy" />
+      <img src={item.src} alt={item.alt} className="absolute inset-0 size-full object-cover mix-blend-multiply" loading="lazy" />
       {item.kind === "video" && (
         <span className="absolute inset-0 flex items-center justify-center">
           <span className="flex size-14 items-center justify-center rounded-full bg-white">
@@ -69,7 +69,7 @@ export function ThumbnailGallery({ media, className }: { media: GalleryMedia[]; 
         className={cn(zoomTrigger, "aspect-square min-h-0 md:aspect-[810/656]")}
       >
         <span className="absolute inset-0 flex justify-center px-10 pb-4 md:px-20">
-          <img key={active.src} src={active.src} alt={active.alt} className="size-full object-contain" />
+          <img key={active.src} src={active.src} alt={active.alt} className="size-full object-contain mix-blend-multiply" />
         </span>
         {active.kind === "video" && (
           <span className="absolute inset-0 flex items-center justify-center">
@@ -93,7 +93,7 @@ export function ThumbnailGallery({ media, className }: { media: GalleryMedia[]; 
                   i === current ? "border-primary" : "border-transparent hover:border-border-subtle",
                 )}
               >
-                <img src={item.src} alt="" className="size-full object-cover" loading="lazy" />
+                <img src={item.src} alt="" className="size-full object-cover mix-blend-multiply" loading="lazy" />
                 {item.kind === "video" && (
                   <span className="absolute inset-0 flex items-center justify-center">
                     <span className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
@@ -121,7 +121,7 @@ export function SettingGallery({ media, previewLabel, className }: SettingGaller
   return (
     <div className={cn("flex flex-col gap-2 px-2 pb-8", className)}>
       <button type="button" onClick={() => overlay.openAt(0)} aria-label={`Enlarge: ${hero.alt}`} className={cn(zoomTrigger, "aspect-square")}>
-        <img src={hero.src} alt={hero.alt} className="absolute inset-0 size-full object-cover" />
+        <img src={hero.src} alt={hero.alt} className="absolute inset-0 size-full object-cover mix-blend-multiply" />
         <Badge className="absolute bottom-2 left-4">{previewLabel}</Badge>
       </button>
       <div className="grid grid-cols-2 gap-2">

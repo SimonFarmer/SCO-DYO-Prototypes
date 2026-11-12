@@ -53,51 +53,85 @@ export interface Setting {
   gallery: Partial<Record<MetalId, GalleryMedia[]>>
   /** `{metal}` is replaced with the selected metal (see descriptionFor). */
   description: string
+  /** Key facts listed under the description; `{metal}` is replaced with the metal name (see highlightsFor). */
+  highlights: string[]
   detailSections: string[]
   /** Specifications tab of the product info drawer. "Metal Type" is derived from the selected metal. */
   specs: { label: string; value: string }[]
 }
 
-export const TIMELESS_SOLITAIRE: Setting = {
-  id: "timeless-solitaire",
-  name: "Timeless Solitaire Engagement Ring",
-  breadcrumb: ["Home", "Engagement Rings"],
+const G = "/images/gallery/ella"
+
+/**
+ * Ella Cathedral Engagement Ring — content, prices and article numbers from shaneco.com
+ * (e.g. /p/41072560, Nov 2026). Chosen for Test 1 because its description carries stone-fit
+ * info ("Best fits up to a 1.50 ct. diamond") and its metals have different image sets.
+ */
+export const ELLA_CATHEDRAL: Setting = {
+  id: "ella-cathedral",
+  name: "Ella Cathedral Engagement Ring",
+  breadcrumb: ["Home", "Engagement Rings", "Classic Engagement Rings"],
   variants: [
-    { metal: "14k-white-gold", articleNo: "41004887", price: 690 },
-    { metal: "14k-yellow-gold", articleNo: "41004888", price: 690 },
+    { metal: "14k-white-gold", articleNo: "41072560", price: 2225 },
+    { metal: "14k-yellow-gold", articleNo: "41076522", price: 2225 },
+    { metal: "14k-rose-gold", articleNo: "41072561", price: 2225 },
+    { metal: "platinum", articleNo: "41072448", price: 2425 },
   ],
-  defaultMetal: "14k-yellow-gold",
+  defaultMetal: "14k-white-gold",
   previewStone: { shape: "Round", carat: 1 },
+  // Exact-metal images only, so the image count differs by metal. Styled shots that shaneco.com
+  // shows on another metal's page are filed under the metal they actually show.
   gallery: {
-    "14k-yellow-gold": [
-      { kind: "image", src: "/images/gallery/yellow-gold/main.png", alt: "Timeless Solitaire in 14k yellow gold with a round diamond" },
-      { kind: "video", src: "/images/gallery/yellow-gold/video.png", alt: "360° view of the setting in 14k yellow gold", badge: "360 view" },
-      { kind: "image", src: "/images/gallery/yellow-gold/on-hand-1.png", alt: "Ring on hand", badge: "Shown with 2ct diamond" },
-      { kind: "image", src: "/images/gallery/yellow-gold/on-hand-2.png", alt: "Ring on hand with upgraded crown", badge: "Shown with 2ct diamond + Upgraded Crown" },
-      { kind: "image", src: "/images/gallery/yellow-gold/on-hand-3.png", alt: "Ring stacked with a pavé band", badge: "Styled with Vista Diamond Pave Band" },
-      { kind: "image", src: "/images/gallery/yellow-gold/on-hand-4.png", alt: "Ring stacked with a baguette band", badge: "Styled with Baguette & Round Diamond Band" },
+    "14k-white-gold": [
+      { kind: "image", src: `${G}/white-gold/main.jpg`, alt: "Ella Cathedral in 14k white gold with a 1 ct round diamond" },
+      { kind: "image", src: `${G}/white-gold/side.jpg`, alt: "Side profile showing the diamond pavé cathedral" },
+      { kind: "image", src: `${G}/white-gold/front.jpg`, alt: "Front view through the band, showing the pavé gallery under the head" },
+      { kind: "image", src: `${G}/white-gold/styled.jpg`, alt: "Ring resting on rosemary with a round diamond", badge: "Shown with round diamond" },
       SIZE_GUIDE,
     ],
-    // Figma 7386:62056 (+ the shared size guide, which is not metal-specific).
-    "14k-white-gold": [
-      { kind: "image", src: "/images/gallery/white-gold/main.png", alt: "Timeless Solitaire in 14k white gold with a round diamond" },
-      { kind: "video", src: "/images/gallery/white-gold/video.png", alt: "360° view of the setting in 14k white gold", badge: "360 view" },
-      { kind: "image", src: "/images/gallery/white-gold/on-hand-1.png", alt: "Ring on hand", badge: "Shown with 2ct diamond" },
-      { kind: "image", src: "/images/gallery/white-gold/on-hand-2.jpg", alt: "Ring on hand with upgraded crown", badge: "Shown with 2ct diamond + Upgraded Crown" },
-      { kind: "image", src: "/images/gallery/white-gold/on-hand-3.png", alt: "Ring stacked with a pavé band", badge: "Styled with Vista Diamond Pave Band" },
-      { kind: "image", src: "/images/gallery/white-gold/on-hand-4.jpg", alt: "Ring stacked with a baguette band", badge: "Styled with Baguette & Round Diamond Band" },
+    "14k-yellow-gold": [
+      { kind: "image", src: `${G}/yellow-gold/main.jpg`, alt: "Ella Cathedral in 14k yellow gold with a 1 ct round diamond" },
+      { kind: "image", src: `${G}/yellow-gold/side.jpg`, alt: "Side profile showing the diamond pavé cathedral" },
+      { kind: "image", src: `${G}/yellow-gold/front.jpg`, alt: "Front view through the band, showing the pavé gallery under the head" },
+      { kind: "image", src: `${G}/yellow-gold/styled-princess.jpg`, alt: "Ring with a princess-cut diamond on a gift box", badge: "Shown with princess-cut diamond" },
+      { kind: "image", src: `${G}/yellow-gold/on-hand-princess.jpg`, alt: "Ring on hand with a princess-cut diamond", badge: "Shown with princess-cut diamond" },
+      SIZE_GUIDE,
+    ],
+    "14k-rose-gold": [
+      { kind: "image", src: `${G}/rose-gold/main.jpg`, alt: "Ella Cathedral in 14k rose gold with a 1 ct round diamond" },
+      { kind: "image", src: `${G}/rose-gold/side.jpg`, alt: "Side profile showing the diamond pavé cathedral" },
+      { kind: "image", src: `${G}/rose-gold/front.jpg`, alt: "Front view through the band, showing the pavé gallery under the head" },
+      { kind: "image", src: `${G}/rose-gold/on-hand.jpg`, alt: "Ring on hand with a round diamond, mountains behind", badge: "Shown with round diamond" },
+      SIZE_GUIDE,
+    ],
+    platinum: [
+      { kind: "image", src: `${G}/platinum/main.jpg`, alt: "Ella Cathedral in platinum with a 1 ct round diamond" },
+      { kind: "image", src: `${G}/platinum/side.jpg`, alt: "Side profile showing the diamond pavé cathedral" },
+      { kind: "image", src: `${G}/platinum/front.jpg`, alt: "Front view through the band, showing the pavé gallery under the head" },
+      { kind: "image", src: `${G}/platinum/styled-pear.jpg`, alt: "Ring with a pear-shaped pink sapphire", badge: "Shown with pear-shaped pink sapphire" },
       SIZE_GUIDE,
     ],
   },
   description:
-    "Add the center stone of your dreams to this {metal} solitaire engagement ring for a timeless, elegant look. For more information on selecting your center stone, live chat online, call a customer service representative at 1-866-467-4263, or visit one of our store locations.",
+    "This {metal} engagement ring offers sparkle from all angles. It features a natural diamond pavé band and a shimmering cathedral encrusted with more natural diamond accents. Add the center stone of your choice to complete this dreamy ring. For more information on selecting your center stone, including accommodating a center stone larger than 1.50 ct. or adding a decorative crown, live chat online, call a customer service representative at 1-866-467-4263, or visit one of our store locations.",
+  highlights: [
+    "Best fits up to a 1.50 ct. diamond",
+    "48 round natural diamond accents at approx. 0.30 tcw",
+    "Center stone sold separately",
+    "{metal}",
+    "Approx. 1.5mm band width",
+    "Engravable and resizable",
+  ],
   detailSections: ["Setting Details", "Center Stone Compatibility", "Ring Size Guide"],
   specs: [
-    { label: "Band Width", value: "Approx. 1.8 mm" },
+    { label: "Band Width", value: "Approx. 1.5mm" },
     { label: "Engravable", value: "Yes" },
-    { label: "Resizable", value: "Yes" },
-    { label: "Metal Finish", value: "High Polish" },
-    { label: "Fits Center Stones", value: "0.50 – 3.00 ct" },
+    { label: "Stackable", value: "Yes" },
+    { label: "Metal Finish", value: "Polished" },
+    { label: "Gemstone Type", value: "Natural Diamond" },
+    { label: "Gemstone Carat Weight", value: "Approx. 0.30 tcw (center stone sold separately)" },
+    { label: "Number of Gemstones", value: "48" },
+    { label: "Accent Stone Shape", value: "Round" },
   ],
 }
 
@@ -194,6 +228,11 @@ const METAL_PHRASE: Record<MetalId, string> = {
   "14k-rose-gold": "14-karat rose gold",
   platinum: "platinum",
   "sterling-silver": "sterling silver",
+}
+
+export function highlightsFor(setting: Setting, metal: MetalId) {
+  const name = METALS[metal].label
+  return setting.highlights.map((h) => h.replace("{metal}", metal === "platinum" ? name : name.toLowerCase()))
 }
 
 export function descriptionFor(setting: Setting, metal: MetalId) {

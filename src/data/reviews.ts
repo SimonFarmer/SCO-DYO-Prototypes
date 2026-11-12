@@ -1,5 +1,5 @@
 /**
- * Mock reviews & Q&A for the Timeless Solitaire setting.
+ * Mock reviews & Q&A for the Ella Cathedral setting.
  * Every count, average and percentage on the page is derived from these arrays.
  */
 
@@ -26,8 +26,8 @@ export const SETTING_REVIEWS: Review[] = [
   {
     id: "r1",
     rating: 5,
-    title: "Exactly the classic look we wanted",
-    body: "We went back and forth between a few settings and this one let the diamond be the star. The band is slim but feels solid, and the yellow gold is warm without looking brassy. My fiancée hasn't stopped looking at it.",
+    title: "Sparkles from every angle",
+    body: "We went back and forth between a few settings and the pavé band and cathedral sold us. Even from the side you see diamonds. The white gold is bright and the band is slim but feels solid. My fiancée hasn't stopped looking at it.",
     author: "Daniel R",
     verified: true,
     age: "25-34",
@@ -40,8 +40,8 @@ export const SETTING_REVIEWS: Review[] = [
   {
     id: "r2",
     rating: 5,
-    title: "Sits low and doesn't snag",
-    body: "I work with my hands and was worried about prongs catching on everything. This setting sits low enough that it hasn't been a problem at all. Comfortable to wear every day.",
+    title: "The cathedral detail is stunning",
+    body: "The little diamonds on the cathedral are my favorite part. Nobody notices them until the light hits the ring, then everyone asks. Comfortable to wear every day.",
     author: "Priya S",
     verified: true,
     age: "25-34",
@@ -67,7 +67,7 @@ export const SETTING_REVIEWS: Review[] = [
     id: "r4",
     rating: 5,
     title: "Great with a 1.5 ct oval",
-    body: "Paired it with a 1.5 ct lab-grown oval and it looks stunning. The four prongs hold the stone securely and you can see a lot of the diamond from the side.",
+    body: "Paired it with a 1.5 ct lab-grown oval, the largest it fits without a custom head, and it looks stunning. The four prongs hold the stone securely and it doesn't look crowded.",
     author: "Jordan K",
     verified: true,
     age: "25-34",
@@ -80,8 +80,8 @@ export const SETTING_REVIEWS: Review[] = [
   {
     id: "r5",
     rating: 5,
-    title: "Timeless for a reason",
-    body: "Simple, elegant, and it goes with everything. I stacked it with a pavé band for the wedding and they fit together perfectly.",
+    title: "Pairs perfectly with the matching band",
+    body: "Elegant and it goes with everything. I stacked it with the Ella pavé band for the wedding and they sit flush together.",
     author: "Alicia M",
     verified: true,
     age: "25-34",
@@ -221,7 +221,7 @@ export const SETTING_QUESTIONS: Question[] = [
     comments: [
       { text: "Simple and classic.", author: "Timothy A. C", date: "2026-04-08" },
       { text: "Wanted the diamond to be the focus. This setting does exactly that.", author: "Rachael W", date: "2026-03-13" },
-      { text: "Low profile, so it doesn't catch on gloves at work.", author: "Alan M", date: "2025-12-30" },
+      { text: "Loved the diamonds on the cathedral.", author: "Alan M", date: "2025-12-30" },
       { text: "Purchased from Shane years ago and loved the service.", author: "Charles B", date: "2025-12-18" },
       { text: "It pairs well with almost any wedding band.", author: "Jenna L", date: "2025-11-29" },
       { text: "Looked best with an oval stone when we tried them in store.", author: "Victor O", date: "2025-11-02" },
@@ -234,7 +234,7 @@ export const SETTING_QUESTIONS: Question[] = [
     date: "2026-08-14",
     votes: 6,
     bestAnswer: {
-      text: "This setting fits center stones from 0.50 to 3.00 ct in round, oval, cushion, princess and emerald shapes. Our team adjusts the head to the exact stone you choose.",
+      text: "This setting best fits center stones up to 1.50 ct. It works with round, oval, cushion, princess and other shapes. For a larger stone, our team can make a custom head; chat with us or visit a store.",
       author: "Dallas C.",
       role: "staff",
       date: "2026-08-15",

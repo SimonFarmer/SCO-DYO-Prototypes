@@ -1,6 +1,6 @@
 import { forwardRef } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { METALS, descriptionFor, type MetalId, type Setting } from "@/data/products"
+import { METALS, descriptionFor, highlightsFor, type MetalId, type Setting } from "@/data/products"
 import { cn } from "@/lib/utils"
 
 export type ProductInfoTab = "overview" | "specifications"
@@ -30,6 +30,23 @@ export function SpecList({ setting, metal }: { setting: Setting; metal: MetalId 
   )
 }
 
+/**
+ * Overview copy: description, then the key facts as a list (as on shaneco.com).
+ * The stone-fit line ("Best fits up to…") lives here, so every details variant shows the same text.
+ */
+export function ProductOverview({ setting, metal, className }: { setting: Setting; metal: MetalId; className?: string }) {
+  return (
+    <div className={cn("flex flex-col gap-4 text-sm text-primary", className)}>
+      <p>{descriptionFor(setting, metal)}</p>
+      <ul className="flex list-disc flex-col gap-1 pl-5">
+        {highlightsFor(setting, metal).map((h) => (
+          <li key={h}>{h}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 interface InlineProductDetailsProps {
   setting: Setting
   metal: MetalId
@@ -53,7 +70,7 @@ export const InlineProductDetails = forwardRef<HTMLDivElement, InlineProductDeta
           <TabsTrigger value="specifications">Specifications</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
-          <p className="text-sm text-primary">{descriptionFor(setting, metal)}</p>
+          <ProductOverview setting={setting} metal={metal} />
         </TabsContent>
         <TabsContent value="specifications">
           <SpecList setting={setting} metal={metal} />
