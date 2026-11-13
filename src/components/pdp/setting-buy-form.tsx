@@ -156,7 +156,8 @@ const ASSURANCES = [
   { icon: ArrowsOutLineVertical, lines: ["Free ring", "resizing"] },
 ]
 
-function DyoAssurances() {
+/** "We’ve got you covered" tiles — shared by the setting and diamond buy forms. */
+export function DyoAssurances() {
   return (
     <div className="flex flex-col gap-2">
       <p className="type-label-xs font-semibold text-primary">We’ve got you covered</p>
@@ -176,7 +177,8 @@ function DyoAssurances() {
   )
 }
 
-function DeliveryOptions() {
+/** Shipping / faster delivery / store pickup rows — shared by the setting and diamond buy forms. */
+export function DeliveryOptions() {
   const [open, setOpen] = useState(false)
   const notInTest = useNotInTest()
   return (

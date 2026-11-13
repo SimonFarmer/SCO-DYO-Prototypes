@@ -7,6 +7,7 @@ import {
   STONE,
   type Crown,
   type EngravingStyle,
+  type Stone,
 } from "@/data/dyo"
 
 export interface Engraving {
@@ -18,6 +19,8 @@ interface BuildState {
   ringSize: string | null
   engraving: Engraving | null
   crownId: string | null
+  /** Stone chosen in the Stone step (Test 3). Falls back to the pre-chosen STONE. */
+  stone: Stone | null
 }
 
 export interface LineItem {
@@ -27,7 +30,7 @@ export interface LineItem {
 
 interface RingBuild extends BuildState {
   setting: typeof SETTING
-  stone: typeof STONE
+  stone: Stone
   crown: Crown | null
   engravingStyle: EngravingStyle | null
   lineItems: LineItem[]
@@ -35,11 +38,12 @@ interface RingBuild extends BuildState {
   setRingSize: (size: string) => void
   setEngraving: (engraving: Engraving | null) => void
   setCrownId: (id: string | null) => void
+  setStone: (stone: Stone) => void
   reset: () => void
 }
 
 const STORAGE_KEY = "dyo-ring-build"
-const INITIAL: BuildState = { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null }
+const INITIAL: BuildState = { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null, stone: null }
 
 function load(): BuildState {
   try {
@@ -52,7 +56,7 @@ function load(): BuildState {
 
 const RingBuildContext = createContext<RingBuild | null>(null)
 
-/** The ring being built: setting + stone (pre-chosen) plus finishing touches. */
+/** The ring being built: setting + stone (pre-chosen unless picked in the Stone step) plus finishing touches. */
 export function RingBuildProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<BuildState>(load)
 
@@ -65,20 +69,21 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
   }, [state])
 
   const value = useMemo<RingBuild>(() => {
+    const stone = state.stone ?? STONE
     const crown = CROWNS.find((c) => c.id === state.crownId) ?? null
     const engravingStyle = state.engraving
       ? (ENGRAVING.styles.find((s) => s.id === state.engraving!.styleId) ?? null)
       : null
     const lineItems: LineItem[] = [
       { kind: "setting", price: SETTING.price },
-      { kind: "stone", price: STONE.price },
+      { kind: "stone", price: stone.price },
       ...(crown ? [{ kind: "crown" as const, price: crown.price }] : []),
       ...(state.engraving ? [{ kind: "engraving" as const, price: ENGRAVING.price }] : []),
     ]
     return {
       ...state,
       setting: SETTING,
-      stone: STONE,
+      stone,
       crown,
       engravingStyle,
       lineItems,
@@ -86,6 +91,7 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
       setRingSize: (ringSize) => setState((s) => ({ ...s, ringSize })),
       setEngraving: (engraving) => setState((s) => ({ ...s, engraving })),
       setCrownId: (crownId) => setState((s) => ({ ...s, crownId })),
+      setStone: (stone) => setState((s) => ({ ...s, stone })),
       reset: () => setState(INITIAL),
     }
   }, [state])

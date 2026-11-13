@@ -10,6 +10,20 @@ const PROTOTYPES = [
       { label: "Variant C: thumbnail gallery, details tabs below the CTA", to: "/test-1/c" },
     ],
   },
+  {
+    test: "Test 3.1 · Stone Details: Quickview vs PDP",
+    links: [
+      { label: "Variant A: GLP tile opens the full Diamond PDP", to: "/test-3-quickview/a" },
+      { label: "Variant B: GLP tile opens the Quickview (Full Details → PDP)", to: "/test-3-quickview/b" },
+    ],
+  },
+  {
+    test: "Test 3.2 · Stone Details: spec layout on the Diamond PDP",
+    links: [
+      { label: "Variant A: horizontal spec tiles", to: "/test-3-specs/a" },
+      { label: "Variant B: vertical spec table", to: "/test-3-specs/b" },
+    ],
+  },
   { test: "Test 4 · Ring Personalization as a Separate Step", links: [{ label: "Variant A: options on Ring Review", to: "/test-4/a" }] },
 ]
 
