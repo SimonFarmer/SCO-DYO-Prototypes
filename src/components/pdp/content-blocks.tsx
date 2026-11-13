@@ -83,23 +83,30 @@ export function ValuePropsBlock() {
   )
 }
 
-/** Next-step teaser: image + "Our Diamonds & Gemstones" + CTA. */
-export function FeatureBlock() {
+interface FeatureBlockProps {
+  eyebrow?: string
+  title?: string
+  image?: string
+  imageAlt?: string
+}
+
+/** Image + copy feature with a “Read The Guide” CTA. Defaults are the Settings PDP copy. */
+export function FeatureBlock({
+  eyebrow = "Next: Step 2",
+  title = "Our Diamonds & Gemstones",
+  image = "/images/feature-block/diamonds-loupe.jpg",
+  imageAlt = "Diamonds under a jeweler's loupe",
+}: FeatureBlockProps = {}) {
   const notInTest = useNotInTest()
   return (
     <section className="bg-primary-foreground px-margin py-14">
       <div className="grid gap-8 lg:grid-cols-[542fr_762fr] lg:gap-2">
-        <img
-          src="/images/feature-block/diamonds-loupe.jpg"
-          alt="Diamonds under a jeweler's loupe"
-          className="aspect-square w-full object-cover"
-          loading="lazy"
-        />
+        <img src={image} alt={imageAlt} className="aspect-square w-full object-cover" loading="lazy" />
         <div className="flex flex-col justify-center gap-8 lg:pl-16">
           <div className="flex max-w-2xl flex-col gap-6 text-primary">
             <div className="flex flex-col gap-2">
-              <p className="type-label-xs font-semibold">Next: Step 2</p>
-              <h2 className="type-h3 font-medium">Our Diamonds &amp; Gemstones</h2>
+              <p className="type-label-xs font-semibold">{eyebrow}</p>
+              <h2 className="type-h3 font-medium">{title}</h2>
             </div>
             <p className="text-base">
               From lab grown to natural, the 4Cs to certification — everything you need to shop with confidence.
