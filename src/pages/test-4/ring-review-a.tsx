@@ -122,7 +122,7 @@ export function RingReviewA() {
 
             <Divider />
 
-            <BuyActions onAddToBag={() => navigate("/test-4/added?variant=A")} />
+            <BuyActions onAddToBag={() => navigate("/test-4/a/added")} />
             <Assurances />
             <DeliveryOptions />
           </div>

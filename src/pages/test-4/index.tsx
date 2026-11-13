@@ -3,7 +3,7 @@ import { RingReviewA } from "./ring-review-a"
 
 const VARIANTS = ["A", "B"] as const
 
-/** Test 4 · Ring Personalization as a Separate Step. Switch with ?variant=A|B. */
+/** Test 4 · Ring Personalization as a Separate Step. Participant URLs: /test-4/a, /test-4/b. */
 export function Test4() {
   const variant = useVariant(VARIANTS)
   if (variant === "B") {
