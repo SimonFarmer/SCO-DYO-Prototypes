@@ -55,7 +55,7 @@ function StepMarker({
  * Desktop (lg+): horizontal bar (Test 4 frames). Mobile: accordion (Steps Interface frame).
  * View/Edit links are inert in the unmoderated tests.
  */
-export function DyoStepper({ current }: { current: StepNumber }) {
+export function DyoStepper({ current, mobileLabel }: { current: StepNumber; /** Short label for the 375px accordion header. */ mobileLabel?: string }) {
   const { setting, stone, total } = useRingBuild()
   const notInTest = useNotInTest()
   const [open, setOpen] = useState(false)
@@ -132,7 +132,7 @@ export function DyoStepper({ current }: { current: StepNumber }) {
         >
           <span className="type-label-xs text-primary">Design Your Own</span>
           <span className="flex min-w-0 items-center gap-2 type-label-xs text-primary">
-            <span className="truncate">Step {current}. {stepTitle[current]}</span>
+            <span className="truncate">Step {current}. {mobileLabel ?? stepTitle[current]}</span>
             <CaretDownIcon className={cn("size-4 shrink-0 transition-transform", open && "rotate-180")} />
           </span>
         </button>
