@@ -69,7 +69,11 @@ function FilterSection({
   )
 }
 
-/** Two read-out fields over a range slider (price and carat). */
+/**
+ * Two read-out fields over a range slider (price and carat). While dragging, only the fields
+ * update; the filter (grid, count and applied chips) changes once the thumb is released, so
+ * the chip row doesn't reflow on every step.
+ */
 function RangeFields({
   value,
   bounds,
@@ -87,15 +91,20 @@ function RangeFields({
   onChange: (v: [number, number]) => void
   label: string
 }) {
+  // Only set while a thumb is being dragged; otherwise the committed filter value shows,
+  // so outside changes (chip removed, Clear Filter(s)) come straight through.
+  const [dragging, setDragging] = useState<[number, number] | null>(null)
+  const draft = dragging ?? value
+
   const field = (i: 0 | 1) => (
     <input
-      key={`${i}-${value[i]}`}
+      key={`${i}-${draft[i]}`}
       aria-label={`${label} ${i === 0 ? "minimum" : "maximum"}`}
-      defaultValue={format(value[i])}
+      defaultValue={format(draft[i])}
       onBlur={(e) => {
         const n = parse(e.target.value)
-        if (Number.isNaN(n)) return void (e.target.value = format(value[i]))
-        const next: [number, number] = [...value]
+        if (Number.isNaN(n)) return void (e.target.value = format(draft[i]))
+        const next: [number, number] = [...draft]
         next[i] = Math.min(bounds[1], Math.max(bounds[0], n))
         if (next[0] > next[1]) next.reverse()
         onChange(next)
@@ -115,14 +124,22 @@ function RangeFields({
         min={bounds[0]}
         max={bounds[1]}
         step={step}
-        value={value}
-        onValueChange={(v) => onChange(v as [number, number])}
+        value={draft}
+        onValueChange={(v) => setDragging(v as [number, number])}
+        onValueCommitted={(v) => {
+          setDragging(null)
+          onChange(v as [number, number])
+        }}
       />
     </div>
   )
 }
 
-/** Grade slider with tick labels (color M→D, clarity I3→IF). */
+/**
+ * Stepped grade slider (Figma “Range Slider” + “Indicator”): each grade is a segment, ticks
+ * mark the steps between grades and the thumbs snap to those steps. Segments are weighted by
+ * label length, like the Figma frames (min-w 24 / 28 / 36px), so “VVS2” never overlaps.
+ */
 function GradeSlider({
   grades,
   value,
@@ -130,26 +147,54 @@ function GradeSlider({
   label,
 }: {
   grades: readonly string[]
+  /** Inclusive grade index range */
   value: [number, number]
   onChange: (v: [number, number]) => void
   label: string
 }) {
+  const weights = grades.map((g) => (g.length >= 4 ? 36 : g.length === 3 ? 28 : 24))
+  // Step boundaries: 0, w0, w0+w1, … total
+  const bounds = weights.reduce<number[]>((acc, w) => [...acc, acc[acc.length - 1] + w], [0])
+  const total = bounds[bounds.length - 1]
+  const nearest = (v: number) =>
+    bounds.reduce((best, b, i) => (Math.abs(b - v) < Math.abs(bounds[best] - v) ? i : best), 0)
+
   return (
     <div className="flex flex-col gap-2">
       <Slider
         aria-label={label}
         min={0}
-        max={grades.length - 1}
+        max={total}
         step={1}
-        value={value}
-        onValueChange={(v) => onChange(v as [number, number])}
+        marks={bounds.slice(1, -1)}
+        value={[bounds[value[0]], bounds[value[1] + 1]]}
+        onValueChange={(v, details) => {
+          const [a, b] = v as number[]
+          let lo = nearest(a)
+          let hi = nearest(b)
+          // Arrow keys move one grade at a time (a 1-unit nudge would otherwise snap straight back).
+          if (details.reason === "keyboard") {
+            const thumb = details.activeThumbIndex
+            const current = thumb === 0 ? value[0] : value[1] + 1
+            const dir = Math.sign((thumb === 0 ? a : b) - bounds[current])
+            const next = Math.min(grades.length, Math.max(0, current + dir))
+            if (thumb === 0) lo = next
+            else hi = next
+          }
+          // Keep at least one grade selected.
+          if (hi <= lo) {
+            if (hi < grades.length) hi = lo + 1
+            else lo = hi - 1
+          }
+          if (lo !== value[0] || hi - 1 !== value[1]) onChange([lo, hi - 1])
+        }}
       />
-      <ol className="flex justify-between">
+      <ol className="grid" style={{ gridTemplateColumns: weights.map((w) => `${w}fr`).join(" ") }}>
         {grades.map((g, i) => (
           <li
             key={g}
             className={cn(
-              "w-0 flex-1 text-center text-xxs leading-3 font-medium tracking-[1px] uppercase first:text-left last:text-right",
+              "text-center text-xxs leading-3 font-medium tracking-[1px] whitespace-nowrap uppercase",
               i >= value[0] && i <= value[1] ? "text-primary" : "text-muted-foreground",
             )}
           >
