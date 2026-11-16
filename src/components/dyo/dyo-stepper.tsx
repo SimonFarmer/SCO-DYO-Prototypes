@@ -55,7 +55,20 @@ function StepMarker({
  * Desktop (lg+): horizontal bar (Test 4 frames). Mobile: accordion (Steps Interface frame).
  * View/Edit links are inert in the unmoderated tests.
  */
-export function DyoStepper({ current, mobileLabel }: { current: StepNumber; /** Short label for the 375px accordion header. */ mobileLabel?: string }) {
+export function DyoStepper({
+  current,
+  mobileLabel,
+  showTotal = true,
+  mobileTone = "secondary",
+}: {
+  current: StepNumber
+  /** Short label for the 375px accordion header. */
+  mobileLabel?: string
+  /** Show the running total on step 3 (off on the PLP, before anything is chosen). */
+  showTotal?: boolean
+  /** Mobile bar fill: the PLP uses the accent strip (Figma Drop 3b PLP); the tests keep secondary. */
+  mobileTone?: "secondary" | "accent"
+}) {
   const { setting, stone, total } = useRingBuild()
   const notInTest = useNotInTest()
   const [open, setOpen] = useState(false)
@@ -112,14 +125,7 @@ export function DyoStepper({ current, mobileLabel }: { current: StepNumber; /** 
         </ol>
       </div>
 
-      {/* Mobile accordion: opens over the page with a dimmed backdrop */}
-      {open && (
-        <div
-          aria-hidden
-          onClick={() => setOpen(false)}
-          className="fixed inset-0 z-20 bg-black/40 animate-in fade-in lg:hidden"
-        />
-      )}
+      {/* Mobile accordion: opens over the page, dimming only what's below the bar (not the header or hero above it) */}
       <div
         className="sticky top-(--header-offset) z-30 border-b border-border-subtle bg-background transition-[top] duration-300 ease-out lg:hidden"
         onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
@@ -128,7 +134,10 @@ export function DyoStepper({ current, mobileLabel }: { current: StepNumber; /** 
           type="button"
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
-          className="flex h-12 w-full cursor-pointer items-center justify-between gap-3 bg-secondary px-margin whitespace-nowrap"
+          className={cn(
+            "flex h-12 w-full cursor-pointer items-center justify-between gap-3 px-margin whitespace-nowrap",
+            mobileTone === "accent" ? "bg-accent" : "bg-secondary",
+          )}
         >
           <span className="type-label-xs text-primary">Design Your Own</span>
           <span className="flex min-w-0 items-center gap-2 type-label-xs text-primary">
@@ -136,6 +145,13 @@ export function DyoStepper({ current, mobileLabel }: { current: StepNumber; /** 
             <CaretDownIcon className={cn("size-4 shrink-0 transition-transform", open && "rotate-180")} />
           </span>
         </button>
+        {open && (
+          <div
+            aria-hidden
+            onClick={() => setOpen(false)}
+            className="absolute inset-x-0 top-full h-svh bg-black/40 animate-in fade-in"
+          />
+        )}
         {open && (
           <ol className="absolute inset-x-0 top-full border-b border-border-subtle bg-background px-margin shadow-lg animate-in fade-in slide-in-from-top-1">
             {[
@@ -145,7 +161,7 @@ export function DyoStepper({ current, mobileLabel }: { current: StepNumber; /** 
               stateOf(2) === "done"
                 ? { n: 2 as const, label: "Stone", lines: [stone.title], price: formatPrice(stone.price) }
                 : { n: 2 as const, label: "Stone", lines: [STEP_DESCRIPTION[2]], price: "" },
-              { n: 3 as const, label: "Finishing Touches", lines: ["Size, personalize & review"], price: `Total: ${formatPrice(total)}` },
+              { n: 3 as const, label: "Finishing Touches", lines: ["Size, personalize & review"], price: showTotal ? `Total: ${formatPrice(total)}` : "" },
             ].map((step, i, all) => (
               <li
                 key={step.n}
