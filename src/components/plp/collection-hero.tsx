@@ -39,7 +39,7 @@ function ModeToggle({ mode }: { mode: Listing["mode"] }) {
       onClick={() => !active && go(to)}
       className={cn(
         "flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 border px-4 type-label-xs text-primary lg:flex-none",
-        active ? "border-primary" : "border-border-subtle bg-background/60 hover:border-border",
+        active ? "border-primary" : "border-border-subtle hover:border-border",
       )}
     >
       <Icon className="size-4 max-lg:hidden" />

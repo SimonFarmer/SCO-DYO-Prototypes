@@ -184,7 +184,7 @@ export function DesktopFilterBar({
 /** Mobile filter bar (Figma 7845:168558): Filter & Sort button, fulfilment chips, count. */
 export function MobileFilterBar({ listing, onOpenFilters, activeCount }: { listing: Listing; onOpenFilters: () => void; activeCount: number }) {
   return (
-    <div className="flex flex-col gap-3 px-margin pt-5 pb-4 lg:hidden">
+    <div className="flex flex-col gap-3 px-margin pt-8 pb-8 lg:hidden">
       <button
         type="button"
         onClick={onOpenFilters}
