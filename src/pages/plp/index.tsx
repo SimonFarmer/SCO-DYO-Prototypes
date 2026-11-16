@@ -23,7 +23,11 @@ export function EngagementRingPlp() {
   const { mode, collection } = listing
 
   useEffect(() => {
+    const previous = document.title
     document.title = `${mode === "rts" ? "Ready to Ship Engagement Rings" : collection?.title ?? "Engagement Rings"} | Shane Co.`
+    return () => {
+      document.title = previous
+    }
   }, [mode, collection])
 
   return (

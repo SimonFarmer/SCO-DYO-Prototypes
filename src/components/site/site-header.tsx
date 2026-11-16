@@ -57,6 +57,11 @@ export function SiteHeader({
   const ref = useRef<HTMLElement>(null)
   const visible = useStickyOnIntent(ref)
   const [menuOpen, setMenuOpen] = useState(false)
+  // Prototype-only: the logo returns to the index of prototypes (not the storefront homepage).
+  const toIndex = () => {
+    navigate("/")
+    window.scrollTo({ top: 0 })
+  }
   const closeTimer = useRef<number | undefined>(undefined)
 
   const openMenu = () => {
@@ -90,7 +95,7 @@ export function SiteHeader({
     >
       {/* Mobile: logo + tagline, as on the non-DYO mobile PDP */}
       <div className="flex h-22 items-center justify-center lg:hidden">
-        <button type="button" onClick={() => notInTest("The homepage")} className="cursor-pointer">
+        <button type="button" onClick={toIndex} aria-label="Shane Co. (back to the prototype list)" className="cursor-pointer">
           <Logo withTagline />
         </button>
       </div>
@@ -105,7 +110,8 @@ export function SiteHeader({
           </div>
           <button
             type="button"
-            onClick={() => notInTest("The homepage")}
+            onClick={toIndex}
+            aria-label="Shane Co. (back to the prototype list)"
             className="absolute left-1/2 -translate-x-1/2 cursor-pointer"
           >
             <Logo />
