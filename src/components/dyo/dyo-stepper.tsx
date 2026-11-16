@@ -55,7 +55,17 @@ function StepMarker({
  * Desktop (lg+): horizontal bar (Test 4 frames). Mobile: accordion (Steps Interface frame).
  * View/Edit links are inert in the unmoderated tests.
  */
-export function DyoStepper({ current, mobileLabel }: { current: StepNumber; /** Short label for the 375px accordion header. */ mobileLabel?: string }) {
+export function DyoStepper({
+  current,
+  mobileLabel,
+  showTotal = true,
+}: {
+  current: StepNumber
+  /** Short label for the 375px accordion header. */
+  mobileLabel?: string
+  /** Show the running total on step 3 (off on the PLP, before anything is chosen). */
+  showTotal?: boolean
+}) {
   const { setting, stone, total } = useRingBuild()
   const notInTest = useNotInTest()
   const [open, setOpen] = useState(false)
@@ -145,7 +155,7 @@ export function DyoStepper({ current, mobileLabel }: { current: StepNumber; /** 
               stateOf(2) === "done"
                 ? { n: 2 as const, label: "Stone", lines: [stone.title], price: formatPrice(stone.price) }
                 : { n: 2 as const, label: "Stone", lines: [STEP_DESCRIPTION[2]], price: "" },
-              { n: 3 as const, label: "Finishing Touches", lines: ["Size, personalize & review"], price: `Total: ${formatPrice(total)}` },
+              { n: 3 as const, label: "Finishing Touches", lines: ["Size, personalize & review"], price: showTotal ? `Total: ${formatPrice(total)}` : "" },
             ].map((step, i, all) => (
               <li
                 key={step.n}
