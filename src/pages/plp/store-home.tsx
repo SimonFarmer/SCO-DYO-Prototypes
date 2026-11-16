@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router"
+import { Link, useNavigate } from "react-router"
 import { Button } from "@/components/ui/button"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
@@ -28,7 +28,10 @@ export function StoreHome() {
 
           {/* Mobile: the logo sits on the hero */}
           <div className="absolute inset-x-0 top-6 flex flex-col items-center gap-2 lg:hidden">
-            <img src="/images/logo.svg" alt="Shane Co." className="h-10 w-auto brightness-0 invert" />
+            {/* Prototype-only: the logo returns to the list of prototypes. */}
+            <Link to="/" aria-label="Shane Co. (back to the prototype list)">
+              <img src="/images/logo.svg" alt="" className="h-10 w-auto brightness-0 invert" />
+            </Link>
             <img src="/images/tagline.svg" alt="Your friend & jeweler" className="h-2 w-auto brightness-0 invert" />
           </div>
 

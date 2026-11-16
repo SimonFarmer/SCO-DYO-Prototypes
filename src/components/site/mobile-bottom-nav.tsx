@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { Link } from "react-router"
 import {
   CaretLeftIcon,
   CaretRightIcon,
@@ -41,7 +42,9 @@ function ScreenHeader({ title, onBack, onClose }: { title?: string; onBack?: () 
       {title ? (
         <h2 className="text-center type-h4 font-medium text-primary">{title}</h2>
       ) : (
-        <img src="/images/logo.svg" alt="Shane Co." className="mx-auto h-10 w-auto" />
+        <Link to="/" aria-label="Shane Co. (back to the prototype list)" className="mx-auto">
+          <img src="/images/logo.svg" alt="" className="h-10 w-auto" />
+        </Link>
       )}
       <button type="button" onClick={onClose} aria-label="Close menu" className="flex size-10 cursor-pointer items-center justify-center text-primary">
         <XIcon className="size-6" weight="light" />
