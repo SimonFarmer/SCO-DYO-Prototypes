@@ -64,19 +64,12 @@ export const PLP_METALS: PlpMetal[] = [
 
 export const metalById = (id: string) => PLP_METALS.find((m) => m.id === id)!
 
+/** Shop by Budget entry points (mega menu); each lands on the PLP with that price range set. */
 export const PRICE_BANDS: (Facet & { min: number; max: number })[] = [
   { id: "under-1000", label: "Under $1,000", min: 0, max: 999 },
   { id: "1000-2000", label: "$1,000 – $2,000", min: 1000, max: 2000 },
-  { id: "2000-3000", label: "$2,000 – $3,000", min: 2001, max: 3000 },
-  { id: "3000-plus", label: "$3,000 & Above", min: 3001, max: Infinity },
-]
-
-/** Ready to Ship prices include the center stone, so they need wider bands. */
-export const RTS_PRICE_BANDS: (Facet & { min: number; max: number })[] = [
-  { id: "under-2000", label: "Under $2,000", min: 0, max: 1999 },
-  { id: "2000-4000", label: "$2,000 – $4,000", min: 2000, max: 4000 },
-  { id: "4000-7500", label: "$4,000 – $7,500", min: 4001, max: 7500 },
-  { id: "7500-plus", label: "$7,500 & Above", min: 7501, max: Infinity },
+  { id: "2000-3000", label: "$2,000 – $3,000", min: 2000, max: 3000 },
+  { id: "3000-plus", label: "$3,000 & Above", min: 3000, max: Infinity },
 ]
 
 export const ACCENTS: Facet[] = [
@@ -107,12 +100,16 @@ export const FULFILMENT: {
   { id: "friday", label: "Arrives by Friday", shortLabel: "By Fri", icon: "calendar" },
 ]
 
+/** Sort options (SCO Drop 2 "Mobile Filters" Sort By). */
 export const SORTS: Facet[] = [
-  { id: "popular", label: "Popular" },
+  { id: "recommended", label: "Recommended" },
+  { id: "price-asc", label: "Price Low to High" },
+  { id: "price-desc", label: "Price High to Low" },
   { id: "newest", label: "Newest" },
-  { id: "price-asc", label: "Price: Low to High" },
-  { id: "price-desc", label: "Price: High to Low" },
+  { id: "best-selling", label: "Best Selling" },
 ]
+
+export const DEFAULT_SORT = "recommended"
 
 // ---------------------------------------------------------------------------------------------
 // Designs → cards
@@ -252,7 +249,7 @@ export const SETTINGS: PlpProduct[] = DESIGNS.flatMap((d, di) =>
       accent: d.accent,
       badge: d.badge,
       fulfilment: { instore, sameday, friday },
-      // Designs keep their catalogue order for "Popular"; a design's first metal ranks highest.
+      // Designs keep their catalogue order for "Recommended"; a design's first metal ranks highest.
       popularity: di * 10 + mi + hash(d.id) * 5,
       newness: d.badge === "New" ? 0 : hash(`${d.id}new`),
     }
@@ -311,15 +308,25 @@ export interface ListingFilters {
   style: string[]
   shape: string[]
   metal: string[]
-  price: string[]
   accent: string[]
+  /** Price range (SCO Drop 2 price filter: min/max inputs + range slider). null = no bound. */
+  minPrice: number | null
+  maxPrice: number | null
   fulfil: FulfilmentId | null
 }
 
-export const EMPTY_FILTERS: ListingFilters = { style: [], shape: [], metal: [], price: [], accent: [], fulfil: null }
+export const EMPTY_FILTERS: ListingFilters = { style: [], shape: [], metal: [], accent: [], minPrice: null, maxPrice: null, fulfil: null }
+
+export const hasPrice = (f: ListingFilters) => f.minPrice !== null || f.maxPrice !== null
 
 export const filterCount = (f: ListingFilters) =>
-  f.style.length + f.shape.length + f.metal.length + f.price.length + f.accent.length + (f.fulfil ? 1 : 0)
+  f.style.length + f.shape.length + f.metal.length + f.accent.length + (hasPrice(f) ? 1 : 0) + (f.fulfil ? 1 : 0)
+
+/** Slider bounds for a catalogue: its cheapest and dearest prices, rounded out to $50. */
+export function priceBounds(products: PlpProduct[]) {
+  const prices = products.map((p) => p.price)
+  return { min: Math.floor(Math.min(...prices) / 50) * 50, max: Math.ceil(Math.max(...prices) / 50) * 50 }
+}
 
 /** OR within a facet, AND across facets (standard PLP behaviour). */
 export function applyFilters(products: PlpProduct[], f: ListingFilters) {
@@ -329,11 +336,8 @@ export function applyFilters(products: PlpProduct[], f: ListingFilters) {
       (!f.shape.length || f.shape.some((s) => p.shapes.includes(s))) &&
       (!f.metal.length || f.metal.includes(p.metal.id)) &&
       (!f.accent.length || f.accent.includes(p.accent)) &&
-      (!f.price.length ||
-        f.price.some((id) => {
-          const band = [...PRICE_BANDS, ...RTS_PRICE_BANDS].find((b) => b.id === id)
-          return band ? p.price >= band.min && p.price <= band.max : false
-        })) &&
+      (f.minPrice === null || p.price >= f.minPrice) &&
+      (f.maxPrice === null || p.price <= f.maxPrice) &&
       (!f.fulfil || p.fulfilment[f.fulfil]),
   )
 }
@@ -343,6 +347,7 @@ export function sortProducts(products: PlpProduct[], sort: string) {
   if (sort === "price-asc") list.sort((a, b) => a.price - b.price)
   else if (sort === "price-desc") list.sort((a, b) => b.price - a.price)
   else if (sort === "newest") list.sort((a, b) => a.newness - b.newness)
+  else if (sort === "best-selling") list.sort((a, b) => Number(b.badge === "Top Seller") - Number(a.badge === "Top Seller") || a.popularity - b.popularity)
   else list.sort((a, b) => a.popularity - b.popularity)
   return list
 }
@@ -513,7 +518,10 @@ export const NAV_SECTIONS: NavSection[] = [
     groups: [
       {
         heading: "Setting Price",
-        links: PRICE_BANDS.map((b) => ({ label: b.label, to: `${PLP_PATH}?price=${b.id}` })),
+        links: PRICE_BANDS.map((b) => ({
+          label: b.label,
+          to: `${PLP_PATH}?price=${b.min > 0 ? b.min : ""}-${Number.isFinite(b.max) ? b.max : ""}`,
+        })),
       },
     ],
   },

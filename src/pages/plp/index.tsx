@@ -41,7 +41,15 @@ export function EngagementRingPlp() {
           <div className="flex gap-16 px-margin-listing pb-14 lg:px-margin">
             {sidebarOpen && (
               <aside aria-label="Filters" className="hidden w-66.5 shrink-0 lg:block">
-                <FilterPanel mode={mode} filters={listing.filters} onToggle={listing.toggle} onFulfil={listing.setFulfil} />
+                <FilterPanel
+                  mode={mode}
+                  filters={listing.filters}
+                  bounds={listing.bounds}
+                  onToggle={listing.toggle}
+                  onFulfil={listing.setFulfil}
+                  onPrice={listing.setPrice}
+                  onChange={(next) => listing.setFilters(next)}
+                />
               </aside>
             )}
             <div className="min-w-0 flex-1">

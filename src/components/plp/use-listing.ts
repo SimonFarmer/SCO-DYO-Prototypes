@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router"
 import {
+  DEFAULT_SORT,
   EMPTY_FILTERS,
   PAGE_SIZE,
   PLP_PATH,
@@ -9,22 +10,34 @@ import {
   SETTINGS,
   applyFilters,
   collectionBySlug,
+  priceBounds,
   sortProducts,
   type FulfilmentId,
   type ListingFilters,
 } from "@/data/plp"
 
-const LIST_KEYS = ["style", "shape", "metal", "price", "accent"] as const
+const LIST_KEYS = ["style", "shape", "metal", "accent"] as const
+export type ListKey = (typeof LIST_KEYS)[number]
+
+/** "500-1500", "-999" or "3000-" → bounds (null = open). */
+function parsePrice(raw: string | null): [number | null, number | null] {
+  if (!raw) return [null, null]
+  const [a, b] = raw.split("-")
+  const n = (v?: string) => (v && Number.isFinite(Number(v)) ? Number(v) : null)
+  return [n(a), n(b)]
+}
 
 function parseFilters(params: URLSearchParams): ListingFilters {
   const list = (k: string) => params.get(k)?.split(",").filter(Boolean) ?? []
   const fulfil = params.get("fulfil")
+  const [minPrice, maxPrice] = parsePrice(params.get("price"))
   return {
     style: list("style"),
     shape: list("shape"),
     metal: list("metal"),
-    price: list("price"),
     accent: list("accent"),
+    minPrice,
+    maxPrice,
     fulfil: fulfil === "instore" || fulfil === "sameday" || fulfil === "friday" ? (fulfil as FulfilmentId) : null,
   }
 }
@@ -32,8 +45,9 @@ function parseFilters(params: URLSearchParams): ListingFilters {
 function toQuery(f: ListingFilters, sort: string) {
   const q = new URLSearchParams()
   for (const k of LIST_KEYS) if (f[k].length) q.set(k, f[k].join(","))
+  if (f.minPrice !== null || f.maxPrice !== null) q.set("price", `${f.minPrice ?? ""}-${f.maxPrice ?? ""}`)
   if (f.fulfil) q.set("fulfil", f.fulfil)
-  if (sort !== "popular") q.set("sort", sort)
+  if (sort !== DEFAULT_SORT) q.set("sort", sort)
   const s = q.toString()
   return s ? `?${s}` : ""
 }
@@ -58,7 +72,7 @@ export function useListing() {
   const mode: ListingMode = pathname.startsWith(RTS_PATH) ? "rts" : "dyo"
   const collection = mode === "dyo" ? collectionBySlug(slug) : undefined
   const basePath = mode === "rts" ? RTS_PATH : PLP_PATH
-  const sort = params.get("sort") ?? "popular"
+  const sort = params.get("sort") ?? DEFAULT_SORT
   const page = Math.max(1, Number(params.get("page")) || 1)
 
   const filters = useMemo<ListingFilters>(
@@ -83,18 +97,20 @@ export function useListing() {
     navigate(`${basePath}${toQuery(next, nextSort)}`, { preventScrollReset: true })
   }
 
-  const toggle = (key: (typeof LIST_KEYS)[number], value: string) => {
+  const toggle = (key: ListKey, value: string) => {
     const has = filters[key].includes(value)
     setFilters({ ...filters, [key]: has ? filters[key].filter((v) => v !== value) : [...filters[key], value] })
   }
 
   const setFulfil = (fulfil: FulfilmentId | null) => setFilters({ ...filters, fulfil })
 
+  const setPrice = (minPrice: number | null, maxPrice: number | null) => setFilters({ ...filters, minPrice, maxPrice })
+
   /** Sort and paging stay on the current page (a Level 3 landing stays Level 3). */
   const setSort = (next: string) => {
     const q = new URLSearchParams(params)
     q.delete("page")
-    if (next === "popular") q.delete("sort")
+    if (next === DEFAULT_SORT) q.delete("sort")
     else q.set("sort", next)
     const s = q.toString()
     navigate(`${pathname}${s ? `?${s}` : ""}`, { preventScrollReset: true })
@@ -121,9 +137,12 @@ export function useListing() {
     results,
     pageItems: results.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE),
     countFor,
+    /** Price slider range for this catalogue (settings, or preset rings). */
+    bounds: priceBounds(mode === "rts" ? READY_TO_SHIP : SETTINGS),
     setFilters,
     toggle,
     setFulfil,
+    setPrice,
     setSort,
     setPage,
     clearAll: () => setFilters(EMPTY_FILTERS),

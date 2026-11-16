@@ -1,12 +1,11 @@
 import { useState, type ReactNode } from "react"
 import { CheckIcon } from "@phosphor-icons/react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   ACCENTS,
   FULFILMENT,
   PLP_METALS,
-  PRICE_BANDS,
-  RTS_PRICE_BANDS,
   SHAPES,
   STORE,
   STYLES,
@@ -14,18 +13,45 @@ import {
   type ListingFilters,
 } from "@/data/plp"
 import { cn } from "@/lib/utils"
-import type { ListingMode } from "./use-listing"
-
-type ListKey = "style" | "shape" | "metal" | "price" | "accent"
+import { AppliedFilters, PriceRange, type Bounds } from "./filter-parts"
+import type { ListKey, ListingMode } from "./use-listing"
 
 export interface FilterPanelProps {
   mode: ListingMode
   filters: ListingFilters
+  bounds: Bounds
   onToggle: (key: ListKey, value: string) => void
   onFulfil: (id: FulfilmentId | null) => void
+  onPrice: (min: number | null, max: number | null) => void
+  /** Replace all filters at once (applied-filter pills and Clear Filter(s)). */
+  onChange: (next: ListingFilters) => void
   /** Extra groups placed first (the mobile drawer puts Sort By here). */
   before?: ReactNode
   className?: string
+}
+
+/** Single-choice list (SCO Drop 2 Sort By): radio circles with labels. */
+export function RadioList({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string
+  value: string | null
+  options: { id: string; label: string }[]
+  onChange: (id: string) => void
+}) {
+  return (
+    <RadioGroup value={value ?? ""} onValueChange={(v) => onChange(v as string)} aria-label={label} className="gap-0">
+      {options.map((o) => (
+        <label key={o.id} className="flex cursor-pointer items-center gap-3 py-2">
+          <RadioGroupItem value={o.id} className="border-primary" />
+          <span className={cn("text-sm leading-5 text-primary", value === o.id && "font-medium")}>{o.label}</span>
+        </label>
+      ))}
+    </RadioGroup>
+  )
 }
 
 function Check({ checked }: { checked: boolean }) {
@@ -91,13 +117,15 @@ function Group({ value, title, children }: { value: string; title: string; child
  * Stone Shape icons, then collapsed Accent Stones, Fast Delivery and Pickup, Setting Price.
  * Used by the desktop sidebar (applies instantly) and the mobile drawer (applies on "View N Items").
  */
-export function FilterPanel({ mode, filters, onToggle, onFulfil, before, className }: FilterPanelProps) {
+export function FilterPanel({ mode, filters, bounds, onToggle, onFulfil, onPrice, onChange, before, className }: FilterPanelProps) {
   const [moreStyles, setMoreStyles] = useState(false)
   const styles = moreStyles ? STYLES : STYLES.slice(0, 6)
   const ownPrice = mode === "dyo" ? "Setting Price" : "Price"
 
   return (
-    <Accordion multiple defaultValue={["style", "metal", "shape"]} className={cn("border-t border-border-subtle lg:border-t-0", className)}>
+    <div className={className}>
+      <AppliedFilters filters={filters} bounds={bounds} onChange={onChange} />
+      <Accordion multiple defaultValue={["sort", "style", "metal", "shape", "price"]}>
       {before}
       <Group value="style" title="Setting Style">
         <ul className="grid grid-cols-2 gap-3">
@@ -198,10 +226,9 @@ export function FilterPanel({ mode, filters, onToggle, onFulfil, before, classNa
       </Group>
 
       <Group value="price" title={ownPrice}>
-        {(mode === "dyo" ? PRICE_BANDS : RTS_PRICE_BANDS).map((b) => (
-          <CheckRow key={b.id} label={b.label} checked={filters.price.includes(b.id)} onChange={() => onToggle("price", b.id)} />
-        ))}
+        <PriceRange bounds={bounds} min={filters.minPrice} max={filters.maxPrice} onChange={onPrice} />
       </Group>
-    </Accordion>
+      </Accordion>
+    </div>
   )
 }

@@ -129,7 +129,7 @@ function ShowingCount({ listing }: { listing: Listing }) {
 }
 
 function SortMenu({ listing }: { listing: Listing }) {
-  const label = SORTS.find((s) => s.id === listing.sort)?.label ?? "Popular"
+  const label = SORTS.find((s) => s.id === listing.sort)?.label ?? "Recommended"
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex h-10 cursor-pointer items-center gap-2 type-label-xs text-primary">
