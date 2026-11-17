@@ -1,6 +1,8 @@
 import { BrowserRouter, Route, Routes } from "react-router"
 import { NotInTestProvider } from "@/components/prototype/not-in-test"
-import { Blank, Home, TEAM_INDEX_PATH } from "@/pages/home"
+import { Blank, Home } from "@/pages/home"
+import { EngagementRingPlp } from "@/pages/plp"
+import { StoreHome } from "@/pages/plp/store-home"
 import { Test1 } from "@/pages/test-1"
 import { Test3Done, Test3Quickview, Test3QuickviewPdp, Test3Specs } from "@/pages/test-3"
 import { Test4 } from "@/pages/test-4"
@@ -14,10 +16,12 @@ export default function App() {
       <NotInTestProvider>
         <RingBuildProvider>
           <Routes>
-            {/* Participants get one standalone URL per variant (/test-1/a …); nothing links between them.
-                The root is blank; the team index of all prototypes lives at TEAM_INDEX_PATH. */}
-            <Route path="/" element={<Blank />} />
-            <Route path={TEAM_INDEX_PATH} element={<Home />} />
+            {/* The root is the prototype list (the header logo returns here).
+                Participants get one standalone URL per variant (/test-1/a …); unknown URLs are blank. */}
+            <Route path="/" element={<Home />} />
+            <Route path="/shop" element={<StoreHome />} />
+            <Route path="/engagement-rings" element={<EngagementRingPlp />} />
+            <Route path="/engagement-rings/:slug" element={<EngagementRingPlp />} />
             <Route path="/test-1/:variant?" element={<Test1 />} />
             <Route path="/test-3-quickview/:variant?" element={<Test3Quickview />} />
             <Route path="/test-3-quickview/:variant/diamond/:id" element={<Test3QuickviewPdp />} />

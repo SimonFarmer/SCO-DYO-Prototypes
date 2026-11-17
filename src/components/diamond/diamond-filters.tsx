@@ -138,7 +138,7 @@ function RangeFields({
 /**
  * Stepped grade slider (Figma “Range Slider” + “Indicator”): each grade is a segment, ticks
  * mark the steps between grades and the thumbs snap to those steps. Segments are weighted by
- * label length, like the Figma frames (min-w 24 / 28 / 36px), so “VVS2” never overlaps.
+ * label length (Figma frames use min-widths for the same reason), so “VVS2” never overlaps.
  */
 function GradeSlider({
   grades,
@@ -152,7 +152,8 @@ function GradeSlider({
   onChange: (v: [number, number]) => void
   label: string
 }) {
-  const weights = grades.map((g) => (g.length >= 4 ? 36 : g.length === 3 ? 28 : 24))
+  // Width per grade, roughly its label width plus breathing room (single letters share the track evenly).
+  const weights = grades.map((g) => ({ 1: 24, 2: 18, 3: 27 })[g.length] ?? 38)
   // Step boundaries: 0, w0, w0+w1, … total
   const bounds = weights.reduce<number[]>((acc, w) => [...acc, acc[acc.length - 1] + w], [0])
   const total = bounds[bounds.length - 1]
@@ -189,7 +190,8 @@ function GradeSlider({
           if (lo !== value[0] || hi - 1 !== value[1]) onChange([lo, hi - 1])
         }}
       />
-      <ol className="grid" style={{ gridTemplateColumns: weights.map((w) => `${w}fr`).join(" ") }}>
+      {/* px-2 matches the slider's inset track, so each label sits between its two step ticks. */}
+      <ol className="grid px-2" style={{ gridTemplateColumns: weights.map((w) => `${w}fr`).join(" ") }}>
         {grades.map((g, i) => (
           <li
             key={g}

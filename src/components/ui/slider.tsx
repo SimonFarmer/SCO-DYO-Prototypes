@@ -1,30 +1,19 @@
 import { Slider as SliderPrimitive } from "@base-ui/react/slider"
 import { cn } from "@/lib/utils"
 
-type SliderProps = SliderPrimitive.Root.Props<number | readonly number[]> & {
-  /** Values to mark with a 1px step tick on the track (Figma “Point”, input colour). */
-  marks?: number[]
-}
-
 /**
- * Pattern Library range slider: 6px secondary track, primary range, 16px white thumbs
- * with a primary border and shadow-md. Optional step ticks via `marks`.
+ * shadcn/ui Slider on Base UI, styled to the Pattern Library range slider (SCO Drop 2 price filter):
+ * light track, charcoal range, round white thumbs with a charcoal border.
+ * Optional `marks` draw 1px step ticks on the track (Figma “Point”), e.g. the diamond color/clarity grades.
  */
-function Slider({ className, value, defaultValue, marks, min = 0, max = 100, ...props }: SliderProps) {
-  const initial = value ?? defaultValue
-  const thumbs = Array.isArray(initial) ? initial.length : 1
+function Slider({ className, marks, ...props }: SliderPrimitive.Root.Props<number[]> & { marks?: number[] }) {
+  const min = props.min ?? 0
+  const max = props.max ?? 100
+  const count = Array.isArray(props.value ?? props.defaultValue) ? (props.value ?? props.defaultValue)!.length : 1
   return (
-    <SliderPrimitive.Root
-      data-slot="slider"
-      value={value}
-      defaultValue={defaultValue}
-      min={min}
-      max={max}
-      className={cn("w-full touch-none select-none", className)}
-      {...props}
-    >
-      <SliderPrimitive.Control className="flex h-4 w-full items-center">
-        <SliderPrimitive.Track className="relative h-1.5 w-full rounded-full bg-secondary">
+    <SliderPrimitive.Root data-slot="slider" className={cn("w-full touch-none select-none", className)} {...props}>
+      <SliderPrimitive.Control className="flex h-6 w-full items-center px-2">
+        <SliderPrimitive.Track className="relative h-1 w-full rounded-full bg-muted">
           <SliderPrimitive.Indicator className="rounded-full bg-primary" />
           {marks?.map((m) => (
             <span
@@ -34,11 +23,11 @@ function Slider({ className, value, defaultValue, marks, min = 0, max = 100, ...
               style={{ left: `${((m - min) / (max - min)) * 100}%` }}
             />
           ))}
-          {Array.from({ length: thumbs }, (_, i) => (
+          {Array.from({ length: count }, (_, i) => (
             <SliderPrimitive.Thumb
               key={i}
               index={i}
-              className="size-4 rounded-full border border-primary bg-background shadow-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="size-4 cursor-grab rounded-full border border-primary bg-background outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:cursor-grabbing"
             />
           ))}
         </SliderPrimitive.Track>

@@ -7,12 +7,14 @@ import {
   UserCircleIcon,
   type Icon,
 } from "@phosphor-icons/react"
-import { useRef } from "react"
+import { useEffect, useRef, useState } from "react"
+import { useNavigate } from "react-router"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { MegaMenu } from "@/components/site/mega-menu"
 import { useStickyOnIntent } from "@/components/site/use-sticky-on-intent"
 import { cn } from "@/lib/utils"
 
-const NAV = ["Engagement Rings", "Wedding Bands", "Diamonds", "Gemstones", "Fine Jewelry", "Personalize"]
+import { NAV_LEVEL_1, PLP_PATH } from "@/data/plp"
 
 function Logo({ withTagline = false }: { withTagline?: boolean }) {
   return (
@@ -37,23 +39,63 @@ function UtilityLink({ icon: IconCmp, label }: { icon: Icon; label: string }) {
   )
 }
 
-/** Global site header (inert: outside every test's scope). Sticky on intent: hides on scroll down, returns on scroll up. */
-export function SiteHeader() {
+/**
+ * Global site header. Sticky on intent: hides on scroll down, returns on scroll up.
+ * In the tests it's inert. With `navigation` (the PLP entry point), Engagement Rings opens the
+ * desktop mega menu on hover and goes to the PLP on click; on mobile, navigation lives in MobileBottomNav.
+ */
+export function SiteHeader({
+  navigation = false,
+  mobileHidden = false,
+}: {
+  navigation?: boolean
+  /** Hide the mobile logo bar (the homepage overlays its own logo on the hero). */
+  mobileHidden?: boolean
+}) {
   const notInTest = useNotInTest()
+  const navigate = useNavigate()
   const ref = useRef<HTMLElement>(null)
   const visible = useStickyOnIntent(ref)
+  const [menuOpen, setMenuOpen] = useState(false)
+  // Prototype-only: the logo returns to the index of prototypes (not the storefront homepage).
+  const toIndex = () => {
+    navigate("/")
+    window.scrollTo({ top: 0 })
+  }
+  const closeTimer = useRef<number | undefined>(undefined)
+
+  const openMenu = () => {
+    window.clearTimeout(closeTimer.current)
+    setMenuOpen(true)
+  }
+  // A short delay so moving the pointer from the nav item into the panel doesn't flicker it closed.
+  const closeMenu = () => {
+    window.clearTimeout(closeTimer.current)
+    closeTimer.current = window.setTimeout(() => setMenuOpen(false), 150)
+  }
+  useEffect(() => () => window.clearTimeout(closeTimer.current), [])
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false)
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [menuOpen])
+  // The menu closes when the header slides away.
+  if (!visible && menuOpen) setMenuOpen(false)
   return (
+    <>
     <header
       ref={ref}
       data-visible={visible}
       className={cn(
         "sticky top-0 z-40 border-b border-border-subtle bg-background transition-transform duration-300 ease-out lg:border-b-0",
+        mobileHidden && "max-lg:hidden",
         !visible && "-translate-y-full",
       )}
     >
       {/* Mobile: logo + tagline, as on the non-DYO mobile PDP */}
       <div className="flex h-22 items-center justify-center lg:hidden">
-        <button type="button" onClick={() => notInTest("The homepage")} className="cursor-pointer">
+        <button type="button" onClick={toIndex} aria-label="Shane Co. (back to the prototype list)" className="cursor-pointer">
           <Logo withTagline />
         </button>
       </div>
@@ -68,7 +110,8 @@ export function SiteHeader() {
           </div>
           <button
             type="button"
-            onClick={() => notInTest("The homepage")}
+            onClick={toIndex}
+            aria-label="Shane Co. (back to the prototype list)"
             className="absolute left-1/2 -translate-x-1/2 cursor-pointer"
           >
             <Logo />
@@ -79,19 +122,50 @@ export function SiteHeader() {
             <UtilityLink icon={ShoppingBagIcon} label="Bag" />
           </div>
         </div>
-        <nav className="flex h-8 items-start justify-center gap-5">
-          {NAV.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => notInTest("Site navigation")}
-              className="cursor-pointer type-label-s text-primary"
-            >
-              {item}
-            </button>
-          ))}
-        </nav>
+        <div className="relative" onMouseLeave={navigation ? closeMenu : undefined}>
+          <nav className="flex h-8 items-start justify-center gap-5">
+            {NAV_LEVEL_1.map((item) => {
+              const live = navigation && item === "Engagement Rings"
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  aria-expanded={live ? menuOpen : undefined}
+                  aria-haspopup={live ? "true" : undefined}
+                  onMouseEnter={live ? openMenu : navigation ? closeMenu : undefined}
+                  onFocus={live ? openMenu : undefined}
+                  onClick={() => {
+                    if (!live) return notInTest(navigation ? item : "Site navigation")
+                    setMenuOpen(false)
+                    navigate(PLP_PATH)
+                    window.scrollTo({ top: 0 })
+                  }}
+                  className={cn(
+                    "relative h-full cursor-pointer type-label-s text-primary",
+                    live && menuOpen && "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary",
+                  )}
+                >
+                  {item}
+                </button>
+              )
+            })}
+          </nav>
+          {menuOpen && (
+            <div onMouseEnter={openMenu}>
+              <MegaMenu onClose={() => setMenuOpen(false)} />
+            </div>
+          )}
+        </div>
       </div>
     </header>
+    {/* Dims the page under the open mega menu (Figma active nav). */}
+    {menuOpen && (
+      <div
+        aria-hidden
+        onMouseEnter={closeMenu}
+        className="fixed inset-0 z-30 hidden bg-black/40 animate-in fade-in lg:block"
+      />
+    )}
+    </>
   )
 }

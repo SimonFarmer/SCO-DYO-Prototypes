@@ -3,6 +3,16 @@ import { useRingBuild } from "@/state/ring-build"
 
 const PROTOTYPES = [
   {
+    test: "Engagement Ring PLP · DYO entry point",
+    links: [
+      { label: "Homepage: navigation entry point (start here)", to: "/shop" },
+      { label: "PLP: all engagement rings (DYO step 1)", to: "/engagement-rings" },
+      { label: "PLP: Level 3 landing (Classic)", to: "/engagement-rings/classic" },
+      { label: "PLP: Shop by Budget preset (under $1,000)", to: "/engagement-rings?price=under-1000" },
+      { label: "PLP: Ready to Ship", to: "/engagement-rings/ready-to-ship" },
+    ],
+  },
+  {
     test: "Test 1 · Settings PDP Gallery & Details",
     links: [
       { label: "Variant A: long-scroll gallery, details drawer", to: "/test-1/a" },
@@ -33,10 +43,7 @@ const PROTOTYPES = [
   },
 ]
 
-/** Unlisted path of the team index (not linked from anywhere, so participants can't reach other variants). */
-export const TEAM_INDEX_PATH = "/team-7k2p9"
-
-/** Root and unknown URLs: an empty page, so a participant who edits the URL doesn't find the other variants. */
+/** Unknown URLs: an empty page, so a participant who edits the URL doesn't land on another variant. */
 export function Blank() {
   return <main className="min-h-svh bg-background" />
 }
