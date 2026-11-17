@@ -9,7 +9,7 @@ import { REVIEW_GALLERY } from "@/data/dyo"
 import { useRingBuild } from "@/state/ring-build"
 import { PageColumns } from "./page-columns"
 
-const FINISHING = "/test-4?variant=B"
+const FINISHING = "/test-4/b"
 
 /**
  * Test 4 · Variant B, screen 2 — Ring Review summarizing the finishing touches.
@@ -22,7 +22,7 @@ export function RingReviewB() {
   // Ring size is chosen on Finishing Touches; without it, send the shopper back there.
   if (!ringSize) return <Navigate to={FINISHING} replace />
 
-  const backTo = (open: "crown" | "engraving" | "size" | "band" | "band-engraving") => navigate(`${FINISHING}&open=${open}`)
+  const backTo = (open: "crown" | "engraving" | "size" | "band" | "band-engraving") => navigate(`${FINISHING}?open=${open}`)
 
   return (
     <div className="min-h-svh bg-background">
@@ -49,7 +49,7 @@ export function RingReviewB() {
           />
         </section>
         <SectionDivider />
-        <BuyActions onAddToBag={() => navigate("/test-4/added?variant=B")} />
+        <BuyActions onAddToBag={() => navigate("/test-4/b/added")} />
         <Assurances />
         <DeliveryOptions />
       </PageColumns>

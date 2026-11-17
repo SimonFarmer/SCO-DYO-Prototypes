@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
-import { useSearchParams } from "react-router"
+import { useLocation } from "react-router"
 import {
   CROWNS,
   DEFAULT_RING_SIZE,
@@ -9,6 +9,7 @@ import {
   WEDDING_BANDS,
   type Crown,
   type EngravingStyle,
+  type Stone,
   type WeddingBand,
 } from "@/data/dyo"
 
@@ -24,6 +25,8 @@ interface BuildState {
   /** Matching wedding band (Test 4 · B) and the band's own engraving. */
   bandId: string | null
   bandEngraving: Engraving | null
+  /** Stone chosen in the Stone step (Test 3). Falls back to the pre-chosen STONE. */
+  stone: Stone | null
 }
 
 export interface LineItem {
@@ -33,7 +36,7 @@ export interface LineItem {
 
 interface RingBuild extends BuildState {
   setting: typeof SETTING
-  stone: typeof STONE
+  stone: Stone
   crown: Crown | null
   engravingStyle: EngravingStyle | null
   band: WeddingBand | null
@@ -46,20 +49,34 @@ interface RingBuild extends BuildState {
   /** Removing the band also removes its engraving. */
   setBandId: (id: string | null) => void
   setBandEngraving: (engraving: Engraving | null) => void
+  setStone: (stone: Stone) => void
   reset: () => void
-  /** Clears both variants' builds (used when launching a prototype from the index). */
+  /** Clears every build (used when launching a prototype from the index). */
   resetAll: () => void
 }
 
-type BuildKey = "A" | "B"
+/** A and B are Test 4's variants; T3 is Test 3's own build, so a stone picked there never shows up in Test 4. */
+type BuildKey = "A" | "B" | "T3"
 
 /**
- * Starting state per variant, following the Figma frames:
+ * Starting state per build, following the Figma frames:
  * A (Ring Review) shows size 6.5 preselected; B (Finishing Touches) starts with no size.
  */
 const INITIAL: Record<BuildKey, BuildState> = {
-  A: { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null, bandId: null, bandEngraving: null },
-  B: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null },
+  A: { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
+  B: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
+  T3: { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
+}
+
+/**
+ * Which build the current URL uses. Variants live in the path (/test-4/b, /test-4/b/review);
+ * older ?variant=B links still resolve to B.
+ */
+function buildKeyFor(pathname: string, search: string): BuildKey {
+  if (/^\/test-3/.test(pathname)) return "T3"
+  const fromPath = pathname.match(/^\/test-4\/([ab])(?:\/|$)/i)?.[1]
+  const variant = (fromPath ?? new URLSearchParams(search).get("variant"))?.toUpperCase()
+  return variant === "B" ? "B" : "A"
 }
 
 const storageKey = (key: BuildKey) => `dyo-ring-build-${key}`
@@ -76,13 +93,13 @@ function load(key: BuildKey): BuildState {
 const RingBuildContext = createContext<RingBuild | null>(null)
 
 /**
- * The ring being built: setting + stone (pre-chosen) plus finishing touches.
- * Each variant keeps its own build (keyed by ?variant=), so switching variants never leaks choices.
+ * The ring being built: setting + stone (pre-chosen unless picked in the Stone step) plus finishing touches.
+ * Each variant keeps its own build (see buildKeyFor), so switching variants never leaks choices.
  */
 export function RingBuildProvider({ children }: { children: ReactNode }) {
-  const [params] = useSearchParams()
-  const key: BuildKey = params.get("variant")?.toUpperCase() === "B" ? "B" : "A"
-  const [builds, setBuilds] = useState<Record<BuildKey, BuildState>>(() => ({ A: load("A"), B: load("B") }))
+  const { pathname, search } = useLocation()
+  const key = buildKeyFor(pathname, search)
+  const [builds, setBuilds] = useState<Record<BuildKey, BuildState>>(() => ({ A: load("A"), B: load("B"), T3: load("T3") }))
   const state = builds[key]
 
   useEffect(() => {
@@ -95,6 +112,7 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<RingBuild>(() => {
     const update = (patch: Partial<BuildState>) => setBuilds((b) => ({ ...b, [key]: { ...b[key], ...patch } }))
+    const stone = state.stone ?? STONE
     const crown = CROWNS.find((c) => c.id === state.crownId) ?? null
     const styleOf = (e: Engraving | null) => (e ? (ENGRAVING.styles.find((s) => s.id === e.styleId) ?? null) : null)
     const engravingStyle = styleOf(state.engraving)
@@ -102,7 +120,7 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
     const bandEngraving = band ? state.bandEngraving : null
     const lineItems: LineItem[] = [
       { kind: "setting", price: SETTING.price },
-      { kind: "stone", price: STONE.price },
+      { kind: "stone", price: stone.price },
       ...(crown ? [{ kind: "crown" as const, price: crown.price }] : []),
       ...(state.engraving ? [{ kind: "engraving" as const, price: ENGRAVING.price }] : []),
       ...(band ? [{ kind: "band" as const, price: band.price }] : []),
@@ -111,7 +129,7 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
     return {
       ...state,
       setting: SETTING,
-      stone: STONE,
+      stone,
       crown,
       engravingStyle,
       bandEngraving,
@@ -124,6 +142,7 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
       setCrownId: (crownId) => update({ crownId }),
       setBandId: (bandId) => update(bandId ? { bandId } : { bandId: null, bandEngraving: null }),
       setBandEngraving: (bandEngraving) => update({ bandEngraving }),
+      setStone: (stone) => update({ stone }),
       reset: () => update(INITIAL[key]),
       resetAll: () => setBuilds(INITIAL),
     }

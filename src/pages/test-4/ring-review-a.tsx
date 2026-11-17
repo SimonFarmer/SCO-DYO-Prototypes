@@ -44,7 +44,7 @@ export function RingReviewA() {
           <RingSummary onEditCrown={() => open("crown")} onEditEngraving={() => open("engraving")} />
         </section>
         <SectionDivider />
-        <BuyActions onAddToBag={() => navigate("/test-4/added?variant=A")} />
+        <BuyActions onAddToBag={() => navigate("/test-4/a/added")} />
         <Assurances />
         <DeliveryOptions />
       </PageColumns>

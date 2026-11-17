@@ -32,7 +32,7 @@ import { SETTING_PDP_VARIANTS, VARIANT_IDS } from "./variants"
 const COMPLETE_THE_LOOK = MATCHING_BANDS.slice(0, 3).map((p) => ({ ...p, badge: undefined }))
 
 /**
- * Test 1 · Settings PDP Gallery & Details (DYO step 1). Switch with ?variant=A|B|C.
+ * Test 1 · Settings PDP Gallery & Details (DYO step 1). Participant URLs: /test-1/a, /test-1/b, /test-1/c.
  * The variant only changes the gallery and how product details are reached; see ./variants.ts.
  */
 export function Test1() {
