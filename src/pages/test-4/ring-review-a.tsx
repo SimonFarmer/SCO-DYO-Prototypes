@@ -12,7 +12,7 @@ import { ProductGallery } from "@/components/dyo/product-gallery"
 import { RingSummary } from "@/components/dyo/ring-summary"
 import { SiteHeader } from "@/components/site/site-header"
 import { REVIEW_GALLERY } from "@/data/dyo"
-import { PageColumns } from "./page-columns"
+import { PageColumns } from "@/components/dyo/page-columns"
 
 /**
  * Test 4 · Variant A — options on the Ring Review step (current flow).

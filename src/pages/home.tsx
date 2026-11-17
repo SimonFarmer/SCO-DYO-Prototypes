@@ -21,6 +21,14 @@ const PROTOTYPES = [
     ],
   },
   {
+    test: "Test 2 · Stone Preferences & Recommendations",
+    links: [
+      { label: "Variant A: size selector → total ring price range", to: "/test-2?variant=A" },
+      { label: "Variant B: total budget slider → available stone sizes", to: "/test-2?variant=B" },
+      { label: "Variant C: size + budget together, with trade-off messaging", to: "/test-2?variant=C" },
+    ],
+  },
+  {
     test: "Test 4 · Ring Personalization as a Separate Step",
     links: [
       { label: "Variant A: options on Ring Review", to: "/test-4?variant=A" },

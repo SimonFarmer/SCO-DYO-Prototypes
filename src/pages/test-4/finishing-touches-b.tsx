@@ -18,7 +18,7 @@ import { useNotInTest } from "@/components/prototype/not-in-test"
 import { SiteHeader } from "@/components/site/site-header"
 import { CLASSIC_CROWN, FINISHING_GALLERY, type GalleryImage } from "@/data/dyo"
 import { useRingBuild } from "@/state/ring-build"
-import { PageColumns } from "./page-columns"
+import { PageColumns } from "@/components/dyo/page-columns"
 
 const OVERLAYS: FinishingOverlay[] = ["size", "size-guide", "engraving", "crown", "band", "band-engraving"]
 
