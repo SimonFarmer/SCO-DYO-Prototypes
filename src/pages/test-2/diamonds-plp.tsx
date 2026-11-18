@@ -269,13 +269,7 @@ export function Test2DiamondsPlp() {
         {/* The hero's background runs full width; its content stops at the 1680px page width. */}
         <section className="bg-secondary">
           <div className={cn("flex flex-col gap-5 px-margin pt-5 pb-10", PAGE_MAX)}>
-          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-            <Breadcrumb items={["Home", "Diamonds", title]} className="p-0" />
-            <button type="button" onClick={back} className="flex h-6 cursor-pointer items-center gap-0.5 type-label-xs text-primary underline">
-              <CaretLeftIcon className="size-4" />
-              {from === "recs" ? "Back to your recommendations" : "Back to stone preferences"}
-            </button>
-          </div>
+          <Breadcrumb items={["Home", "Diamonds", title]} className="p-0" />
           <div className="flex flex-col gap-8 lg:flex-row lg:gap-16">
             <div className="flex flex-col gap-5 lg:w-108 lg:shrink-0 lg:border-r lg:border-input lg:pr-16 lg:pb-7">
               <h1 className="type-h2 text-primary max-lg:type-h3">{title}</h1>
@@ -287,8 +281,17 @@ export function Test2DiamondsPlp() {
         </section>
 
         <div id="plp-results" className={cn("scroll-mt-(--header-offset)", PAGE_MAX)}>
+          {/* Back to step 2, as "Edit preferences" on the recommendations page: it heads the results block, just
+              above the filters, so it sits on screen once the shopper is in the results (mobile too). */}
+          <div className="px-margin pt-6">
+            <button type="button" onClick={back} className="flex h-6 cursor-pointer items-center gap-0.5 type-label-xs text-primary underline">
+              <CaretLeftIcon className="size-4" />
+              {from === "recs" ? "Back to your recommendations" : "Back to stone preferences"}
+            </button>
+          </div>
+
           {/* Desktop filter bar (Figma "Filter.Controls") */}
-          <div className="hidden items-center gap-6 px-margin py-7 lg:flex">
+          <div className="hidden items-center gap-6 px-margin pt-4 pb-7 lg:flex">
             <button
               type="button"
               onClick={() => setSidebarOpen((o) => !o)}
@@ -308,7 +311,7 @@ export function Test2DiamondsPlp() {
           </div>
 
           {/* Mobile filter bar */}
-          <div className="flex flex-col gap-3 px-margin py-8 lg:hidden">
+          <div className="flex flex-col gap-3 px-margin pt-4 pb-8 lg:hidden">
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}

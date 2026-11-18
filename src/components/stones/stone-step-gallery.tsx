@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from "react"
-import { SettingGallery } from "@/components/pdp/setting-gallery"
+import { SettingGallery, ThumbnailGallery } from "@/components/pdp/setting-gallery"
 import { FINISHING_GALLERY, REVIEW_GALLERY } from "@/data/dyo"
 import type { GalleryMedia } from "@/data/products"
+import { useIsDesktop } from "@/lib/hooks"
 import { formatSize, gemById, previewImage, sizeScale, stoneShape, stoneType, type StoneTypeId } from "@/data/stones"
 
 /**
@@ -9,6 +10,7 @@ import { formatSize, gemById, previewImage, sizeScale, stoneShape, stoneType, ty
  * overlay) so both steps look and size the same. The hero is Shane Co.'s own render of this ring with
  * the chosen stone, shape and size (shaneco.com "Preview with Shape / Gemstone / Size"); diamonds then
  * show the 360 view, close-up, size guide and the two proportion diagrams (Figma 7685:412972).
+ * Below lg it's Test 1 C's single image + thumbnail strip instead, so the buy form starts one screen down.
  */
 export function StoneStepGallery({
   type,
@@ -79,5 +81,15 @@ export function StoneStepGallery({
     }
   }, [type, shape, gem, scale.min, scale.max, scale.step])
 
+  const isDesktop = useIsDesktop()
+  if (!isDesktop) {
+    return (
+      // As Test 1 C on mobile; the hero (the live preview) is the first image. Keyed by it, so changing
+      // the stone, shape or size brings the stage back to the preview to show the change.
+      <div className="px-2">
+        <ThumbnailGallery key={media[0].src} media={media} />
+      </div>
+    )
+  }
   return <SettingGallery media={media} previewLabel={previewLabel} />
 }
