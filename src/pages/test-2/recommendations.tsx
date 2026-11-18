@@ -135,7 +135,7 @@ export function Test2Recommendations() {
 
   return (
     <div data-variant={variant.id}>
-      <StoneStepLayout prefs={prefs} size={selected?.stone.size ?? sim.size}>
+      <StoneStepLayout prefs={prefs} size={selected?.stone.size ?? sim.size} gallery="full">
         <header className="flex flex-col gap-8 max-lg:gap-4">
           <StepIntro eyebrow="Step 2 of 3 · Recommended Stones" title="Our three picks for you" subtitle={basis(shopBy, prefs, sim)} />
           <button
