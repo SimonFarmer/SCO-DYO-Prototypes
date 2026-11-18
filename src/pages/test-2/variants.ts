@@ -4,7 +4,7 @@
  *
  * The variant only changes the step 2a entry controls. Stones, prices, the recommendations (2b)
  * and the Diamonds PLP are the same for every variant.
- * Open a variant with `/test-2?variant=A` (B, C). Unknown or missing → A.
+ * Participant URLs: `/test-2/a`, `/test-2/b`, `/test-2/c` (older `/test-2?variant=A` links still work).
  */
 
 export type EntryControls = "size" | "budget" | "size-and-budget"

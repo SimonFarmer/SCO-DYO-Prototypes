@@ -206,12 +206,12 @@ function SizeAndBudgetControls({ prefs, update }: { prefs: StonePrefs; update: U
 }
 
 /**
- * Test 2 · Stone Preferences (2a). Switch with ?variant=A|B|C.
+ * Test 2 · Stone Preferences (2a). One URL per variant: /test-2/a, /test-2/b, /test-2/c (old ?variant= links still work).
  * Figma: A 7685:412966, B 7685:414388, C 7685:415174. Leads to Recommendations (2b) or the Diamonds PLP.
  */
 export function Test2() {
   const navigate = useNavigate()
-  const { variant, prefs, update, matching, query } = useStonePrefs()
+  const { variant, prefs, update, matching, href } = useStonePrefs()
 
   // Changing type or shape keeps the size/budget; C re-fits its size inside the new availability.
   const reshape = (patch: Partial<StonePrefs>) => {
@@ -249,11 +249,11 @@ export function Test2() {
         {variant.controls === "size-and-budget" && <SizeAndBudgetControls prefs={prefs} update={update} />}
         <StoneCtas
           primary="View Recommended Stones"
-          onPrimary={() => navigate(`/test-2/recommendations${query()}`)}
+          onPrimary={() => navigate(href("recommendations"))}
           primaryDisabled={matching.length === 0}
           shape={prefs.shape}
           count={matching.length}
-          onViewAll={() => navigate(`/test-2/diamonds${query({ from: "prefs" })}`)}
+          onViewAll={() => navigate(href("diamonds", { from: "prefs" }))}
         />
       </StoneStepLayout>
     </div>

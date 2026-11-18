@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { useSearchParams } from "react-router"
+import { useNavigate, useSearchParams } from "react-router"
 import { SETTING } from "@/data/dyo"
 import {
   CARAT,
@@ -19,7 +19,7 @@ import { useVariant } from "@/lib/hooks"
 import { STONE_PREFERENCE_VARIANTS, VARIANT_IDS, type StonePreferenceVariant } from "./variants"
 
 /**
- * The shopper's stone preferences live in the URL (?variant=A&type=natural&shape=round&carat=1…),
+ * The shopper's stone preferences live in the URL (/test-2/a?type=natural&shape=round&carat=0.75-1.25…),
  * so 2a → 2b → PLP and back always keep them, and every state is linkable for the researcher.
  */
 export interface StonePrefs {
@@ -84,9 +84,9 @@ function parse(params: URLSearchParams, variant: StonePreferenceVariant["id"]): 
   }
 }
 
-/** Query string for a set of preferences (only the values this variant uses). */
+/** Query string for a set of preferences (only the values this variant uses). The variant lives in the path. */
 export function prefsQuery(variant: StonePreferenceVariant["id"], p: StonePrefs, extra?: Record<string, string>) {
-  const q = new URLSearchParams({ variant, type: p.type, shape: p.shape })
+  const q = new URLSearchParams({ type: p.type, shape: p.shape })
   if (variant === "A") q.set("carat", `${p.caratLo.toFixed(2)}-${p.caratHi.toFixed(2)}`)
   if (variant === "C") q.set("carat", p.carat.toFixed(2))
   if (variant === "B") q.set("budget", String(p.budgetHi))
@@ -121,13 +121,22 @@ export function prefsFilters(variant: StonePreferenceVariant["id"], p: StonePref
   }
 }
 
+export type Test2Step = "preferences" | "recommendations" | "diamonds"
+
+/** Per-variant participant URL, matching the other tests (/test-1/a …): /test-2/a, /test-2/a/recommendations, /test-2/a/diamonds. */
+export function test2Path(variant: StonePreferenceVariant["id"], step: Test2Step, query = "") {
+  const base = `/test-2/${variant.toLowerCase()}`
+  return `${step === "preferences" ? base : `${base}/${step}`}${query}`
+}
+
 /** Target size for "Our Pick": the chosen size in C, the middle of the range in A; B has none (largest wins). */
 export const targetCarat = (variant: StonePreferenceVariant["id"], p: StonePrefs) => (variant === "B" ? null : p.carat)
 
 export function useStonePrefs() {
   const variantId = useVariant(VARIANT_IDS)
   const variant = STONE_PREFERENCE_VARIANTS[variantId]
-  const [params, setParams] = useSearchParams()
+  const [params] = useSearchParams()
+  const navigate = useNavigate()
   const prefs = useMemo(() => parse(params, variantId), [params, variantId])
   const filters = useMemo(() => prefsFilters(variantId, prefs), [variantId, prefs])
   const matching = useMemo(() => filterStones(filters), [filters])
@@ -138,8 +147,12 @@ export function useStonePrefs() {
     const { min, max } = stoneType(next.type).budget
     next.budgetHi = Math.min(max, Math.max(min, next.budgetHi))
     next.budgetLo = Math.min(next.budgetHi, Math.max(min, next.budgetLo))
-    setParams(new URLSearchParams(prefsQuery(variantId, next).slice(1)), { replace: true, preventScrollReset: true })
+    // Always written to the per-variant path, so an old ?variant= link settles on its participant URL.
+    navigate(test2Path(variantId, "preferences", prefsQuery(variantId, next)), { replace: true, preventScrollReset: true })
   }
 
-  return { variant, prefs, update, filters, matching, query: (extra?: Record<string, string>) => prefsQuery(variantId, prefs, extra) }
+  /** Link to a Test 2 step for this variant, carrying the current preferences. */
+  const href = (step: Test2Step, extra?: Record<string, string>) => test2Path(variantId, step, prefsQuery(variantId, prefs, extra))
+
+  return { variant, prefs, update, filters, matching, href }
 }

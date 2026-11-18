@@ -511,6 +511,7 @@ function QuestionsAndAnswers({ questions }: { questions: Question[] }) {
             Learn more
           </a>
         </div>
+        {questions.length > 0 && (
         <div className="flex items-center gap-4 rounded-xs bg-bg-input-50 px-3.5 py-3">
           <p className="text-sm leading-none font-medium text-accent-foreground" aria-live="polite">
             {list.length} Question{list.length === 1 ? "" : "s"}
@@ -524,8 +525,9 @@ function QuestionsAndAnswers({ questions }: { questions: Question[] }) {
             <img src="/images/reviews/icon-sort-caret.svg" alt="" className="size-2.5" />
           </button>
         </div>
+        )}
       </div>
-      {list.length > 0 ? (
+      {questions.length === 0 ? null : list.length > 0 ? (
         <div className="flex flex-col gap-1">
           {list.map((question) => (
             <QuestionItem key={question.id} question={question} />
@@ -542,18 +544,42 @@ function QuestionsAndAnswers({ questions }: { questions: Question[] }) {
 
 /* ───────────────────────── Block ───────────────────────── */
 
-export function ReviewsBlock() {
+/** No reviews yet (Diamond PDP, Figma 7375:134971): “No ratings” + first-review prompt. */
+function NoReviews() {
+  const notInTest = useNotInTest()
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="border-b border-border-subtle pb-3 type-label-xs font-semibold text-primary">No ratings</p>
+      <div className="flex flex-col items-center gap-2 bg-secondary px-4 py-8">
+        <p className="text-xs font-medium text-primary">Be the first to review this item</p>
+        <Stars rating={0} className="h-5" />
+        <Button size="sm" className="mt-1 px-6" onClick={() => notInTest("Writing a review")}>
+          Write a review
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+/** Reviews + Q&A. `empty` shows the no-reviews state used on the Diamond PDP. */
+export function ReviewsBlock({ empty = false }: { empty?: boolean }) {
   return (
     <section className="flex flex-col gap-14 bg-background px-margin py-14">
       <div className="flex w-full max-w-5xl flex-col gap-8">
         <h2 className="type-h3 font-medium text-primary">Reviews</h2>
-        <ReviewSummary reviews={SETTING_REVIEWS} />
-        <ReviewListing reviews={SETTING_REVIEWS} />
+        {empty ? (
+          <NoReviews />
+        ) : (
+          <>
+            <ReviewSummary reviews={SETTING_REVIEWS} />
+            <ReviewListing reviews={SETTING_REVIEWS} />
+          </>
+        )}
       </div>
       <div className="h-px w-full max-w-5xl bg-border-subtle" />
       <div className="flex w-full max-w-5xl flex-col gap-8">
         <h2 className="type-h3 font-medium text-primary">Questions and Answers</h2>
-        <QuestionsAndAnswers questions={SETTING_QUESTIONS} />
+        <QuestionsAndAnswers questions={empty ? [] : SETTING_QUESTIONS} />
       </div>
     </section>
   )

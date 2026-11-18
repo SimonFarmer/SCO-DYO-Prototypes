@@ -82,7 +82,7 @@ export function FinishingTouchesB() {
       document.getElementById("ring-size")?.scrollIntoView({ behavior: "smooth", block: "start" })
       return
     }
-    navigate("/test-4/review?variant=B")
+    navigate("/test-4/b/review")
   }
 
   return (

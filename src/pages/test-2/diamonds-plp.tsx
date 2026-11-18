@@ -208,7 +208,7 @@ export function Test2DiamondsPlp() {
   const navigate = useNavigate()
   const isDesktop = useIsDesktop()
   const [params] = useSearchParams()
-  const { variant, filters: preset, query } = useStonePrefs()
+  const { variant, filters: preset, href } = useStonePrefs()
   const from = params.get("from") === "recs" ? "recs" : "prefs"
 
   const [filters, setFiltersState] = useState<StoneFilters>(preset)
@@ -249,7 +249,7 @@ export function Test2DiamondsPlp() {
     }
   }, [title])
 
-  const back = () => navigate(from === "recs" ? `/test-2/recommendations${query()}` : `/test-2${query()}`)
+  const back = () => navigate(href(from === "recs" ? "recommendations" : "preferences"))
   const count = (
     <p className="type-caption whitespace-nowrap text-muted-foreground" aria-live="polite">
       Showing <span className="font-semibold text-primary">{pageItems.length}</span> of{" "}

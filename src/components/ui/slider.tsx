@@ -4,23 +4,36 @@ import { cn } from "@/lib/utils"
 /**
  * shadcn/ui Slider on Base UI, styled to the Pattern Library range slider (SCO Drop 2 price filter):
  * light track, charcoal range, round white thumbs with a charcoal border.
+ * Optional `marks` draw 1px step ticks on the track (Figma “Point”), e.g. the diamond color/clarity grades.
  */
 function Slider({
   className,
+  marks,
   trackClassName,
   indicatorClassName,
   ...props
 }: SliderPrimitive.Root.Props<number[]> & {
+  marks?: number[]
   /** e.g. the 6px track of the DYO stone simulator */
   trackClassName?: string
   indicatorClassName?: string
 }) {
+  const min = props.min ?? 0
+  const max = props.max ?? 100
   const count = Array.isArray(props.value ?? props.defaultValue) ? (props.value ?? props.defaultValue)!.length : 1
   return (
     <SliderPrimitive.Root data-slot="slider" className={cn("w-full touch-none select-none", className)} {...props}>
       <SliderPrimitive.Control className="flex h-6 w-full items-center px-2">
         <SliderPrimitive.Track className={cn("relative h-1 w-full rounded-full bg-muted", trackClassName)}>
           <SliderPrimitive.Indicator className={cn("rounded-full bg-primary", indicatorClassName)} />
+          {marks?.map((m) => (
+            <span
+              key={m}
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 w-px -translate-x-1/2 bg-border-subtle"
+              style={{ left: `${((m - min) / (max - min)) * 100}%` }}
+            />
+          ))}
           {Array.from({ length: count }, (_, i) => (
             <SliderPrimitive.Thumb
               key={i}

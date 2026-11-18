@@ -4,7 +4,7 @@
  *
  * Each variant is a fixed combination of the dimensions under test. Products, prices and
  * data are identical across variants; only the presentation changes.
- * Open a variant with `/test-1?variant=A` (B, C). Unknown or missing → A (via `useVariant`).
+ * Open a variant with `/test-1/a` (b, c), or `/test-1?variant=A`. Unknown or missing → A (via `useVariant`).
  */
 
 export type GalleryMode = "long-scroll" | "thumbnails"

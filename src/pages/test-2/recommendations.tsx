@@ -99,12 +99,12 @@ function RingSummary({ pick }: { pick: StonePick }) {
 export function Test2Recommendations() {
   const navigate = useNavigate()
   const notInTest = useNotInTest()
-  const { variant, prefs, matching, query } = useStonePrefs()
+  const { variant, prefs, matching, href } = useStonePrefs()
   const picks = useMemo(() => recommend(matching, targetCarat(variant.id, prefs)), [matching, variant.id, prefs])
   const [selectedKind, setSelectedKind] = useState(picks[0]?.kind)
   const selected = picks.find((p) => p.kind === selectedKind) ?? picks[0]
 
-  const editPrefs = () => navigate(`/test-2${query()}`)
+  const editPrefs = () => navigate(href("preferences"))
 
   return (
     <div data-variant={variant.id}>
@@ -147,7 +147,7 @@ export function Test2Recommendations() {
           primaryDisabled={!selected}
           shape={prefs.shape}
           count={matching.length}
-          onViewAll={() => navigate(`/test-2/diamonds${query({ from: "recs" })}`)}
+          onViewAll={() => navigate(href("diamonds", { from: "recs" }))}
         />
       </StoneStepLayout>
     </div>
