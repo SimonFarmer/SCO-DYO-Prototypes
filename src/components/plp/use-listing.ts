@@ -38,7 +38,7 @@ function parseFilters(params: URLSearchParams): ListingFilters {
     accent: list("accent"),
     minPrice,
     maxPrice,
-    fulfil: fulfil === "instore" || fulfil === "sameday" || fulfil === "friday" ? (fulfil as FulfilmentId) : null,
+    fulfil: fulfil === "instore" || fulfil === "friday" ? (fulfil as FulfilmentId) : null,
   }
 }
 

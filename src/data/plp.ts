@@ -86,17 +86,16 @@ export const STORE = {
   addressShort: "21780 Stevens Creek Boulevard",
 }
 
-export type FulfilmentId = "instore" | "sameday" | "friday"
+export type FulfilmentId = "instore" | "friday"
 
 export const FULFILMENT: {
   id: FulfilmentId
   label: string
   /** Mobile chip label (Figma mobile filter bar). */
   shortLabel: string
-  icon: "pin" | "lightning" | "calendar"
+  icon: "pin" | "calendar"
 }[] = [
   { id: "instore", label: "In-store today", shortLabel: "In-store", icon: "pin" },
-  { id: "sameday", label: "Same day delivery", shortLabel: "Same day", icon: "lightning" },
   { id: "friday", label: "Arrives by Friday", shortLabel: "By Fri", icon: "calendar" },
 ]
 
@@ -232,9 +231,8 @@ export const SETTINGS: PlpProduct[] = DESIGNS.flatMap((d, di) =>
   d.metals.map((metalId, mi) => {
     const metal = metalById(metalId)
     const r = hash(`${d.id}:${metalId}`)
-    // In-store stock is the scarcest; same-day delivery comes from that stock; most ship by Friday.
+    // In-store stock is the scarcest; most settings ship by Friday.
     const instore = r < 0.4
-    const sameday = instore && r < 0.22
     const friday = r < 0.8
     return {
       id: `${d.id}--${metalId}`,
@@ -248,7 +246,7 @@ export const SETTINGS: PlpProduct[] = DESIGNS.flatMap((d, di) =>
       shapes: d.shapes,
       accent: d.accent,
       badge: d.badge,
-      fulfilment: { instore, sameday, friday },
+      fulfilment: { instore, friday },
       // Designs keep their catalogue order for "Recommended"; a design's first metal ranks highest.
       popularity: di * 10 + mi + hash(d.id) * 5,
       newness: d.badge === "New" ? 0 : hash(`${d.id}new`),
@@ -294,7 +292,7 @@ export const READY_TO_SHIP: PlpProduct[] = DESIGNS.slice(0, 30).map((d, i) => {
     accent: d.accent,
     badge: d.badge,
     // Ready-to-ship rings are already made, so more are in store.
-    fulfilment: { instore: r < 0.55, sameday: r < 0.3, friday: true },
+    fulfilment: { instore: r < 0.55, friday: true },
     popularity: i,
     newness: d.badge === "New" ? 0 : hash(`${d.id}new`),
   }
