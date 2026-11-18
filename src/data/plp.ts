@@ -391,6 +391,8 @@ export interface NavLink {
   label: string
   /** Route to open, or null for links outside the prototype (shows "not part of this test"). */
   to: string | null
+  /** Illustration shown before the label (Stone Shapes, Figma SCO Drop 1 "Stone Shape" 28px). */
+  icon?: string
 }
 
 export interface NavGroup {
@@ -448,7 +450,12 @@ export const NAV_SECTIONS: NavSection[] = [
       {
         heading: "Stone Shapes",
         columns: 2,
-        links: SHAPES.map((s) => ({ label: s.label, to: toCollection(`${s.id}-shape`) })),
+        // Figma order (SCO Drop 1, 4548:45957 / 4548:45788): column 1 then column 2.
+        links: ["oval", "round", "marquise", "radiant", "cushion", "princess", "emerald", "pear", "heart", "asscher"].map((id) => ({
+          label: id === "emerald" ? "Emerald Cut" : SHAPES.find((s) => s.id === id)!.label,
+          to: toCollection(`${id}-shape`),
+          icon: `/images/nav/shapes/${id}.png`,
+        })),
       },
       {
         heading: "Stone Types",
