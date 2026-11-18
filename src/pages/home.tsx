@@ -35,6 +35,14 @@ const PROTOTYPES = [
     ],
   },
   {
+    test: "Test 2 · Stone Preferences & Recommendations",
+    links: [
+      { label: "Variant A: carat first (size → ring price range)", to: "/test-2/a" },
+      { label: "Variant B: budget first (budget → sizes in stock)", to: "/test-2/b" },
+      { label: "Variant C: size + budget (size priced inside your budget)", to: "/test-2/c" },
+    ],
+  },
+  {
     test: "Test 4 · Ring Personalization as a Separate Step",
     links: [
       { label: "Variant A: options on Ring Review", to: "/test-4/a" },

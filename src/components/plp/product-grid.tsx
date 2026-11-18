@@ -35,7 +35,7 @@ function InGridBanner() {
   )
 }
 
-function Pagination({ page, pageCount, onPage }: { page: number; pageCount: number; onPage: (p: number) => void }) {
+export function Pagination({ page, pageCount, onPage }: { page: number; pageCount: number; onPage: (p: number) => void }) {
   if (pageCount <= 1) return null
   // 1 2 3 … n, keeping the current page and its neighbours visible.
   const pages = Array.from({ length: pageCount }, (_, i) => i + 1).filter(

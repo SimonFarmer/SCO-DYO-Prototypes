@@ -29,3 +29,9 @@ export const cn = createCn({
     },
   },
 })
+
+/**
+ * Page content cap (1680px, the 2xl breakpoint token): centres content on wide screens while the
+ * element it sits in (backgrounds, borders, full-bleed bands) keeps the full viewport width.
+ */
+export const PAGE_MAX = "mx-auto w-full max-w-(--breakpoint-2xl)"

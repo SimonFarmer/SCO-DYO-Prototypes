@@ -7,7 +7,7 @@ import { RingSummary } from "@/components/dyo/ring-summary"
 import { SiteHeader } from "@/components/site/site-header"
 import { REVIEW_GALLERY } from "@/data/dyo"
 import { useRingBuild } from "@/state/ring-build"
-import { PageColumns } from "./page-columns"
+import { PageColumns } from "@/components/dyo/page-columns"
 
 const FINISHING = "/test-4/b"
 
