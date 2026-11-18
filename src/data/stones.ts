@@ -465,9 +465,21 @@ export interface SizeRow {
 export function sizeRows(scope: StoneScope): SizeRow[] {
   const stock = stockFor(scope)
   const scale = sizeScale(scope.type, scope.gem)
+  // Sizes outside the stock's own range get no row, even when a stone sits within the window of them:
+  // otherwise the green band and the size handle could reach past the largest (or below the smallest) size.
+  let lo = Infinity
+  let hi = 0
+  for (const s of stock) {
+    lo = Math.min(lo, snapSize(s.size, scale))
+    hi = Math.max(hi, snapSize(s.size, scale))
+  }
   const rows: SizeRow[] = []
   for (let v = scale.min; v <= scale.max + 1e-9; v += scale.step) {
     const size = Math.round(v * 100) / 100
+    if (size < lo - 1e-9 || size > hi + 1e-9) {
+      rows.push({ size, count: 0, min: 0, max: 0 })
+      continue
+    }
     let count = 0
     let min = Infinity
     let max = 0

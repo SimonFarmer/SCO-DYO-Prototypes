@@ -1,16 +1,24 @@
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { ImageGalleryOverlay } from "@/components/pdp/image-gallery-overlay"
 import { SettingGallery, ThumbnailGallery } from "@/components/pdp/setting-gallery"
+import { Badge } from "@/components/ui/badge"
 import { FINISHING_GALLERY, REVIEW_GALLERY } from "@/data/dyo"
 import type { GalleryMedia } from "@/data/products"
 import { useIsDesktop } from "@/lib/hooks"
 import { formatSize, gemById, previewImage, sizeScale, stoneShape, stoneType, type StoneTypeId } from "@/data/stones"
 
+/** How the stone step shows its media. */
+export type StoneGalleryMode =
+  /** Preferences (2a): the live preview alone, large, so it can be watched while the handles move */
+  | "preview"
+  /** Recommendations (2b): every image (Test 1's long-scroll grid on desktop, image + thumbnails on mobile) */
+  | "full"
+
 /**
- * Stone step gallery: Test 1's long-scroll gallery (hero + 2-column grid, every image opens the zoom
- * overlay) so both steps look and size the same. The hero is Shane Co.'s own render of this ring with
- * the chosen stone, shape and size (shaneco.com "Preview with Shape / Gemstone / Size"); diamonds then
- * show the 360 view, close-up, size guide and the two proportion diagrams (Figma 7685:412972).
- * Below lg it's Test 1 C's single image + thumbnail strip instead, so the buy form starts one screen down.
+ * Stone step gallery. The first image is Shane Co.'s own render of this ring with the chosen stone, shape
+ * and size (shaneco.com "Preview with Shape / Gemstone / Size"); diamonds then show the 360 view, close-up,
+ * size guide and the two proportion diagrams (Figma 7685:412972), and gemstones the setting photos and two
+ * size comparisons. In "preview" mode those extra images are kept but not shown.
  */
 export function StoneStepGallery({
   type,
@@ -18,6 +26,7 @@ export function StoneStepGallery({
   size,
   gem,
   previewNote,
+  mode = "preview",
 }: {
   type: StoneTypeId
   shape: string
@@ -26,6 +35,7 @@ export function StoneStepGallery({
   gem?: string
   /** e.g. "middle of your range" when the shopper chose a range, not one size */
   previewNote?: string
+  mode?: StoneGalleryMode
 }) {
   const scale = sizeScale(type, gem)
   const what = type === "gemstone" ? gemById(gem).label : stoneType(type).noun
@@ -82,14 +92,36 @@ export function StoneStepGallery({
   }, [type, shape, gem, scale.min, scale.max, scale.step])
 
   const isDesktop = useIsDesktop()
-  if (!isDesktop) {
-    return (
-      // As Test 1 C on mobile; the hero (the live preview) is the first image. Keyed by it, so changing
-      // the stone, shape or size brings the stage back to the preview to show the change.
-      <div className="px-2">
-        <ThumbnailGallery key={media[0].src} media={media} />
-      </div>
-    )
-  }
-  return <SettingGallery media={media} previewLabel={previewLabel} />
+
+  if (mode === "preview") return <PreviewStage hero={media[0]} label={previewLabel} />
+  if (isDesktop) return <SettingGallery media={media} previewLabel={previewLabel} className="px-0" />
+  // Mobile: Test 1 C's image + thumbnail strip. Keyed by the preview, so changing the stone, shape or
+  // size brings the stage back to it.
+  return <ThumbnailGallery key={media[0].src} media={media} />
+}
+
+/**
+ * The live preview on its own: one large image (opens the zoom overlay), capped at the viewport height on
+ * desktop so the whole ring stays on screen while the layout keeps it in view.
+ */
+function PreviewStage({ hero, label }: { hero: GalleryMedia; label: string }) {
+  const [open, setOpen] = useState(false)
+  const [session, setSession] = useState(0)
+  return (
+    <div className="bg-secondary">
+      <button
+        type="button"
+        onClick={() => {
+          setSession((n) => n + 1)
+          setOpen(true)
+        }}
+        aria-label={`Enlarge: ${hero.alt}`}
+        className="relative block aspect-square w-full cursor-zoom-in overflow-clip outline-none focus-visible:ring-3 focus-visible:ring-ring/50 lg:max-h-[calc(100svh-var(--header-offset)-var(--spacing)*4)]"
+      >
+        <img src={hero.src} alt={hero.alt} className="absolute inset-0 size-full object-contain mix-blend-multiply" />
+        <Badge className="absolute bottom-2 left-4">{label}</Badge>
+      </button>
+      <ImageGalleryOverlay key={session} media={[hero]} open={open} onOpenChange={setOpen} startIndex={0} />
+    </div>
+  )
 }
