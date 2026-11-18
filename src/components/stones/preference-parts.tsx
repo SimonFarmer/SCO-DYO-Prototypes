@@ -65,7 +65,9 @@ export function StoneTypeToggle({ value, onChange }: { value: StoneTypeId; onCha
   )
 }
 
-const VISIBLE_SHAPES = 8
+/** Swatch size and gap in px (size-11, gap-1.5): used to work out how many shapes fit on one row. */
+const SWATCH = 44
+const SWATCH_GAP = 6
 
 /** Round swatches in a row; selected gets a 2px ring (Figma "Shape Selector"). */
 function Swatch({
@@ -114,22 +116,31 @@ export function ShapeSelector({
   /** Shapes this stone comes in; others are crossed out (gemstones) */
   offered?: string[]
 }) {
-  const selectedIndex = STONE_SHAPES.findIndex((s) => s.id === value)
-  // A shape chosen from the overflow stays visible.
-  const [expanded, setExpanded] = useState(selectedIndex >= VISIBLE_SHAPES)
-  const shown = expanded ? STONE_SHAPES : STONE_SHAPES.slice(0, VISIBLE_SHAPES)
-  const hidden = STONE_SHAPES.length - VISIBLE_SHAPES
+  // One row, truncated to fit: when every shape fits there's no "+N"; otherwise the last slot becomes "+N"
+  // and narrower screens show fewer shapes (and a bigger N). "+N" expands to every shape, wrapping.
+  const [rowRef, width] = useWidth<HTMLDivElement>()
+  const [expanded, setExpanded] = useState(false)
+  const fits = width ? Math.max(1, Math.floor((width + SWATCH_GAP) / (SWATCH + SWATCH_GAP))) : STONE_SHAPES.length
+  const truncated = !expanded && fits < STONE_SHAPES.length
+  let shown = STONE_SHAPES
+  if (truncated) {
+    shown = STONE_SHAPES.slice(0, Math.max(0, fits - 1))
+    // The chosen shape always stays visible: it takes the last visible slot if it would be hidden.
+    const chosen = STONE_SHAPES.find((s) => s.id === value)
+    if (chosen && !shown.includes(chosen)) shown = [...shown.slice(0, -1), chosen]
+  }
+  const hidden = STONE_SHAPES.length - shown.length
 
   return (
     <section className="flex flex-col gap-6">
       <ConfigHeader title="Select your Shape" aside={{ label: "Preview Shape", value: stoneShape(value).label }} />
-      <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Shape">
+      <div ref={rowRef} className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Shape">
         {shown.map((s) => (
           <Swatch key={s.id} on={s.id === value} label={s.label} onClick={() => onChange(s.id)} disabled={offered ? !offered.includes(s.id) : false}>
             <img src={s.icon} alt="" className={s.id === value ? "size-7.5" : "size-7"} />
           </Swatch>
         ))}
-        {!expanded && hidden > 0 && (
+        {truncated && hidden > 0 && (
           <button
             type="button"
             onClick={() => setExpanded(true)}

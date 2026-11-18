@@ -56,7 +56,8 @@ export function StoneStepLayout({
               previewNote={previewNote}
             />
           </div>
-          <aside className="px-margin pb-8 lg:px-14 lg:pt-5">
+          {/* Mobile: 24px between the gallery and the buy form. */}
+          <aside className="px-margin pt-6 pb-8 lg:px-14 lg:pt-5">
             {/* Sticks below the sticky-on-intent header when that is showing (--header-offset), as in Test 1 A. */}
             <div
               className={cn(
