@@ -11,6 +11,7 @@ export function StoneCtas({
   primary,
   onPrimary,
   primaryDisabled,
+  viewAllDisabled,
   shape,
   count,
   onViewAll,
@@ -18,6 +19,7 @@ export function StoneCtas({
   primary: string
   onPrimary: () => void
   primaryDisabled?: boolean
+  viewAllDisabled?: boolean
   shape: string
   count: number
   onViewAll: () => void
@@ -29,7 +31,7 @@ export function StoneCtas({
         <Button className="w-full" onClick={onPrimary} disabled={primaryDisabled}>
           {primary}
         </Button>
-        <Button variant="outline" className="w-full border-input" onClick={onViewAll}>
+        <Button variant="outline" className="w-full border-input" onClick={onViewAll} disabled={viewAllDisabled}>
           View All {stoneShape(shape).label} Stones ({count.toLocaleString("en-US")})
         </Button>
       </div>

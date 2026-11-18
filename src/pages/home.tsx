@@ -37,9 +37,9 @@ const PROTOTYPES = [
   {
     test: "Test 2 · Stone Preferences & Recommendations",
     links: [
-      { label: "Variant A: carat range → total ring price range", to: "/test-2/a" },
-      { label: "Variant B: total budget slider → available stone sizes", to: "/test-2/b" },
-      { label: "Variant C: size + budget together, with trade-off messaging", to: "/test-2/c" },
+      { label: "Variant A: carat first (size → ring price range)", to: "/test-2/a" },
+      { label: "Variant B: budget first (budget → sizes in stock)", to: "/test-2/b" },
+      { label: "Variant C: size + budget (size priced inside your budget)", to: "/test-2/c" },
     ],
   },
   {

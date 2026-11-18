@@ -32,7 +32,7 @@ import {
   type StoneTypeId,
 } from "@/data/stones"
 import { useIsDesktop } from "@/lib/hooks"
-import { cn } from "@/lib/utils"
+import { cn, PAGE_MAX } from "@/lib/utils"
 import { useStonePrefs } from "./preferences"
 
 const PAGE_SIZE = 24
@@ -54,7 +54,7 @@ const SORTERS: Record<string, (a: LooseStone, b: LooseStone) => number> = {
 const INTRO: Record<StoneTypeId, string> = {
   natural: "Hand-selected, GIA-certified loose diamonds in a wide range of shapes and sizes. Choose the one that’s right for your ring.",
   lab: "IGI-certified lab-grown diamonds: the same sparkle and hardness as natural diamonds, at a lower price per carat.",
-  gemstone: "Hand-selected blue sapphires in classic and fancy shapes. Choose the one that’s right for your ring.",
+  gemstone: "Hand-selected gemstones, from amethyst to sapphire, in classic and fancy shapes. Choose the one that’s right for your ring.",
 }
 
 type ExploreTab = "shape" | "cut" | "clarity" | "color"
@@ -223,11 +223,11 @@ export function Test2DiamondsPlp() {
     setPage(1)
   }
 
-  // A new type has different price and grade scales: keep shape and carat, reset the rest.
+  // A new type has different price, size and grade scales (carats vs millimetres): keep the shapes, reset the rest.
   const setType = (type: StoneTypeId) => {
     if (type === filters.type) return
     setPresetId(null)
-    setFilters({ ...emptyStoneFilters(type), shapes: filters.shapes, minCarat: filters.minCarat, maxCarat: filters.maxCarat })
+    setFilters({ ...emptyStoneFilters(type), shapes: filters.shapes })
   }
 
   const results = useMemo(() => filterStones(filters).sort(SORTERS[sort]), [filters, sort])
@@ -262,11 +262,13 @@ export function Test2DiamondsPlp() {
 
   return (
     <div className="min-h-svh bg-background" data-variant={variant.id}>
-      <SiteHeader navigation />
-      <DyoStepper current={2} mobileLabel="Stone" showTotal={false} />
+      <SiteHeader navigation contained />
+      <DyoStepper current={2} mobileLabel="Stone" showTotal={false} contained />
       <main>
         {/* Collection hero (Figma "Collection Hero") */}
-        <section className="flex flex-col gap-5 bg-secondary px-margin pt-5 pb-10">
+        {/* The hero's background runs full width; its content stops at the 1680px page width. */}
+        <section className="bg-secondary">
+          <div className={cn("flex flex-col gap-5 px-margin pt-5 pb-10", PAGE_MAX)}>
           <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
             <Breadcrumb items={["Home", "Diamonds", title]} className="p-0" />
             <button type="button" onClick={back} className="flex h-6 cursor-pointer items-center gap-0.5 type-label-xs text-primary underline">
@@ -281,9 +283,10 @@ export function Test2DiamondsPlp() {
             </div>
             <ExploreBy filters={filters} onChange={setFilters} />
           </div>
+          </div>
         </section>
 
-        <div id="plp-results" className="scroll-mt-(--header-offset)">
+        <div id="plp-results" className={cn("scroll-mt-(--header-offset)", PAGE_MAX)}>
           {/* Desktop filter bar (Figma "Filter.Controls") */}
           <div className="hidden items-center gap-6 px-margin py-7 lg:flex">
             <button
@@ -365,9 +368,9 @@ export function Test2DiamondsPlp() {
           </div>
         </div>
 
-        <BelowGridContent />
+        <BelowGridContent contained />
       </main>
-      <SiteFooter />
+      <SiteFooter contained />
       <MobileBottomNav />
 
       {/* Mobile filters: changes apply as they're made; the button shows the live count. */}

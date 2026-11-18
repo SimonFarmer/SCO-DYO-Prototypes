@@ -1,22 +1,36 @@
-import { useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
+import { Menu } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
-import { STONE_SHAPES, STONE_TYPES, stoneShape, type StoneTypeId } from "@/data/stones"
+import {
+  BUDGET_GAP,
+  formatSize,
+  GEMS,
+  STONE_SHAPES,
+  STONE_TYPES,
+  gemById,
+  scaleIndex,
+  scalePct,
+  stoneShape,
+  type SizeScale,
+  type StoneTypeId,
+} from "@/data/stones"
+import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 /**
- * Building blocks of the Stone Preferences form (Test 2 · 2a, Figma 7685:412966 / 414388 / 415174).
- * Shared by the three variants so only the size/budget controls differ.
+ * Building blocks of the Stone Preferences form (Test 2 · 2a). Behaviour from the BASIC concept,
+ * styling from Figma 7685:417428 ("Find your Stone", Size + Budget).
  */
 
-/** Section title row: "Select your carat size ........ 1.00 ct" (Headings/H4). */
-export function ConfigHeader({ title, value }: { title: string; value?: ReactNode }) {
+/** Section title row: "Carat Size ........ Preview Size: 1.50 ct" (Headings/H4 + Caption). */
+export function ConfigHeader({ title, aside }: { title: string; aside?: { label: string; value: string } }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 type-h4 text-primary lining-nums">
-      <h2>{title}</h2>
-      {value !== undefined && (
-        <span aria-live="polite" className="whitespace-nowrap">
-          {value}
-        </span>
+    <div className="flex items-baseline justify-between gap-4 text-primary">
+      <h2 className="type-h4 lining-nums">{title}</h2>
+      {aside && (
+        <p aria-live="polite" className="text-right text-xs leading-4 font-medium whitespace-nowrap">
+          {aside.label}: <span className="font-semibold">{aside.value}</span>
+        </p>
       )}
     </div>
   )
@@ -26,7 +40,7 @@ export function ConfigHeader({ title, value }: { title: string; value?: ReactNod
 export function StoneTypeToggle({ value, onChange }: { value: StoneTypeId; onChange: (t: StoneTypeId) => void }) {
   return (
     <section className="flex flex-col gap-6">
-      <ConfigHeader title="Select your stone type" />
+      <ConfigHeader title="Select your Stone Type" />
       <div className="flex gap-2" role="radiogroup" aria-label="Stone type">
         {STONE_TYPES.map((t) => {
           const on = t.id === value
@@ -53,8 +67,53 @@ export function StoneTypeToggle({ value, onChange }: { value: StoneTypeId; onCha
 
 const VISIBLE_SHAPES = 8
 
-/** Round shape swatches, the first 8 then "+N" (Figma "Shape Configuration"). */
-export function ShapeSelector({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+/** Round swatches in a row; selected gets a 2px ring (Figma "Shape Selector"). */
+function Swatch({
+  on,
+  label,
+  onClick,
+  disabled,
+  children,
+}: {
+  on: boolean
+  label: string
+  onClick: () => void
+  /** Not offered (e.g. a shape a gemstone doesn't come in): crossed out, as on shaneco.com */
+  disabled?: boolean
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={on}
+      aria-label={disabled ? `${label} (not available)` : label}
+      title={disabled ? `${label} isn’t available for this stone` : label}
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "relative flex size-11 items-center justify-center overflow-hidden rounded-full bg-primary-foreground p-1",
+        on ? "border-2 border-primary" : "border border-input",
+        disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer hover:border-border",
+      )}
+    >
+      {children}
+      {disabled && <span aria-hidden className="absolute h-px w-[140%] -rotate-45 bg-primary" />}
+    </button>
+  )
+}
+
+/** Shapes: the first 8 then "+N" (Figma "Shape Configuration", "Preview Shape" aside). */
+export function ShapeSelector({
+  value,
+  onChange,
+  offered,
+}: {
+  value: string
+  onChange: (id: string) => void
+  /** Shapes this stone comes in; others are crossed out (gemstones) */
+  offered?: string[]
+}) {
   const selectedIndex = STONE_SHAPES.findIndex((s) => s.id === value)
   // A shape chosen from the overflow stays visible.
   const [expanded, setExpanded] = useState(selectedIndex >= VISIBLE_SHAPES)
@@ -63,28 +122,13 @@ export function ShapeSelector({ value, onChange }: { value: string; onChange: (i
 
   return (
     <section className="flex flex-col gap-6">
-      <ConfigHeader title="Select your shape" />
+      <ConfigHeader title="Select your Shape" aside={{ label: "Preview Shape", value: stoneShape(value).label }} />
       <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Shape">
-        {shown.map((s) => {
-          const on = s.id === value
-          return (
-            <button
-              key={s.id}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              aria-label={s.label}
-              title={s.label}
-              onClick={() => onChange(s.id)}
-              className={cn(
-                "flex size-11 cursor-pointer items-center justify-center rounded-full bg-primary-foreground p-1",
-                on ? "border-2 border-primary" : "border border-input hover:border-border",
-              )}
-            >
-              <img src={s.icon} alt="" className={on ? "size-7.5" : "size-7"} />
-            </button>
-          )
-        })}
+        {shown.map((s) => (
+          <Swatch key={s.id} on={s.id === value} label={s.label} onClick={() => onChange(s.id)} disabled={offered ? !offered.includes(s.id) : false}>
+            <img src={s.icon} alt="" className={s.id === value ? "size-7.5" : "size-7"} />
+          </Swatch>
+        ))}
         {!expanded && hidden > 0 && (
           <button
             type="button"
@@ -96,128 +140,243 @@ export function ShapeSelector({ value, onChange }: { value: string; onChange: (i
           </button>
         )}
       </div>
-      <p className="text-sm leading-none font-semibold text-muted-foreground">{stoneShape(value).label} Cut</p>
     </section>
   )
 }
 
-/** Range labels under a slider ("$1,500 ........ $25,000+"). */
-export function SliderScale({ from, to }: { from: string; to: string }) {
+/** Gemstone picker: only shown when Gemstones is the stone type (concept). */
+export function GemSelector({ value, onChange }: { value: string; onChange: (id: string) => void }) {
   return (
-    <div className="flex justify-between px-1 type-label-xs normal-case text-muted-foreground" aria-hidden>
-      <span>{from}</span>
-      <span>{to}</span>
-    </div>
+    <section className="flex flex-col gap-6 animate-in fade-in">
+      <ConfigHeader title="Select your Gemstone" aside={{ label: "Preview Gemstone", value: gemById(value).label }} />
+      <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Gemstone">
+        {GEMS.map((g) => (
+          <Swatch key={g.id} on={g.id === value} label={g.label} onClick={() => onChange(g.id)}>
+            <img src={g.icon} alt="" className="size-full rounded-full object-cover" />
+          </Swatch>
+        ))}
+      </div>
+    </section>
   )
 }
 
-const pct = (v: number, min: number, max: number) => ((Math.min(max, Math.max(min, v)) - min) / (max - min)) * 100
+/** Width of an element, kept up to date (for placing and merging price tags). */
+function useWidth<T extends HTMLElement>() {
+  const ref = useRef<T>(null)
+  const [width, setWidth] = useState(0)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setWidth(el.clientWidth))
+    ro.observe(el)
+    setWidth(el.clientWidth)
+    return () => ro.disconnect()
+  }, [])
+  return [ref, width] as const
+}
+
+const TAG = "absolute top-0 type-label-xs whitespace-nowrap text-muted-foreground"
+/** Rough width of a Label/XS tag, to decide when two would collide. */
+const tagWidth = (text: string) => text.length * 7.5
 
 /**
- * Simulator slider (6px track). `band` paints a highlighted span that isn't the slider's own value,
- * e.g. the sizes available in your budget behind Variant C's single carat handle.
+ * Two price tags under a line at x1/x2 (0–100 of the track). Centred under handles, or flush with a
+ * band's ends; merged into one "a – b" tag when they would collide (concept).
  */
-export function SimSlider({
-  label,
-  min,
-  max,
-  step,
-  value,
+function PriceTags({ a, b, x1, x2, align }: { a: string; b: string; x1: number; x2: number; align: "center" | "ends" }) {
+  const [ref, w] = useWidth<HTMLDivElement>()
+  const px1 = (x1 / 100) * w
+  const px2 = (x2 / 100) * w
+  const clamp = (x: number, tw: number) => Math.max(0, Math.min(w - tw, x))
+  const wa = tagWidth(a)
+  const wb = tagWidth(b)
+  const left = align === "center" ? clamp(px1 - wa / 2, wa) : clamp(px1, wa)
+  const right = align === "center" ? clamp(px2 - wb / 2, wb) : clamp(px2 - wb, wb)
+  const merged = left + wa + 12 > right
+  const both = `${a} – ${b}`
+  return (
+    <div ref={ref} className="relative mt-1.5 h-3" aria-hidden>
+      {w > 0 &&
+        (merged ? (
+          <span className={TAG} style={{ left: clamp((px1 + px2) / 2 - tagWidth(both) / 2, tagWidth(both)) }}>
+            {both}
+          </span>
+        ) : (
+          <>
+            <span className={TAG} style={{ left }}>
+              {a}
+            </span>
+            <span className={TAG} style={{ left: right }}>
+              {b}
+            </span>
+          </>
+        ))}
+    </div>
+  )
+}
+
+/** Green span on a line (Figma "Selected budget", success colours): sizes in budget or a size's price range. */
+function GreenBand({ from, to }: { from: number; to: number }) {
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute inset-y-0 min-w-0.75 border-x border-success bg-success-foreground transition-[left,width] duration-150"
+      style={{ left: `${from}%`, width: `${Math.max(to - from, 0)}%` }}
+    />
+  )
+}
+
+/**
+ * Budget line (Figma "Total ring budget Configuration").
+ *  - With `onChange` (Budget first, Size + Budget): two handles on the stepped scale, tags under them.
+ *  - Without (Carat first): no handles; the green band is the size's whole-ring price range, tagged at its ends.
+ */
+export function BudgetLine({
+  scale,
+  lo,
+  hi,
   onChange,
   band,
-  scale,
-  minStepsBetweenValues,
 }: {
-  label: string
-  min: number
-  max: number
-  step: number
-  value: number[]
-  onChange: (v: number[]) => void
-  band?: { from: number; to: number } | null
-  scale: { from: string; to: string }
-  /** Smallest gap between two handles, in steps */
-  minStepsBetweenValues?: number
+  scale: number[]
+  lo: number
+  hi: number
+  onChange?: (lo: number, hi: number) => void
+  /** Ring price range shown in green (a size's lowest → highest quality) */
+  band?: { lo: number; hi: number } | null
 }) {
-  const custom = band !== undefined
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="relative">
-        {custom && (
-          <div aria-hidden className="absolute inset-x-2 top-3 h-1.5 -translate-y-1/2 rounded-full bg-muted">
-            {band && (
-              <div
-                className="absolute inset-y-0 rounded-full bg-primary"
-                style={{ left: `${pct(band.from, min, max)}%`, width: `${pct(band.to, min, max) - pct(band.from, min, max)}%` }}
-              />
-            )}
+  const last = scale.length - 1
+  const clampToScale = (v: number) => Math.min(scale[last], Math.max(scale[0], v))
+  const bandPct = band ? { from: scalePct(scale, clampToScale(band.lo)), to: scalePct(scale, clampToScale(band.hi)) } : null
+
+  if (!onChange) {
+    return (
+      <div className="flex flex-col">
+        <div className="flex h-6 items-center px-2">
+          <div className="relative h-1.5 w-full rounded-full bg-muted">{bandPct && <GreenBand {...bandPct} />}</div>
+        </div>
+        {band && bandPct && (
+          <div className="px-2">
+            <PriceTags a={formatPrice(band.lo)} b={formatPrice(band.hi)} x1={bandPct.from} x2={bandPct.to} align="ends" />
           </div>
         )}
-        <Slider
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onValueChange={(v) => onChange(Array.isArray(v) ? [...v] : [v as number])}
-          aria-label={label}
-          minStepsBetweenValues={minStepsBetweenValues}
-          trackClassName={cn("h-1.5", custom && "bg-transparent")}
-          indicatorClassName={cn(custom && "bg-transparent")}
-        />
       </div>
-      <SliderScale {...scale} />
-    </div>
-  )
-}
+    )
+  }
 
-/** Small read-only bar: where a range sits on a scale (inside the result panel). */
-export function MiniRange({ from, to, min, max, scale }: { from: number; to: number; min: number; max: number; scale: { from: string; to: string } }) {
-  const left = pct(from, min, max)
-  const right = pct(to, min, max)
+  const gap = Math.min(BUDGET_GAP, last)
   return (
-    <div className="flex flex-col gap-1.5" aria-hidden>
-      <div className="relative h-1.5 overflow-hidden rounded-full bg-muted">
-        <div className="absolute inset-y-0 rounded-full bg-primary" style={{ left: `${left}%`, width: `${Math.max(right - left, 1.5)}%` }} />
-      </div>
-      <div className="flex justify-between text-xs leading-none text-muted-foreground">
-        <span>{scale.from}</span>
-        <span>{scale.to}</span>
+    <div className="flex flex-col">
+      <Slider
+        min={0}
+        max={last}
+        step={1}
+        minStepsBetweenValues={gap}
+        value={[scaleIndex(scale, lo), scaleIndex(scale, hi)]}
+        onValueChange={(v) => {
+          const [a, b] = v as number[]
+          onChange(scale[a], scale[b])
+        }}
+        aria-label="Total ring budget"
+        trackClassName="h-1.5"
+        thumbClassName="shadow-md"
+      >
+        {bandPct && <GreenBand {...bandPct} />}
+      </Slider>
+      <div className="px-2">
+        <PriceTags a={formatPrice(lo)} b={formatPrice(hi)} x1={scalePct(scale, lo)} x2={scalePct(scale, hi)} align="center" />
       </div>
     </div>
   )
 }
 
-/** Grey result panel (Figma "Result (information)"): eyebrow, big value, bar, rows and a note. */
-export function ResultPanel({
-  eyebrow,
+/**
+ * Size line (Figma "Carat Size"): one pill handle with a grip. Diamonds run on the concept's fixed
+ * 0.25–5.00 ct line; gemstones on their millimetre range for this setting (as shaneco.com's
+ * "Preview with Size"). A stone that tops out below the end of the line gets a tick at its largest
+ * size and a hatched track beyond it. `band` (budget modes) is the sizes in stock at the budget.
+ */
+export function SizeLine({
+  scale,
   value,
-  bar,
-  rows,
-  note,
+  onChange,
+  largest,
+  band,
 }: {
-  eyebrow: string
-  value: ReactNode
-  bar?: ReactNode
-  rows?: { label: string; value: string }[]
-  note?: ReactNode
+  scale: SizeScale
+  value: number
+  onChange: (v: number) => void
+  largest: number
+  band?: { from: number; to: number } | null
+}) {
+  const pct = (v: number) => (scale.max === scale.min ? 0 : ((Math.max(scale.min, Math.min(scale.max, v)) - scale.min) / (scale.max - scale.min)) * 100)
+  const capped = largest < scale.max - 1e-9
+  const at = pct(largest)
+  return (
+    <div className="flex flex-col">
+      <Slider
+        min={scale.min}
+        max={scale.max}
+        step={scale.step}
+        value={[value]}
+        onValueChange={(v) => onChange(Array.isArray(v) ? v[0] : (v as number))}
+        aria-label={scale.unit === "ct" ? "Carat size" : "Gemstone size in millimetres"}
+        controlClassName="px-5"
+        trackClassName="h-1.5"
+        indicatorClassName="bg-transparent"
+        thumbClassName="flex h-4 w-10 items-center justify-center shadow-md"
+        thumbContent={<Menu aria-hidden className="size-3 rotate-90 text-primary" strokeWidth={2} />}
+      >
+        {capped && (
+          <>
+            <span
+              aria-hidden
+              className="absolute inset-y-0 right-0 rounded-r-full bg-[repeating-linear-gradient(135deg,var(--muted)_0_2px,var(--background)_2px_5px)]"
+              style={{ left: `${at}%` }}
+            />
+            <span aria-hidden className="absolute -top-1.25 h-4 w-px -translate-x-1/2 bg-primary" style={{ left: `${at}%` }} />
+          </>
+        )}
+        {band && <GreenBand from={pct(band.from)} to={pct(band.to)} />}
+      </Slider>
+      <div className="relative mx-5 mt-1.5 h-3 type-label-xs normal-case text-muted-foreground" aria-hidden>
+        <span className="absolute -left-4">{formatSize(scale.min, scale.unit)}</span>
+        <span className={cn("absolute", capped ? "-translate-x-1/2" : "right-0 translate-x-1/2")} style={capped ? { left: `${at}%` } : undefined}>
+          {formatSize(largest, scale.unit)}
+        </span>
+      </div>
+    </div>
+  )
+}
+/** "Price Explained" (Figma popover): Setting and Stone rows, divider, Ring Total. */
+export function PriceExplained({
+  rows,
+  total,
+}: {
+  rows: { label: string; desc: ReactNode; price: string }[]
+  total: string
 }) {
   return (
-    <div className="flex flex-col gap-3 bg-bg-input-50 p-4" aria-live="polite">
-      <p className="type-label-xs text-muted-foreground">{eyebrow}</p>
-      <p className="type-h4 text-primary lining-nums">{value}</p>
-      {bar}
-      {rows && rows.length > 0 && (
-        <>
-          <div className="h-px bg-muted" />
-          {rows.map((r) => (
-            <div key={r.label} className="flex items-center justify-between gap-3 leading-none text-muted-foreground">
-              <span className="text-xs">{r.label}</span>
-              <span className="text-sm font-semibold whitespace-nowrap">{r.value}</span>
-            </div>
-          ))}
-        </>
-      )}
-      {note && <p className="text-xs leading-4 text-muted-foreground">{note}</p>}
+    <div className="flex flex-col gap-3 bg-bg-input-50 p-4 text-primary" aria-live="polite">
+      {rows.map((r) => (
+        <div key={r.label} className="flex flex-col gap-0.75">
+          <p className="type-label-xs">{r.label}</p>
+          <div className="flex items-start gap-2 text-xs leading-4">
+            <p className="min-w-0 flex-1 tracking-[0.12px]">{r.desc}</p>
+            <p className="text-right font-semibold whitespace-nowrap">{r.price}</p>
+          </div>
+        </div>
+      ))}
+      <div className="h-px bg-input" />
+      <div className="flex items-start justify-between gap-2 text-sm leading-5 font-semibold">
+        <span>Ring Total:</span>
+        <span className="whitespace-nowrap">{total}</span>
+      </div>
     </div>
   )
+}
+
+/** Grey note for empty states (no stones at a size or a budget). */
+export function StockNote({ children }: { children: ReactNode }) {
+  return <p className="border border-input bg-secondary px-3 py-2.5 text-xs leading-4 text-muted-foreground">{children}</p>
 }

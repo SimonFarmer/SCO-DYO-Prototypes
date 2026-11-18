@@ -2,7 +2,7 @@ import { Fragment, useState } from "react"
 import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { formatPrice } from "@/lib/format"
-import { cn } from "@/lib/utils"
+import { cn, PAGE_MAX } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
 
 type StepNumber = 1 | 2 | 3
@@ -60,6 +60,7 @@ export function DyoStepper({
   mobileLabel,
   showTotal = true,
   mobileTone = "secondary",
+  contained = false,
 }: {
   current: StepNumber
   /** Short label for the 375px accordion header. */
@@ -68,6 +69,8 @@ export function DyoStepper({
   showTotal?: boolean
   /** Mobile bar fill: the PLP uses the accent strip (Figma Drop 3b PLP); the tests keep secondary. */
   mobileTone?: "secondary" | "accent"
+  /** Cap the desktop bar's contents at the page max width (1680px); the bar itself stays full width. */
+  contained?: boolean
 }) {
   const { setting, stone, total } = useRingBuild()
   const notInTest = useNotInTest()
@@ -81,7 +84,8 @@ export function DyoStepper({
     <>
       {/* Desktop bar (Figma 7336:177134): title column, then three equal steps split by dividers,
           so the steps stretch with the viewport instead of sitting at fixed widths. */}
-      <div className="hidden items-center gap-2 border-y border-border-subtle bg-primary-foreground px-margin py-3 lg:flex">
+      <div className="hidden border-y border-border-subtle bg-primary-foreground lg:block">
+      <div className={cn("flex items-center gap-2 px-margin py-3", contained && PAGE_MAX)}>
         <p className="w-card shrink-0 type-h5 text-primary">Design Your Ring</p>
         <ol className="flex min-w-0 flex-1 items-center gap-4">
           {[
@@ -123,6 +127,7 @@ export function DyoStepper({
             )
           })}
         </ol>
+      </div>
       </div>
 
       {/* Mobile accordion: opens over the page, dimming only what's below the bar (not the header or hero above it) */}

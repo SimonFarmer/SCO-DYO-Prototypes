@@ -1,150 +1,190 @@
 import { useMemo, useState } from "react"
 import { useNavigate } from "react-router"
-import { CaretLeftIcon } from "@phosphor-icons/react"
+import { CaretLeftIcon, CheckIcon, TriangleIcon } from "@phosphor-icons/react"
 import { SectionDivider, StepIntro } from "@/components/dyo/finishing-sections"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { PriceExplained } from "@/components/stones/preference-parts"
 import { StoneCtas } from "@/components/stones/stone-ctas"
-import { Badge } from "@/components/ui/badge"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { SETTING } from "@/data/dyo"
-import { recommend, stoneImage, stoneShape, stoneTitle, stoneType, type StonePick } from "@/data/stones"
+import { formatSize, gemById, recommend, stoneImage, stoneShape, stoneSpecs, stoneTitle, stoneType, type SpecKey, type StonePick } from "@/data/stones"
 import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { targetCarat, useStonePrefs, type StonePrefs } from "./preferences"
+import { useStonePrefs, type StonePrefs, type StoneSim } from "./preferences"
 import { StoneStepLayout } from "./stone-step-layout"
-import type { StonePreferenceVariant } from "./variants"
+import type { ShopBy } from "./variants"
 
-/** One line under the title that ties the picks back to the shopper's choices (comprehension test). */
-function basis(variant: StonePreferenceVariant["id"], p: StonePrefs, count: number) {
-  const what = `${count.toLocaleString("en-US")} ${stoneShape(p.shape).label.toLowerCase()} ${stoneType(p.type).noun.toLowerCase()}s`
-  if (variant === "A") return `Picked from ${what} between ${p.caratLo.toFixed(2)} and ${p.caratHi.toFixed(2)} ct.`
-  if (variant === "B") return `Picked from ${what} that keep your ring at or near ${formatPrice(p.budgetHi)}.`
-  return `Picked from ${what} around ${p.carat.toFixed(2)} ct for a ring between ${formatPrice(p.budgetLo)} and ${formatPrice(p.budgetHi)}.`
+/** The line under the title that ties the picks back to the shopper's choices (comprehension test). */
+function basis(shopBy: ShopBy, p: StonePrefs, sim: StoneSim) {
+  const what = p.type === "gemstone" ? `${gemById(p.gem).label.toLowerCase()} gemstones` : stoneType(p.type).plural
+  const lead = `Three ${what} in ${stoneShape(sim.scope.shape).label.toLowerCase()}, chosen for each kind of buyer.`
+  const size = formatSize(sim.size, sim.sizes.unit)
+  const budget = `${formatPrice(sim.budgetLo)} – ${formatPrice(sim.budgetHi)}`
+  if (shopBy === "size") return `${lead} Based on your size: ${size}.`
+  if (shopBy === "budget") return `${lead} Based on your ring budget: ${budget}.`
+  return `${lead} Based on ${size} and a ring budget of ${budget}.`
 }
 
-function PickTile({ pick, selected, onSelect }: { pick: StonePick; selected: boolean; onSelect: () => void }) {
-  const notInTest = useNotInTest()
+/** Carat (or Size for gemstones) · Clarity · Color · Cut, with the cells this pick optimises highlighted (concept "strip"). */
+function SpecStrip({ pick }: { pick: StonePick }) {
+  const specs = stoneSpecs(pick.stone)
+  const cells: { key: SpecKey; label: string; value: string }[] = [
+    pick.stone.type === "gemstone"
+      ? { key: "size", label: "Size", value: `${pick.stone.size.toFixed(1)} mm` }
+      : { key: "size", label: "Carat", value: `${pick.stone.carat.toFixed(2)} ct` },
+    { key: "clarity", label: "Clarity", value: specs.clarity },
+    { key: "color", label: "Color", value: specs.color },
+    { key: "cut", label: "Cut", value: specs.cut },
+  ]
+  return (
+    <dl className="grid grid-cols-4 border border-input">
+      {cells.map((c, i) => {
+        const on = pick.highlight.includes(c.key)
+        return (
+          <div
+            key={c.key}
+            className={cn(
+              "flex min-w-0 flex-col px-2 py-1.25",
+              i > 0 && "border-l border-input",
+              on ? "bg-secondary shadow-[inset_0_-2px_0_var(--primary)]" : "bg-background",
+            )}
+          >
+            <dt className="text-xxs leading-4 font-semibold tracking-[1px] text-muted-foreground uppercase">{c.label}</dt>
+            <dd className={cn("text-xs leading-4 text-primary [overflow-wrap:anywhere] tabular-nums", on && "font-semibold")}>{c.value}</dd>
+          </div>
+        )
+      })}
+    </dl>
+  )
+}
+
+/** Budget check under the price: Carat first shows the ring total instead (no budget set). */
+function PriceStatus({ pick, shopBy, stoneMax }: { pick: StonePick; shopBy: ShopBy; stoneMax: number }) {
+  if (shopBy === "size") return <span className="text-xxs leading-4 text-muted-foreground">Ring total {formatPrice(SETTING.price + pick.stone.price)}</span>
+  const over = pick.stone.price - stoneMax
+  return over > 0 ? (
+    <span className="flex items-center justify-end gap-1 text-xxs leading-4 text-warning">
+      <TriangleIcon weight="fill" className="size-2.5" />
+      {formatPrice(over)} over budget
+    </span>
+  ) : (
+    <span className="flex items-center justify-end gap-1 text-xxs leading-4 text-success">
+      <CheckIcon weight="bold" className="size-3" />
+      Within budget
+    </span>
+  )
+}
+
+function PickTile({ pick, selected, onSelect, shopBy, stoneMax }: { pick: StonePick; selected: boolean; onSelect: () => void; shopBy: ShopBy; stoneMax: number }) {
   const img = stoneImage(pick.stone)
   return (
     <div
       onClick={onSelect}
       className={cn(
-        "flex cursor-pointer gap-5 p-4",
-        selected ? "border-2 border-primary" : "border border-input hover:border-border",
+        "grid cursor-pointer grid-cols-[16px_56px_minmax(0,1fr)] items-start gap-3 bg-background",
+        selected ? "border-2 border-primary px-3.25 py-2.75" : "border border-input px-3.5 py-3 hover:border-border",
       )}
     >
-      <div className="size-25.75 shrink-0 bg-secondary">
-        <img src={img.src} alt="" className={cn("size-full", img.photo ? "object-cover" : "object-contain p-5")} />
+      <RadioGroupItem value={pick.kind} aria-label={`${pick.label}: ${stoneTitle(pick.stone)}`} className="mt-0.5 border-primary" />
+      <div className="size-14 overflow-hidden bg-secondary">
+        {/* Gemstones: Shane Co.'s ring render, cropped in on the stone. */}
+        <img
+          src={img.src}
+          alt=""
+          className={cn("size-full", img.render ? "origin-[50%_30%] scale-[2.4] object-contain" : img.photo ? "object-cover" : "object-contain p-2.5 mix-blend-multiply")}
+        />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-start justify-between gap-2">
-            <Badge
-              variant={pick.kind === "our-pick" ? "default" : "secondary"}
-              className={pick.kind === "our-pick" ? undefined : "text-primary"}
-            >
-              {pick.label}
-            </Badge>
-            <RadioGroupItem value={pick.kind} aria-label={`${pick.label}: ${stoneTitle(pick.stone)}`} className="border-primary" />
-          </div>
-          <p className="text-sm leading-5 font-semibold text-primary">{stoneTitle(pick.stone)}</p>
-          <p className="text-xs leading-4 tracking-[0.12px] text-primary">{pick.description}</p>
+      <div className="flex min-w-0 flex-col gap-2">
+        <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="type-label-xs text-primary">{pick.label}</span>
+          <span className="text-xxs leading-4 text-muted-foreground">{pick.who}</span>
+        </p>
+        <div className="flex items-start justify-between gap-3">
+          <p className="min-w-0 font-heading text-lg leading-6 font-medium text-primary lining-nums">{stoneTitle(pick.stone)}</p>
+          <p className="flex shrink-0 flex-col items-end text-right">
+            <span className="font-heading text-lg leading-6 font-medium text-primary lining-nums">{formatPrice(pick.stone.price)}</span>
+            <PriceStatus pick={pick} shopBy={shopBy} stoneMax={stoneMax} />
+          </p>
         </div>
-        <p className="text-sm leading-5 font-semibold text-primary">Ring Total: {formatPrice(SETTING.price + pick.stone.price)}</p>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            notInTest("Stone details")
-          }}
-          className="cursor-pointer self-start type-label-xs text-primary underline"
-        >
-          View details
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function RingSummary({ pick }: { pick: StonePick }) {
-  const rows = [
-    { label: `Setting: ${SETTING.name}, ${SETTING.metal.replace("14K", "14k")}`, price: SETTING.price },
-    { label: `Stone: ${stoneTitle(pick.stone)}`, price: pick.stone.price },
-  ]
-  return (
-    <div className="flex flex-col gap-4 bg-bg-input-50 p-4" aria-live="polite">
-      <h2 className="type-h4 text-primary">Ring Summary</h2>
-      <div className="flex flex-col gap-3">
-        {rows.map((r) => (
-          <div key={r.label} className="flex items-start justify-between gap-3">
-            <span className="text-xs leading-4 font-medium text-primary">{r.label}</span>
-            <span className="text-sm leading-none font-semibold text-muted-foreground">{formatPrice(r.price)}</span>
-          </div>
-        ))}
-      </div>
-      <div className="h-px bg-input" />
-      <div className="flex items-center justify-between text-base leading-6 font-semibold text-primary">
-        <span>Ring Total:</span>
-        <span>{formatPrice(SETTING.price + pick.stone.price)}</span>
+        <SpecStrip pick={pick} />
+        <p className="text-xs leading-4 text-muted-foreground">
+          <span className="font-semibold text-primary">Optimized for {pick.optimizedFor}.</span> {pick.why}
+        </p>
       </div>
     </div>
   )
 }
 
 /**
- * Test 2 · Recommendations (2b). Figma 7685:416729.
- * Replaces the preferences form with three picks from the stones that match 2a; "Edit stone
- * preferences" goes back with every choice kept, and "View All" opens the PLP with them preset.
+ * Test 2 · Recommendations (2b). Behaviour: BASIC concept "Our three picks for you";
+ * tile styling from our Pattern Library tokens (Figma 7685:416729 for the page frame).
+ * Three real stones from stock: Best Value, Largest Size, Finest Quality.
  */
 export function Test2Recommendations() {
   const navigate = useNavigate()
   const notInTest = useNotInTest()
-  const { variant, prefs, matching, href } = useStonePrefs()
-  const picks = useMemo(() => recommend(matching, targetCarat(variant.id, prefs)), [matching, variant.id, prefs])
+  const { variant, prefs, sim, matching, href } = useStonePrefs()
+  const { shopBy } = variant
+  const picks = useMemo(
+    () => (sim.blocked ? [] : recommend({ scope: sim.scope, mode: shopBy, size: sim.size, stoneMin: sim.stoneMin, stoneMax: sim.stoneMax })),
+    [sim, shopBy],
+  )
   const [selectedKind, setSelectedKind] = useState(picks[0]?.kind)
   const selected = picks.find((p) => p.kind === selectedKind) ?? picks[0]
-
-  const editPrefs = () => navigate(href("preferences"))
+  const kind = prefs.type === "gemstone" ? "Gemstone" : "Diamond"
 
   return (
     <div data-variant={variant.id}>
-      <StoneStepLayout prefs={prefs} carat={selected?.stone.carat}>
+      <StoneStepLayout prefs={prefs} size={selected?.stone.size ?? sim.size}>
         <header className="flex flex-col gap-8 max-lg:gap-4">
-          <StepIntro
-            eyebrow="Step 2 of 3 · Stone"
-            title="Stone Recommendations"
-            subtitle={selected ? basis(variant.id, prefs, matching.length) : undefined}
-          />
+          <StepIntro eyebrow="Step 2 of 3 · Recommended Stones" title="Our three picks for you" subtitle={basis(shopBy, prefs, sim)} />
           <button
             type="button"
-            onClick={editPrefs}
+            onClick={() => navigate(href("preferences"))}
             className="flex h-6 cursor-pointer items-center gap-0.5 self-start type-label-xs text-primary underline"
           >
             <CaretLeftIcon className="size-4" />
-            Edit stone preferences
+            Edit preferences
           </button>
         </header>
         <SectionDivider />
         {selected ? (
           <>
-            <RadioGroup value={selected.kind} onValueChange={(v) => setSelectedKind(v as StonePick["kind"])} aria-label="Recommended stones">
-              {picks.map((p) => (
-                <PickTile key={p.kind} pick={p} selected={p.kind === selected.kind} onSelect={() => setSelectedKind(p.kind)} />
-              ))}
-            </RadioGroup>
-            <SectionDivider />
-            <RingSummary pick={selected} />
+            <div className="flex flex-col gap-2">
+              <RadioGroup value={selected.kind} onValueChange={(v) => setSelectedKind(v as StonePick["kind"])} aria-label="Recommended stones">
+                {picks.map((p) => (
+                  <PickTile key={p.kind} pick={p} selected={p.kind === selected.kind} onSelect={() => setSelectedKind(p.kind)} shopBy={shopBy} stoneMax={sim.stoneMax} />
+                ))}
+              </RadioGroup>
+              <p className="text-xxs leading-4 text-muted-foreground">Highlighted cells are what each pick optimizes.</p>
+            </div>
+            <PriceExplained
+              rows={[
+                { label: "Setting", desc: `${SETTING.name} · ${SETTING.metal.replace("14K", "14k")}`, price: formatPrice(SETTING.price) },
+                {
+                  label: `Center ${kind}`,
+                  desc: (
+                    <>
+                      {stoneTitle(selected.stone)} · <span className="font-semibold">{selected.label.toLowerCase()}</span>
+                    </>
+                  ),
+                  price: formatPrice(selected.stone.price),
+                },
+              ]}
+              total={formatPrice(SETTING.price + selected.stone.price)}
+            />
           </>
         ) : (
           <div className="flex flex-col gap-2 bg-bg-input-50 p-4">
             <p className="type-h5 text-primary">No stones match these preferences</p>
-            <p className="text-xs leading-4 text-muted-foreground">Edit your stone preferences to see recommendations.</p>
+            <p className="text-xs leading-4 text-muted-foreground">Edit your preferences to see recommendations.</p>
           </div>
         )}
         <StoneCtas
-          primary="Select This Diamond"
+          primary={stoneType(prefs.type).cta}
           onPrimary={() => notInTest("Finishing touches (step 3)")}
           primaryDisabled={!selected}
+          viewAllDisabled={sim.blocked}
           shape={prefs.shape}
           count={matching.length}
           onViewAll={() => navigate(href("diamonds", { from: "recs" }))}

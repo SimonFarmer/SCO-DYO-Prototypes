@@ -7,7 +7,7 @@ import { useNotInTest } from "@/components/prototype/not-in-test"
 import { ProductCarousel } from "@/components/shared/product-carousel"
 import { RECENTLY_VIEWED } from "@/data/products"
 import { RTS_PATH } from "@/data/plp"
-import { cn } from "@/lib/utils"
+import { cn, PAGE_MAX } from "@/lib/utils"
 
 const FAQ = [
   {
@@ -61,10 +61,12 @@ const RELATED = [
 
 const sectionTitle = "type-h3 text-primary"
 
-function NaturalDiamonds() {
+function NaturalDiamonds({ contained }: { contained: boolean }) {
   const [more, setMore] = useState(false)
   return (
-    <section className="relative isolate flex min-h-152 items-end overflow-hidden px-margin py-12 text-primary-foreground lg:items-center">
+    <section className={cn("relative isolate flex min-h-152 items-end overflow-hidden py-12 text-primary-foreground lg:items-center", !contained && "px-margin")}>
+      {/* With `contained`, the photo stays full bleed and the copy lines up with the 1680px page edge. */}
+      <div className={cn(contained && ["px-margin", PAGE_MAX])}>
       <img src="/images/plp/content/natural-diamonds.jpg" alt="" loading="lazy" className="absolute inset-0 -z-20 size-full object-cover" />
       <div aria-hidden className="absolute inset-0 -z-10 bg-linear-to-t from-black/70 via-black/30 to-transparent lg:bg-linear-to-r" />
       <div className="flex max-w-2xl flex-col items-start gap-4">
@@ -84,17 +86,22 @@ function NaturalDiamonds() {
           {more ? "Read Less" : "Read More"}
         </Button>
       </div>
+      </div>
     </section>
   )
 }
 
-export function BelowGridContent() {
+/**
+ * Content below the PLP grid. `contained` (Test 2 PLP) caps the full-width sections at the 1680px page
+ * width while their backgrounds still run edge to edge; without it they're unchanged.
+ */
+export function BelowGridContent({ contained = false }: { contained?: boolean } = {}) {
   const notInTest = useNotInTest()
   const navigate = useNavigate()
 
   return (
     <div className="flex flex-col bg-secondary">
-      <NaturalDiamonds />
+      <NaturalDiamonds contained={contained} />
 
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-margin py-14">
         <h2 className={sectionTitle}>FAQ</h2>
@@ -131,7 +138,7 @@ export function BelowGridContent() {
         </div>
       </section>
 
-      <section className="flex flex-col gap-8 px-margin py-14">
+      <section className={cn("flex flex-col gap-8 px-margin py-14", contained && PAGE_MAX)}>
         <h2 className={sectionTitle}>Explore Related Articles</h2>
         <ul className="-mr-margin flex snap-x gap-card-gap overflow-x-auto pr-margin [scrollbar-width:none] lg:mr-0 lg:grid lg:grid-cols-4 lg:pr-0">
           {ARTICLES.map((a) => (
@@ -180,7 +187,7 @@ export function BelowGridContent() {
         </Accordion>
       </section>
 
-      <ProductCarousel title="Pick Up Where You Left Off" products={RECENTLY_VIEWED} showWishlist className="border-t border-border-subtle" />
+      <ProductCarousel title="Pick Up Where You Left Off" products={RECENTLY_VIEWED} showWishlist className="border-t border-border-subtle" contained={contained} />
     </div>
   )
 }

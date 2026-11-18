@@ -7,11 +7,14 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Slider } from "@/components/ui/slider"
 import {
-  CARAT,
+  formatSize,
+  sizeBounds,
+  GEMS,
   STONE_SHAPES,
   emptyStoneFilters,
   gradesFor,
   stonePriceBounds,
+  gemById,
   stoneShape,
   type StoneFilters,
 } from "@/data/stones"
@@ -20,7 +23,7 @@ import { cn } from "@/lib/utils"
 
 /**
  * Diamond PLP filters (Figma "Diamond Filters — Preset: Most Brilliant"): applied pills, Diamond
- * Price, Stone Shape, Carat, "What matters most?" presets, Cut, Color, Clarity, then the collapsed
+ * Price, Stone Shape, Carat (millimetres for gemstones), "What matters most?" presets, Cut, Color, Clarity, then the collapsed
  * Certification and L/W Ratio (not part of this test).
  */
 
@@ -51,7 +54,6 @@ export const PRESETS: { id: PresetId; label: string; detail: string; explain: st
   },
 ]
 
-const ct = (c: number) => `${c.toFixed(2)} ct`
 
 function Group({ value, title, info, children }: { value: string; title: string; info?: string; children: ReactNode }) {
   const notInTest = useNotInTest()
@@ -80,8 +82,21 @@ function Group({ value, title, info, children }: { value: string; title: string;
 }
 
 /** Two inputs over a two-thumb slider, for carat weight. */
-function CaratRange({ min, max, onChange }: { min: number | null; max: number | null; onChange: (lo: number | null, hi: number | null) => void }) {
-  const applied: [number, number] = [min ?? CARAT.min, max ?? CARAT.max]
+/** Two inputs over a two-thumb slider, for size: carats for diamonds, millimetres for gemstones. */
+function SizeRange({
+  type,
+  min,
+  max,
+  onChange,
+}: {
+  type: StoneFilters["type"]
+  min: number | null
+  max: number | null
+  onChange: (lo: number | null, hi: number | null) => void
+}) {
+  const B = sizeBounds(type)
+  const fmt = (v: number) => formatSize(v, B.unit)
+  const applied: [number, number] = [min ?? B.min, max ?? B.max]
   const [range, setRange] = useState(applied)
   const [seen, setSeen] = useState(applied.join())
   if (applied.join() !== seen) {
@@ -89,21 +104,21 @@ function CaratRange({ min, max, onChange }: { min: number | null; max: number | 
     setRange(applied)
   }
   const commit = ([a, b]: [number, number]) => {
-    const lo = Math.max(CARAT.min, Math.min(a, b))
-    const hi = Math.min(CARAT.max, Math.max(a, b))
+    const lo = Math.max(B.min, Math.min(a, b))
+    const hi = Math.min(B.max, Math.max(a, b))
     setRange([lo, hi])
-    onChange(lo <= CARAT.min ? null : lo, hi >= CARAT.max ? null : hi)
+    onChange(lo <= B.min ? null : lo, hi >= B.max ? null : hi)
   }
   const input = (i: 0 | 1, label: string) => (
     <input
       key={`${i}-${range[i]}`}
       inputMode="decimal"
       aria-label={label}
-      defaultValue={ct(range[i])}
+      defaultValue={fmt(range[i])}
       onBlur={(e) => {
         const n = Number(e.currentTarget.value.replace(/[^\d.]/g, ""))
         if (Number.isFinite(n) && n > 0) commit(i === 0 ? [n, range[1]] : [range[0], n])
-        else e.currentTarget.value = ct(range[i])
+        else e.currentTarget.value = fmt(range[i])
       }}
       onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
       className="h-12 w-full min-w-0 border border-border bg-background px-3 text-sm text-primary outline-none focus-visible:border-primary"
@@ -116,14 +131,14 @@ function CaratRange({ min, max, onChange }: { min: number | null; max: number | 
         {input(1, "Maximum carat")}
       </div>
       <Slider
-        min={CARAT.min}
-        max={CARAT.max}
-        step={0.05}
+        min={B.min}
+        max={B.max}
+        step={B.step}
         minStepsBetweenValues={1}
         value={range}
         onValueChange={(v) => setRange(v as [number, number])}
         onValueCommitted={(v) => commit(v as [number, number])}
-        aria-label="Carat range"
+        aria-label={B.unit === "ct" ? "Carat range" : "Size range in millimetres"}
       />
     </div>
   )
@@ -190,9 +205,12 @@ function AppliedPills({ filters, onChange }: { filters: StoneFilters; onChange: 
     const b = stonePriceBounds(filters.type)
     pills.push({ key: "price", label: `${formatPrice(filters.minPrice ?? b.min)} - ${formatPrice(filters.maxPrice ?? b.max)}`, next: { ...filters, minPrice: null, maxPrice: null } })
   }
+  for (const id of filters.gems) pills.push({ key: `gem-${id}`, label: gemById(id).label, next: { ...filters, gems: filters.gems.filter((g) => g !== id) } })
   for (const id of filters.shapes) pills.push({ key: `shape-${id}`, label: stoneShape(id).label, next: { ...filters, shapes: filters.shapes.filter((s) => s !== id) } })
-  if (filters.minCarat !== null || filters.maxCarat !== null)
-    pills.push({ key: "carat", label: `${ct(filters.minCarat ?? CARAT.min)} - ${ct(filters.maxCarat ?? CARAT.max)}`, next: { ...filters, minCarat: null, maxCarat: null } })
+  if (filters.minSize !== null || filters.maxSize !== null) {
+    const B = sizeBounds(filters.type)
+    pills.push({ key: "size", label: `${formatSize(filters.minSize ?? B.min, B.unit)} - ${formatSize(filters.maxSize ?? B.max, B.unit)}`, next: { ...filters, minSize: null, maxSize: null } })
+  }
   for (const c of filters.cuts) pills.push({ key: `cut-${c}`, label: g.cut[c].label, next: { ...filters, cuts: filters.cuts.filter((x) => x !== c) } })
   if (filters.color) pills.push({ key: "color", label: `Color ${g.color[filters.color[0]].label}–${g.color[filters.color[1]].label}`, next: { ...filters, color: null } })
   if (filters.clarity) pills.push({ key: "clarity", label: `${g.clarity[filters.clarity[0]].label}–${g.clarity[filters.clarity[1]].label}`, next: { ...filters, clarity: null } })
@@ -252,7 +270,31 @@ export function DiamondFilterPanel({
           onChange(f)
         }}
       />
-      <Accordion multiple defaultValue={["price", "shape", "carat", "cut", "color", "clarity"]}>
+      <Accordion multiple defaultValue={["gem", "price", "shape", "carat", "cut", "color", "clarity"]}>
+        {!diamond && (
+          <Group value="gem" title="Gemstone">
+            <ul className="grid grid-cols-2 gap-3">
+              {GEMS.map((g) => {
+                const on = filters.gems.includes(g.id)
+                return (
+                  <li key={g.id}>
+                    <button
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => onChange({ ...filters, gems: on ? filters.gems.filter((x) => x !== g.id) : [...filters.gems, g.id] })}
+                      className="flex w-full cursor-pointer items-center gap-3 text-left"
+                    >
+                      <span className={cn("shrink-0 rounded-full border p-0.5", on ? "border-primary" : "border-transparent")}>
+                        <img src={g.icon} alt="" className="block size-6 rounded-full object-cover" />
+                      </span>
+                      <span className={cn("text-sm leading-5 text-foreground", on && "font-semibold")}>{g.label}</span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </Group>
+        )}
         <Group value="price" title={diamond ? "Diamond Price" : "Gemstone Price"}>
           <PriceRange bounds={bounds} min={filters.minPrice} max={filters.maxPrice} onChange={(minPrice, maxPrice) => onChange({ ...filters, minPrice, maxPrice })} />
         </Group>
@@ -282,10 +324,14 @@ export function DiamondFilterPanel({
 
         <Group
           value="carat"
-          title="Carat"
-          info="Carat measures a diamond’s weight. While larger carat sizes often appear more impressive, a diamond’s cut and proportions also influence how large it looks."
+          title={diamond ? "Carat" : "Size (mm)"}
+          info={
+            diamond
+              ? "Carat measures a diamond’s weight. While larger carat sizes often appear more impressive, a diamond’s cut and proportions also influence how large it looks."
+              : "Gemstones are sized by their face-up measurement in millimetres."
+          }
         >
-          <CaratRange min={filters.minCarat} max={filters.maxCarat} onChange={(minCarat, maxCarat) => onChange({ ...filters, minCarat, maxCarat })} />
+          <SizeRange key={filters.type} type={filters.type} min={filters.minSize} max={filters.maxSize} onChange={(minSize, maxSize) => onChange({ ...filters, minSize, maxSize })} />
         </Group>
 
         {diamond && (

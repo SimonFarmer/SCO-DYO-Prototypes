@@ -25,7 +25,7 @@ export function DiamondCard({ stone }: { stone: LooseStone }) {
             src={img.src}
             alt=""
             loading="lazy"
-            className={cn("size-full transition-transform duration-300 hover:scale-105", img.photo ? "object-cover" : "object-contain p-[22%] mix-blend-multiply")}
+            className={cn("size-full transition-transform duration-300 hover:scale-105", img.render ? "object-contain" : img.photo ? "object-cover" : "object-contain p-[22%] mix-blend-multiply")}
           />
         </button>
         <button

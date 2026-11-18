@@ -1,256 +1,162 @@
 import { useNavigate } from "react-router"
 import { SectionDivider, StepIntro } from "@/components/dyo/finishing-sections"
 import {
+  BudgetLine,
   ConfigHeader,
-  MiniRange,
-  ResultPanel,
+  GemSelector,
+  PriceExplained,
   ShapeSelector,
-  SimSlider,
+  SizeLine,
+  StockNote,
   StoneTypeToggle,
 } from "@/components/stones/preference-parts"
 import { StoneCtas } from "@/components/stones/stone-ctas"
 import { SETTING } from "@/data/dyo"
-import {
-  CARAT,
-  availableCarats,
-  caratRangeForBudget,
-  ringRangeForWindow,
-  sizeInBudget,
-  stoneShape,
-  stoneType,
-} from "@/data/stones"
+import { formatSize, gemById, shapesFor, snapSize, stoneShape, stoneType } from "@/data/stones"
 import { formatPrice } from "@/lib/format"
-import { rangeMiddle, snapCarat, useStonePrefs, type StonePrefs } from "./preferences"
+import { useStonePrefs, type StonePrefs, type StoneSim } from "./preferences"
 import { StoneStepLayout } from "./stone-step-layout"
 
-const ct = (c: number) => `${c.toFixed(2)} ct`
-const range = (a: number, b: number) => `${formatPrice(a)} – ${formatPrice(b)}`
-const CARAT_SCALE = { from: ct(CARAT.min), to: ct(CARAT.max) }
+/** Ranges to the nearest $5, so the exact end prices show (concept). */
+const r5 = (n: number) => Math.round(n / 5) * 5
+const range = (a: number, b: number) => `${formatPrice(r5(a))} - ${formatPrice(r5(b))}`
 
-type Update = (patch: Partial<StonePrefs>) => void
-
-/** "$1,500 … $25,000+": the top of a budget scale means "and above". */
-function budgetLabel(value: number, max: number) {
-  return value >= max ? `${formatPrice(max)}+` : formatPrice(value)
+/** "Round Natural Diamond", "Oval Ruby" */
+function stoneName(p: StonePrefs, shapeId: string) {
+  const shape = stoneShape(shapeId).label
+  return p.type === "gemstone" ? `${shape} ${gemById(p.gem).label}` : `${shape} ${stoneType(p.type).noun}`
 }
 
-function settingRow() {
-  return { label: `Setting · ${SETTING.metal.replace("14K", "14k")}`, value: formatPrice(SETTING.price) }
-}
-
-/** Variant A: carat range (two independent handles) → whole-ring price range for that range. */
-function SizeControls({ prefs, update }: { prefs: StonePrefs; update: Update }) {
-  const { type, shape, caratLo: lo, caratHi: hi } = prefs
-  const { ringMin, ringMax, stoneMin, stoneMax } = ringRangeForWindow(type, shape, lo, hi)
-  const budget = stoneType(type).budget
-
-  // Each handle moves on its own: the shopper widens or narrows the range (opens at ±0.25 ct around 1 ct).
-  const onRange = ([a, b]: number[]) => update({ caratLo: snapCarat(Math.min(a, b)), caratHi: snapCarat(Math.max(a, b)) })
-
+/**
+ * Size section: carats for diamonds, millimetres for gemstones (as shaneco.com). In the budget modes the
+ * green band is the sizes in stock at the budget and the handle is held inside it (the chosen size is
+ * kept in the URL, so widening the budget restores it).
+ */
+function SizeSection({ sim, setSize, withBand }: { sim: StoneSim; setSize: (v: number) => void; withBand: boolean }) {
+  const band = withBand && sim.budgetSizes.length ? { from: sim.budgetSizes[0], to: sim.budgetSizes[sim.budgetSizes.length - 1] } : null
+  const noBudgetStock = withBand && !sim.available
   return (
-    <>
-      <section className="flex flex-col gap-6">
-        <ConfigHeader title="Select your carat size" value={`${lo.toFixed(2)} – ${ct(hi)}`} />
-        <SimSlider
-          label="Carat size"
-          min={CARAT.min}
-          max={CARAT.max}
-          step={0.05}
-          value={[lo, hi]}
-          onChange={onRange}
-          minStepsBetweenValues={1}
-          scale={CARAT_SCALE}
-        />
-      </section>
-      <ResultPanel
-        eyebrow="Estimated total ring price"
-        value={range(ringMin, ringMax)}
-        bar={
-          <MiniRange
-            from={ringMin}
-            to={ringMax}
-            min={budget.min}
-            max={budget.max}
-            scale={{ from: formatPrice(budget.min), to: budgetLabel(budget.max, budget.max) }}
-          />
-        }
-        rows={[
-          settingRow(),
-          { label: `Center stone · ${ct(lo)} – ${ct(hi)} ${stoneType(type).short}`, value: range(stoneMin, stoneMax) },
-        ]}
-        note="Color and clarity set where you land in this range. You choose the exact stone next."
+    <section className="flex flex-col gap-4">
+      <ConfigHeader
+        title={sim.sizes.unit === "ct" ? "Carat Size" : "Gemstone Size"}
+        aside={noBudgetStock ? undefined : { label: "Preview Size", value: formatSize(sim.size, sim.sizes.unit) }}
       />
-    </>
+      {noBudgetStock ? (
+        <StockNote>No stones at this budget. Try widening it.</StockNote>
+      ) : (
+        <SizeLine scale={sim.sizes} value={sim.size} onChange={(v) => setSize(snapSize(v, sim.sizes))} largest={sim.largest} band={band} />
+      )}
+    </section>
   )
 }
 
-/** Variant B: total ring budget → the stone sizes it buys (capped per stone type). */
-function BudgetControls({ prefs, update }: { prefs: StonePrefs; update: Update }) {
-  const { type, shape, budgetHi } = prefs
-  const budget = stoneType(type).budget
-  const result = caratRangeForBudget(type, shape, budgetHi)
-
+/** Total ring budget section. Handles in the budget modes; in Carat first, only the size's price band. */
+function BudgetSection({ sim, update, interactive, withBand }: { sim: StoneSim; update: (p: Partial<StonePrefs>) => void; interactive: boolean; withBand: boolean }) {
   return (
-    <>
-      <section className="flex flex-col gap-6">
-        <ConfigHeader title="Total ring budget" value={`Up to ${budgetLabel(budgetHi, budget.max)}`} />
-        <SimSlider
-          label="Total ring budget"
-          min={budget.min}
-          max={budget.max}
-          step={250}
-          value={[budgetHi]}
-          onChange={([v]) => update({ budgetHi: v })}
-          scale={{ from: formatPrice(budget.min), to: budgetLabel(budget.max, budget.max) }}
-        />
-      </section>
-      {result.empty ? (
-        <ResultPanel
-          eyebrow="Carat range based on budget"
-          value="No stones at this budget"
-          note={`Less your setting (${formatPrice(SETTING.price)}), that leaves ${formatPrice(Math.max(0, result.stoneBudget))} for the stone. Raise your budget to see ${stoneShape(shape).label.toLowerCase()} stones.`}
-        />
+    <section className="flex flex-col gap-6">
+      <ConfigHeader title={interactive ? "Set your Total Ring Budget" : "Total Ring Budget"} />
+      {!interactive && !sim.row ? (
+        <StockNote>No stones available at this size right now. Try a nearby size to see prices.</StockNote>
       ) : (
-        <ResultPanel
-          eyebrow="Carat range based on budget"
-          value={`${(result.topQuality ?? CARAT.min).toFixed(2)} – ${ct(result.lowQuality)}`}
-          bar={<MiniRange from={result.topQuality ?? CARAT.min} to={result.lowQuality} min={CARAT.min} max={CARAT.max} scale={CARAT_SCALE} />}
-          rows={[
-            { label: "Highest quality", value: result.topQuality ? ct(result.topQuality) : "Above budget" },
-            { label: "Lowest quality", value: ct(result.lowQuality) },
-          ]}
-          note={`Less your setting (${formatPrice(SETTING.price)}), that leaves up to ${formatPrice(result.stoneBudget)} for the stone. We also show stones that run a little over.`}
+        <BudgetLine
+          scale={sim.scale}
+          lo={sim.budgetLo}
+          hi={sim.budgetHi}
+          onChange={interactive ? (budgetLo, budgetHi) => update({ budgetLo, budgetHi }) : undefined}
+          band={withBand ? sim.sizeRing : null}
         />
       )}
-    </>
-  )
-}
-
-/** Variant C: budget handles set the available sizes; the carat handle picks one within them. */
-function SizeAndBudgetControls({ prefs, update }: { prefs: StonePrefs; update: Update }) {
-  const { type, shape, carat, budgetLo, budgetHi } = prefs
-  const budget = stoneType(type).budget
-  const available = availableCarats(type, shape, budgetLo, budgetHi)
-  const size = sizeInBudget(type, shape, carat, budgetLo, budgetHi)
-
-  const keepInside = (c: number, a: typeof available) => (a ? snapCarat(c, Math.ceil(a.from * 20) / 20, Math.floor(a.to * 20) / 20) : c)
-
-  const onBudget = ([lo, hi]: number[]) => {
-    const next = availableCarats(type, shape, lo, hi)
-    update({ budgetLo: lo, budgetHi: hi, carat: keepInside(carat, next) })
-  }
-
-  let note: string
-  if (!available) note = `Nothing fits between ${range(budgetLo, budgetHi)} yet. Widen your budget to see sizes.`
-  else if (!size.inBudget)
-    note =
-      size.ringMin > budgetHi
-        ? `The lowest grades at ${ct(carat)} start at ${formatPrice(size.ringMin)}. Choose a smaller size or raise your budget.`
-        : `Even the top grades at ${ct(carat)} come in under ${formatPrice(budgetLo)}. Choose a larger size or lower your budget.`
-  else if (size.ringMax > budgetHi)
-    note = size.topFitsCarat
-      ? `Top quality at ${ct(carat)} is ${formatPrice(size.ringMax)}. Drop to ${ct(size.topFitsCarat)} to get it within your budget, or raise your budget.`
-      : `Top quality at ${ct(carat)} is ${formatPrice(size.ringMax)}. Raise your budget to reach it.`
-  else note = `Every grade at ${ct(carat)} fits your budget, up to top quality at ${formatPrice(size.ringMax)}.`
-
-  return (
-    <>
-      <section className="flex flex-col gap-6">
-        <ConfigHeader title="Total ring budget" value={`${formatPrice(budgetLo)} – ${budgetLabel(budgetHi, budget.max)}`} />
-        <SimSlider
-          label="Total ring budget"
-          min={budget.min}
-          max={budget.max}
-          step={250}
-          value={[budgetLo, budgetHi]}
-          onChange={onBudget}
-          scale={{ from: formatPrice(budget.min), to: budgetLabel(budget.max, budget.max) }}
-        />
-      </section>
-      <section className="flex flex-col gap-6">
-        <ConfigHeader title="Select your carat size" value={ct(carat)} />
-        <SimSlider
-          label="Carat size"
-          min={CARAT.min}
-          max={CARAT.max}
-          step={0.05}
-          value={[carat]}
-          onChange={([c]) => update({ carat: keepInside(c, available) })}
-          band={available}
-          scale={CARAT_SCALE}
-        />
-      </section>
-      <ResultPanel
-        eyebrow={`Price for ${ct(carat)} in your budget`}
-        value={size.inBudget ? range(size.inBudget.lo, size.inBudget.hi) : "Outside your budget"}
-        bar={
-          <MiniRange
-            from={size.inBudget?.lo ?? size.ringMin}
-            to={size.inBudget?.hi ?? size.ringMin}
-            min={size.ringMin}
-            max={size.ringMax}
-            scale={{ from: formatPrice(size.ringMin), to: formatPrice(size.ringMax) }}
-          />
-        }
-        rows={[
-          settingRow(),
-          {
-            label: `Center stone · ${ct(carat)} ${stoneType(type).short}`,
-            value: size.inBudget ? range(size.inBudget.lo - SETTING.price, size.inBudget.hi - SETTING.price) : "–",
-          },
-        ]}
-        note={note}
-      />
-    </>
+    </section>
   )
 }
 
 /**
- * Test 2 · Stone Preferences (2a). One URL per variant: /test-2/a, /test-2/b, /test-2/c (old ?variant= links still work).
- * Figma: A 7685:412966, B 7685:414388, C 7685:415174. Leads to Recommendations (2b) or the Diamonds PLP.
+ * Test 2 · Stone Preferences (2a). One URL per variant: /test-2/a, /test-2/b, /test-2/c.
+ *  A Size first (carats, or millimetres for gemstones) · B Budget first · C Size + Budget (BASIC concept "Shop by").
+ * Styling: Figma 7685:417428. Leads to Recommendations (2b) or the Diamonds PLP.
  */
 export function Test2() {
   const navigate = useNavigate()
-  const { variant, prefs, update, matching, href } = useStonePrefs()
+  const { variant, prefs, sim, update, setSize, matching, href } = useStonePrefs()
+  const { shopBy } = variant
+  const set = SETTING.price
 
-  // Changing type or shape keeps the size/budget; C re-fits its size inside the new availability.
-  const reshape = (patch: Partial<StonePrefs>) => {
-    if (variant.id !== "C") return update(patch)
-    const next = { ...prefs, ...patch }
-    const a = availableCarats(next.type, next.shape, next.budgetLo, next.budgetHi)
-    update(a ? { ...patch, carat: snapCarat(next.carat, Math.ceil(a.from * 20) / 20, Math.floor(a.to * 20) / 20) } : patch)
-  }
+  // Price Explained: Carat first = that size's range; Budget first = the budget; Size + Budget = the overlap.
+  const stonePrice =
+    shopBy === "both"
+      ? sim.overlap
+        ? range(sim.overlap.lo - set, sim.overlap.hi - set)
+        : "—"
+      : sim.blocked || !sim.row
+        ? "—"
+        : range(sim.row.min, sim.row.max)
+  const total =
+    shopBy === "size"
+      ? sim.sizeRing
+        ? range(sim.sizeRing.lo, sim.sizeRing.hi)
+        : "—"
+      : shopBy === "budget"
+        ? `${formatPrice(sim.budgetLo)} - ${formatPrice(sim.budgetHi)}`
+        : sim.overlap
+          ? range(sim.overlap.lo, sim.overlap.hi)
+          : "—"
 
-  // B has no chosen size: preview the largest stone the budget buys at the lowest grades.
-  // The ring preview shows one stone: the middle of A's range, the middle of the sizes B's budget buys
-  // (top grades → lowest grades), and C's chosen size.
-  const b = variant.id === "B" ? caratRangeForBudget(prefs.type, prefs.shape, prefs.budgetHi) : null
-  const previewCarat = b && !b.empty ? rangeMiddle(b.topQuality ?? CARAT.min, b.lowQuality) : prefs.carat
-  const showsRange = variant.id === "A" || (b !== null && !b.empty)
+  const size = <SizeSection sim={sim} setSize={setSize} withBand={shopBy !== "size"} />
+  const budget = <BudgetSection sim={sim} update={update} interactive={shopBy !== "size"} withBand={shopBy === "size"} />
 
   return (
     <div data-variant={variant.id}>
-      <StoneStepLayout
-        prefs={prefs}
-        carat={previewCarat}
-        previewNote={showsRange ? "middle of your range" : undefined}
-      >
+      <StoneStepLayout prefs={prefs} size={sim.size}>
         <StepIntro
           eyebrow="Step 2 of 3 · Stone"
           title="Find your Stone"
           subtitle="Tell us what you're looking for and we'll recommend stones to suit your ring and budget."
         />
         <SectionDivider />
-        <StoneTypeToggle value={prefs.type} onChange={(type) => reshape({ type })} />
-        <ShapeSelector value={prefs.shape} onChange={(shape) => reshape({ shape })} />
+        <StoneTypeToggle value={prefs.type} onChange={(type) => update({ type })} />
+        <ShapeSelector value={sim.scope.shape} onChange={(shape) => update({ shape })} offered={shapesFor(prefs.type, prefs.gem)} />
+        {prefs.type === "gemstone" && <GemSelector value={prefs.gem} onChange={(gem) => update({ gem })} />}
         <SectionDivider />
-        {variant.controls === "size" && <SizeControls prefs={prefs} update={update} />}
-        {variant.controls === "budget" && <BudgetControls prefs={prefs} update={update} />}
-        {variant.controls === "size-and-budget" && <SizeAndBudgetControls prefs={prefs} update={update} />}
+        {/* Carat first leads with size; the budget modes lead with the budget handles. */}
+        {shopBy === "size" ? (
+          <>
+            {size}
+            {budget}
+          </>
+        ) : (
+          <>
+            {budget}
+            {size}
+          </>
+        )}
+        <PriceExplained
+          rows={[
+            { label: "Setting", desc: SETTING.name, price: formatPrice(set) },
+            {
+              label: "Stone",
+              desc: (
+                <>
+                  {stoneName(prefs, sim.scope.shape)} (<span className="font-semibold">{formatSize(sim.size, sim.sizes.unit)} ±</span>
+                  {shopBy === "both" && ", in your budget"})
+                </>
+              ),
+              price: stonePrice,
+            },
+          ]}
+          total={total}
+        />
+        {sim.blocked && (
+          <p className="-mb-4 text-xs leading-4 text-muted-foreground">
+            {shopBy === "size"
+              ? "No stones are available at this size right now. Choose a different size to continue."
+              : "No stones in this budget right now. Widen your budget to continue."}
+          </p>
+        )}
         <StoneCtas
           primary="View Recommended Stones"
           onPrimary={() => navigate(href("recommendations"))}
-          primaryDisabled={matching.length === 0}
+          primaryDisabled={sim.blocked || matching.length === 0}
+          viewAllDisabled={sim.blocked}
           shape={prefs.shape}
           count={matching.length}
           onViewAll={() => navigate(href("diamonds", { from: "prefs" }))}
