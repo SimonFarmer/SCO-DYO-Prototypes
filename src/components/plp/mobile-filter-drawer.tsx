@@ -49,6 +49,7 @@ export function MobileFilterDrawer({ listing, open, onClose }: { listing: Listin
             filters={pending}
             bounds={listing.bounds}
             onChange={setPending}
+            defaultOpen={[]}
             onToggle={(key, value) =>
               setPending((p) => ({ ...p, [key]: p[key].includes(value) ? p[key].filter((v) => v !== value) : [...p[key], value] }))
             }

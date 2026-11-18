@@ -27,6 +27,8 @@ export interface FilterPanelProps {
   onChange: (next: ListingFilters) => void
   /** Extra groups placed first (the mobile drawer puts Sort By here). */
   before?: ReactNode
+  /** Groups open on first render. The mobile drawer starts with every group collapsed. */
+  defaultOpen?: string[]
   className?: string
 }
 
@@ -117,7 +119,18 @@ function Group({ value, title, children }: { value: string; title: string; child
  * Stone Shape icons, then collapsed Accent Stones, Fast Delivery and Pickup, Setting Price.
  * Used by the desktop sidebar (applies instantly) and the mobile drawer (applies on "View N Items").
  */
-export function FilterPanel({ mode, filters, bounds, onToggle, onFulfil, onPrice, onChange, before, className }: FilterPanelProps) {
+export function FilterPanel({
+  mode,
+  filters,
+  bounds,
+  onToggle,
+  onFulfil,
+  onPrice,
+  onChange,
+  before,
+  className,
+  defaultOpen = ["style", "metal", "shape", "price"],
+}: FilterPanelProps) {
   const [moreStyles, setMoreStyles] = useState(false)
   const styles = moreStyles ? STYLES : STYLES.slice(0, 6)
   const ownPrice = mode === "dyo" ? "Setting Price" : "Price"
@@ -125,7 +138,7 @@ export function FilterPanel({ mode, filters, bounds, onToggle, onFulfil, onPrice
   return (
     <div className={className}>
       <AppliedFilters filters={filters} bounds={bounds} onChange={onChange} />
-      <Accordion multiple defaultValue={["sort", "style", "metal", "shape", "price"]}>
+      <Accordion multiple defaultValue={defaultOpen}>
       {before}
       <Group value="style" title="Setting Style">
         <ul className="grid grid-cols-2 gap-3">
