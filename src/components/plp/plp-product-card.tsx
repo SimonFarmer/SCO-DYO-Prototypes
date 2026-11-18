@@ -2,7 +2,7 @@ import { useState } from "react"
 import { HeartStraightIcon } from "@phosphor-icons/react"
 import { Badge } from "@/components/ui/badge"
 import { useNotInTest } from "@/components/prototype/not-in-test"
-import { settingVariant, type PlpProduct } from "@/data/plp"
+import { productImage, settingVariant, type PlpProduct } from "@/data/plp"
 import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
@@ -10,8 +10,18 @@ import { cn } from "@/lib/utils"
  * PLP product card (Pattern Library "Product Card", Figma 7845:197922 grid).
  * Differs from the shared recommender ProductCard: fluid width, "Setting only" price label, and the
  * swatches switch the card to that metal's variant (image, price, label) like the live site.
+ * The image shows the setting holding the shopper's filtered stone shape when it accepts it.
  */
-export function PlpProductCard({ product, priceLabel }: { product: PlpProduct; priceLabel?: string }) {
+export function PlpProductCard({
+  product,
+  priceLabel,
+  preferredShapes,
+}: {
+  product: PlpProduct
+  priceLabel?: string
+  /** Stone shapes the listing is filtered by, in the order chosen. */
+  preferredShapes?: string[]
+}) {
   const notInTest = useNotInTest()
   const [metalId, setMetalId] = useState(product.metal.id)
   const [wished, setWished] = useState(false)
@@ -29,10 +39,10 @@ export function PlpProductCard({ product, priceLabel }: { product: PlpProduct; p
           aria-label={`${shown.name}, ${metal.label}`}
         >
           <img
-            src={shown.image}
+            src={productImage(shown, preferredShapes)}
             alt=""
             loading="lazy"
-            className={cn("size-full object-contain p-4 mix-blend-multiply transition-transform duration-300 hover:scale-105", shown.tint)}
+            className="size-full object-contain p-4 mix-blend-multiply transition-transform duration-300 hover:scale-105"
           />
         </button>
         {product.badge && (
