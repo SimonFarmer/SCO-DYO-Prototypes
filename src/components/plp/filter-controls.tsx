@@ -1,7 +1,6 @@
 import {
   CalendarCheckIcon,
   CaretDownIcon,
-  LightningIcon,
   MapPinIcon,
   SlidersHorizontalIcon,
   XIcon,
@@ -18,7 +17,7 @@ import { FULFILMENT, PAGE_SIZE, SORTS, STORE, type FulfilmentId } from "@/data/p
 import { cn } from "@/lib/utils"
 import type { Listing } from "./use-listing"
 
-const ICONS = { pin: MapPinIcon, lightning: LightningIcon, calendar: CalendarCheckIcon }
+const ICONS = { pin: MapPinIcon, calendar: CalendarCheckIcon }
 
 /** Helper text next to a selected fulfilment chip (Figma "Fulfilment filters", 7845:197923). */
 function FulfilmentNote({ id, mode, compact }: { id: FulfilmentId; mode: Listing["mode"]; compact?: boolean }) {
@@ -36,16 +35,6 @@ function FulfilmentNote({ id, mode, compact }: { id: FulfilmentId; mode: Listing
         View this {mode === "dyo" ? "setting" : "ring"} in store today
         <br />
         at {link(STORE.name)}
-      </>
-    )
-  if (id === "sameday")
-    return compact ? (
-      link(STORE.addressShort)
-    ) : (
-      <>
-        Order by 3pm to get it today, arrives within 4 hours or less
-        <br />
-        to {link(STORE.address)}
       </>
     )
   return (
@@ -81,7 +70,7 @@ function FulfilmentChip({
       aria-label={selected ? `Remove filter: ${f.label}` : `Filter: ${mode === "dyo" ? "setting " : ""}${f.label}`}
       className={cn(
         "flex h-10.5 shrink-0 cursor-pointer items-center rounded-full border bg-background text-left whitespace-nowrap",
-        compact ? "gap-2 pr-3 pl-2.5" : "gap-2.5 pr-4 pl-3",
+        compact ? "gap-1.5 px-3" : "gap-2.5 pr-4 pl-3",
         selected ? "border-primary" : "border-border-subtle hover:border-border",
       )}
     >
@@ -102,7 +91,7 @@ function FulfilmentChips({ listing, compact }: { listing: Listing; compact?: boo
     return (
       <div className="flex min-w-0 items-center gap-4">
         <FulfilmentChip id={filters.fulfil} selected mode={mode} compact={compact} onClick={() => setFulfil(null)} />
-        <p className={cn("type-caption text-muted-foreground", compact && filters.fulfil === "sameday" && "truncate")}>
+        <p className="type-caption text-muted-foreground">
           <FulfilmentNote id={filters.fulfil} mode={mode} compact={compact} />
         </p>
       </div>
@@ -181,20 +170,22 @@ export function DesktopFilterBar({
   )
 }
 
-/** Mobile filter bar (Figma 7845:168558): Filter & Sort button, fulfilment chips, count. */
+/**
+ * Mobile filter bar (Figma 7845:168558): fulfilment chips, a divider, then Filter & Sort and the
+ * item count on one line.
+ */
 export function MobileFilterBar({ listing, onOpenFilters, activeCount }: { listing: Listing; onOpenFilters: () => void; activeCount: number }) {
   return (
-    <div className="flex flex-col gap-3 px-margin pt-8 pb-8 lg:hidden">
-      <button
-        type="button"
-        onClick={onOpenFilters}
-        className="flex h-10 w-full cursor-pointer items-center justify-center gap-2 border border-border-subtle type-label-xs text-primary"
-      >
-        <SlidersHorizontalIcon className="size-4" />
-        Filter &amp; Sort{activeCount > 0 && ` (${activeCount})`}
-      </button>
+    <div className="flex flex-col gap-4 px-margin pt-6 pb-8 lg:hidden">
       <FulfilmentChips listing={listing} compact />
-      <ShowingCount listing={listing} />
+      <hr className="border-border-subtle" />
+      <div className="flex items-center justify-between gap-4">
+        <button type="button" onClick={onOpenFilters} className="flex cursor-pointer items-center gap-2 type-label-xs text-primary">
+          <SlidersHorizontalIcon className="size-4" />
+          Filter &amp; Sort{activeCount > 0 && ` (${activeCount})`}
+        </button>
+        <ShowingCount listing={listing} />
+      </div>
     </div>
   )
 }

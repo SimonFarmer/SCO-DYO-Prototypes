@@ -66,8 +66,8 @@ export function DyoStepper({
   mobileLabel?: string
   /** Show the running total on step 3 (off on the PLP, before anything is chosen). */
   showTotal?: boolean
-  /** Mobile bar fill: the PLP uses the accent strip (Figma Drop 3b PLP); the tests keep secondary. */
-  mobileTone?: "secondary" | "accent"
+  /** Mobile bar style: the PLP strip is secondary with light top and bottom borders (Figma Drop 3b PLP); the tests keep the taller secondary bar. */
+  mobileTone?: "secondary" | "plp"
 }) {
   const { setting, stone, total } = useRingBuild()
   const notInTest = useNotInTest()
@@ -127,7 +127,10 @@ export function DyoStepper({
 
       {/* Mobile accordion: opens over the page, dimming only what's below the bar (not the header or hero above it) */}
       <div
-        className="sticky top-(--header-offset) z-30 border-b border-border-subtle bg-background transition-[top] duration-300 ease-out lg:hidden"
+        className={cn(
+          "sticky top-(--header-offset) z-30 bg-background transition-[top] duration-300 ease-out lg:hidden",
+          mobileTone === "secondary" && "border-b border-border-subtle",
+        )}
         onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
       >
         <button
@@ -135,8 +138,8 @@ export function DyoStepper({
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
           className={cn(
-            "flex h-12 w-full cursor-pointer items-center justify-between gap-3 px-margin whitespace-nowrap",
-            mobileTone === "accent" ? "bg-accent" : "bg-secondary",
+            "flex w-full cursor-pointer items-center justify-between gap-3 bg-secondary px-margin whitespace-nowrap",
+            mobileTone === "plp" ? "h-10 border-y border-border-light" : "h-12",
           )}
         >
           <span className="type-label-xs text-primary">Design Your Own</span>

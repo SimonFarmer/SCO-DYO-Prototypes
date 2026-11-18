@@ -218,7 +218,7 @@ export function FilterPanel({ mode, filters, bounds, onToggle, onFulfil, onPrice
             key={f.id}
             role="radio"
             label={mode === "dyo" ? `Setting ${f.label.toLowerCase()}` : f.label}
-            detail={f.id === "instore" ? `at ${STORE.name}` : f.id === "sameday" ? "Order by 3pm" : "Free by Friday, $10 by Thursday"}
+            detail={f.id === "instore" ? `at ${STORE.name}` : "Free by Friday, $10 by Thursday"}
             checked={filters.fulfil === f.id}
             onChange={() => onFulfil(filters.fulfil === f.id ? null : f.id)}
           />
