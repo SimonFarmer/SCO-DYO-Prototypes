@@ -77,17 +77,16 @@ export const STORE = {
   addressShort: "21780 Stevens Creek Boulevard",
 }
 
-export type FulfilmentId = "instore" | "friday"
+export type FulfilmentId = "instore"
 
 export const FULFILMENT: {
   id: FulfilmentId
   label: string
   /** Mobile chip label (Figma mobile filter bar). */
   shortLabel: string
-  icon: "pin" | "calendar"
+  icon: "pin"
 }[] = [
   { id: "instore", label: "In-store today", shortLabel: "In-store", icon: "pin" },
-  { id: "friday", label: "Arrives by Friday", shortLabel: "By Fri", icon: "calendar" },
 ]
 
 /** Sort options (SCO Drop 2 "Mobile Filters" Sort By). */
@@ -110,7 +109,10 @@ interface Design {
   name: string
   styles: string[]
   accent: "none" | "diamond" | "gemstone"
-  badge?: "Top Seller" | "New"
+  /** A Top Seller on shaneco.com (Best Selling sort and the Top Sellers collection). */
+  topSeller?: boolean
+  /** Show the Top Seller label on its lead-metal card. Kept to a few so the label still stands out. */
+  label?: boolean
   /** Center-stone shapes the setting accepts (PDP "Preview with Shape"). The first is its default picture. */
   shapes: string[]
   /** [metal, Shane Co. item ID, setting price], first = the metal the live listing leads with. */
@@ -121,20 +123,20 @@ const ALL_SHAPES = ["round", "oval", "cushion", "pear", "marquise", "princess", 
 
 /** Catalogue order = "Recommended" order. */
 const DESIGNS: Design[] = [
-  { id: "timeless-solitaire", name: "Timeless Solitaire Engagement Ring", styles: ["classic"], accent: "none", badge: "Top Seller", shapes: ALL_SHAPES, metals: [["14k-yellow-gold", "41004888", 690], ["14k-white-gold", "41004893", 690], ["14k-rose-gold", "41089052", 690], ["platinum", "41006535", 1050]] },
+  { id: "timeless-solitaire", label: true, name: "Timeless Solitaire Engagement Ring", styles: ["classic"], accent: "none", topSeller: true, shapes: ALL_SHAPES, metals: [["14k-yellow-gold", "41004888", 690], ["14k-white-gold", "41004893", 690], ["14k-rose-gold", "41089052", 690], ["platinum", "41006535", 1050]] },
   { id: "luminary-solitaire", name: "Luminary Solitaire Engagement Ring", styles: ["classic"], accent: "none", shapes: ["round", "oval", "cushion", "pear", "emerald", "heart"], metals: [["14k-white-gold", "41041604", 690], ["14k-yellow-gold", "41045174", 690], ["14k-rose-gold", "41060741", 690], ["platinum", "41045179", 1050]] },
-  { id: "cypress-halo", name: "Cypress Halo Engagement Ring", styles: ["halo", "pave", "vintage"], accent: "diamond", badge: "Top Seller", shapes: ["marquise"], metals: [["14k-yellow-gold", "41098343", 4175], ["14k-white-gold", "41088380", 4175], ["14k-rose-gold", "41088555", 4175], ["platinum", "41105430", 4375]] },
+  { id: "cypress-halo", name: "Cypress Halo Engagement Ring", styles: ["halo", "pave", "vintage"], accent: "diamond", topSeller: true, shapes: ["marquise"], metals: [["14k-yellow-gold", "41098343", 4175], ["14k-white-gold", "41088380", 4175], ["14k-rose-gold", "41088555", 4175], ["platinum", "41105430", 4375]] },
   { id: "ella-halo", name: "Ella Halo Engagement Ring for 1 ct Round", styles: ["halo"], accent: "diamond", shapes: ["round", "cushion", "princess", "asscher"], metals: [["14k-white-gold", "41071388", 2595], ["14k-yellow-gold", "41081279", 2595], ["14k-rose-gold", "41074306", 2595]] },
-  { id: "vista-pave", name: "Vista Diamond Pave Engagement Ring", styles: ["pave", "classic"], accent: "diamond", badge: "Top Seller", shapes: ALL_SHAPES, metals: [["14k-yellow-gold", "41048069", 1295], ["14k-white-gold", "41045046", 1295], ["14k-rose-gold", "41048912", 1295], ["platinum", "41073550", 1495]] },
+  { id: "vista-pave", label: true, name: "Vista Diamond Pave Engagement Ring", styles: ["pave", "classic"], accent: "diamond", topSeller: true, shapes: ALL_SHAPES, metals: [["14k-yellow-gold", "41048069", 1295], ["14k-white-gold", "41045046", 1295], ["14k-rose-gold", "41048912", 1295], ["platinum", "41073550", 1495]] },
   { id: "privet", name: "Privet Engagement Ring (1/5 tcw Diamond Accents)", styles: ["pave", "classic"], accent: "diamond", shapes: ALL_SHAPES, metals: [["14k-yellow-gold", "41111140", 1195], ["14k-white-gold", "41111139", 1195], ["14k-rose-gold", "41111142", 1195], ["platinum", "41111141", 1395]] },
-  { id: "modena-cathedral", name: "Modena Cathedral Engagement Ring", styles: ["cathedral", "classic"], accent: "none", badge: "Top Seller", shapes: ALL_SHAPES, metals: [["14k-yellow-gold", "41050654", 1060], ["14k-white-gold", "41050653", 1060], ["14k-rose-gold", "41077509", 1060], ["platinum", "41089432", 1260]] },
-  { id: "aspen-cathedral", name: "Aspen Cathedral Engagement Ring", styles: ["cathedral", "swirl"], accent: "diamond", badge: "Top Seller", shapes: ALL_SHAPES, metals: [["14k-white-gold", "41097388", 1060], ["14k-yellow-gold", "41097387", 1060], ["14k-rose-gold", "41097389", 1060], ["platinum", "41105441", 1260]] },
+  { id: "modena-cathedral", name: "Modena Cathedral Engagement Ring", styles: ["cathedral", "classic"], accent: "none", topSeller: true, shapes: ALL_SHAPES, metals: [["14k-yellow-gold", "41050654", 1060], ["14k-white-gold", "41050653", 1060], ["14k-rose-gold", "41077509", 1060], ["platinum", "41089432", 1260]] },
+  { id: "aspen-cathedral", name: "Aspen Cathedral Engagement Ring", styles: ["cathedral", "swirl"], accent: "diamond", topSeller: true, shapes: ALL_SHAPES, metals: [["14k-white-gold", "41097388", 1060], ["14k-yellow-gold", "41097387", 1060], ["14k-rose-gold", "41097389", 1060], ["platinum", "41105441", 1260]] },
   { id: "antonia", name: "Antonia Engagement Ring", styles: ["vintage", "swirl", "three-stone"], accent: "diamond", shapes: ALL_SHAPES, metals: [["14k-yellow-gold", "41080416", 1925], ["14k-white-gold", "41061672", 1925]] },
   { id: "woodland", name: "Woodland Engagement Ring", styles: ["vintage", "swirl"], accent: "diamond", shapes: ALL_SHAPES, metals: [["14k-yellow-gold", "41097557", 1295], ["14k-white-gold", "41097358", 1295], ["14k-rose-gold", "41097559", 1295], ["platinum", "41106380", 1495]] },
-  { id: "willow-infinity", name: "Willow Infinity Engagement Ring", styles: ["swirl", "pave"], accent: "diamond", badge: "Top Seller", shapes: ALL_SHAPES, metals: [["14k-white-gold", "41046616", 1625], ["14k-yellow-gold", "41046617", 1625], ["14k-rose-gold", "41088492", 1625], ["platinum", "41088476", 1825]] },
-  { id: "plume", name: "Plume Engagement Ring", styles: ["swirl", "classic"], accent: "diamond", badge: "Top Seller", shapes: ALL_SHAPES, metals: [["14k-yellow-gold", "41093781", 1265], ["14k-white-gold", "41093784", 1265], ["14k-rose-gold", "41093780", 1265], ["platinum", "41093785", 1465]] },
+  { id: "willow-infinity", name: "Willow Infinity Engagement Ring", styles: ["swirl", "pave"], accent: "diamond", topSeller: true, shapes: ALL_SHAPES, metals: [["14k-white-gold", "41046616", 1625], ["14k-yellow-gold", "41046617", 1625], ["14k-rose-gold", "41088492", 1625], ["platinum", "41088476", 1825]] },
+  { id: "plume", name: "Plume Engagement Ring", styles: ["swirl", "classic"], accent: "diamond", topSeller: true, shapes: ALL_SHAPES, metals: [["14k-yellow-gold", "41093781", 1265], ["14k-white-gold", "41093784", 1265], ["14k-rose-gold", "41093780", 1265], ["platinum", "41093785", 1465]] },
   { id: "marianne-three-stone", name: "Marianne Three-Stone Engagement Ring", styles: ["three-stone", "classic", "pave", "cathedral"], accent: "diamond", shapes: ALL_SHAPES, metals: [["14k-white-gold", "41047499", 1555], ["14k-yellow-gold", "41047500", 1555]] },
-  { id: "poesie-three-stone", name: "Poesie Three-Stone Engagement Ring", styles: ["three-stone"], accent: "diamond", badge: "Top Seller", shapes: ALL_SHAPES, metals: [["14k-white-gold", "41071262", 3825], ["14k-yellow-gold", "41071639", 3825], ["platinum", "41105477", 4025]] },
+  { id: "poesie-three-stone", label: true, name: "Poesie Three-Stone Engagement Ring", styles: ["three-stone"], accent: "diamond", topSeller: true, shapes: ALL_SHAPES, metals: [["14k-white-gold", "41071262", 3825], ["14k-yellow-gold", "41071639", 3825], ["platinum", "41105477", 4025]] },
 ]
 
 /** Shane Co. render of a setting (by item ID) holding a center stone of the given shape. */
@@ -152,9 +154,12 @@ export interface PlpProduct {
   itemId: string
   /** Shapes the card can show. A setting shows any shape it accepts; a ready-to-ship ring only its own stone. */
   shapes: string[]
+  /** Fixed gallery (ready-to-ship rings: front, then side). Settings build theirs from the filtered shape. */
+  images?: string[]
   styles: string[]
   accent: Design["accent"]
   badge?: string
+  topSeller: boolean
   fulfilment: Record<FulfilmentId, boolean>
   popularity: number
   newness: number
@@ -162,7 +167,12 @@ export interface PlpProduct {
 
 /** Card image: the first filtered shape this product accepts, otherwise its default shape. */
 export function productImage(p: PlpProduct, preferredShapes: string[] = []) {
-  return settingImage(p.itemId, preferredShapes.find((s) => p.shapes.includes(s)) ?? p.shapes[0])
+  return p.images?.[0] ?? settingImage(p.itemId, preferredShapes.find((s) => p.shapes.includes(s)) ?? p.shapes[0])
+}
+
+/** Card gallery: the front view (holding the filtered shape), then the side profile (Shane Co. "A2" view). */
+export function productImages(p: PlpProduct, preferredShapes: string[] = []) {
+  return p.images ?? [productImage(p, preferredShapes), `/images/plp/settings/${p.itemId}/side.webp`]
 }
 
 /** Small deterministic hash so fulfilment and popularity look random but never change. */
@@ -172,8 +182,6 @@ function hash(s: string) {
   return (h >>> 0) / 4294967295
 }
 
-const roundPrice = (n: number) => Math.round(n / 5) * 5
-
 // Higher item IDs are the newer designs on shaneco.com.
 const newestFirst = [...DESIGNS].sort((a, b) => Number(b.metals[0][1]) - Number(a.metals[0][1])).map((d) => d.id)
 
@@ -181,7 +189,7 @@ export const SETTINGS: PlpProduct[] = DESIGNS.flatMap((d, di) =>
   d.metals.map(([metalId, itemId, price], mi) => {
     const metal = metalById(metalId)
     const r = hash(`${d.id}:${metalId}`)
-    // In-store stock is the scarcest; most settings ship by Friday.
+    // In-store stock is the scarcest.
     return {
       id: `${d.id}--${metalId}`,
       designId: d.id,
@@ -193,8 +201,9 @@ export const SETTINGS: PlpProduct[] = DESIGNS.flatMap((d, di) =>
       shapes: d.shapes,
       styles: d.styles,
       accent: d.accent,
-      badge: d.badge,
-      fulfilment: { instore: r < 0.4, friday: r < 0.8 },
+      badge: d.label && mi === 0 ? "Top Seller" : undefined,
+      topSeller: !!d.topSeller,
+      fulfilment: { instore: r < 0.4 },
       // "Recommended" shows every design's lead metal first, in catalogue order, then the other metals,
       // so a page isn't four cards of the same ring.
       popularity: mi * 100 + di,
@@ -203,53 +212,97 @@ export const SETTINGS: PlpProduct[] = DESIGNS.flatMap((d, di) =>
   }),
 )
 
-export function settingVariant(designId: string, metalId: string) {
-  return SETTINGS.find((p) => p.designId === designId && p.metal.id === metalId)
-}
-
 // ---------------------------------------------------------------------------------------------
 // Ready to Ship: preset rings (setting + center stone), outside the DYO flow
 // ---------------------------------------------------------------------------------------------
 
-const RTS_STONES = [
-  { carat: 0.5, natural: 990, lab: 390 },
-  { carat: 0.75, natural: 1890, lab: 640 },
-  { carat: 1, natural: 3990, lab: 890 },
-  { carat: 1.5, natural: 7490, lab: 1490 },
-  { carat: 2, natural: 12990, lab: 2290 },
+interface PresetRing {
+  name: string
+  shape: string
+  carat: number
+  accent: Design["accent"]
+  styles: string[]
+  /** [metal, Shane Co. item ID, price], first = the metal the live listing shows. */
+  metals: [metal: string, itemId: string, price: number][]
+}
+
+/**
+ * Real preset rings from shaneco.com/premounted-bridal/c (November 2026), in the live listing's order:
+ * name, center stone, metals with item IDs and prices read from each PDP. Style comes from the PDP's
+ * category. Front ("M") and side ("A2") photos sit in /images/plp/rts/{itemId}/.
+ */
+const PRESET_RINGS: PresetRing[] = [
+  { name: "2 ct Lab-Grown Diamond Tulip Engagement Ring", shape: "emerald", carat: 2, accent: "none", styles: ["classic"], metals: [["14k-yellow-gold", "41108013", 3120], ["14k-white-gold", "41108009", 3120], ["platinum", "41108018", 3320]] },
+  { name: "Willow 1 5/8 tcw Lab-Grown Diamond Engagement Ring", shape: "marquise", carat: 1.5, accent: "diamond", styles: ["swirl"], metals: [["14k-yellow-gold", "41113279", 2515], ["14k-white-gold", "41113278", 2515], ["platinum", "41113351", 2715]] },
+  { name: "Bree 2 ct Lab-Grown Diamond Engagement Ring", shape: "oval", carat: 2, accent: "none", styles: ["classic"], metals: [["14k-white-gold", "41108184", 3650], ["14k-yellow-gold", "41108205", 3650], ["platinum", "41108214", 3850]] },
+  { name: "Willow 1 5/8 tcw Lab-Grown Diamond Engagement Ring", shape: "round", carat: 1.5, accent: "diamond", styles: ["swirl"], metals: [["14k-rose-gold", "41113269", 2095], ["14k-white-gold", "41113264", 2095], ["14k-yellow-gold", "41113267", 2095], ["platinum", "41113348", 2295]] },
+  { name: "Evelyn 1 1/4 tcw Lab-Grown Diamond Engagement Ring", shape: "oval", carat: 1, accent: "diamond", styles: ["classic"], metals: [["14k-yellow-gold", "41113742", 1900], ["14k-white-gold", "41113741", 1900], ["platinum", "41113738", 2100]] },
+  { name: "Evelyn 2 1/4 tcw Lab-Grown Diamond Engagement Ring", shape: "oval", carat: 2, accent: "diamond", styles: ["classic"], metals: [["14k-yellow-gold", "41113749", 3075], ["14k-white-gold", "41113748", 3075], ["platinum", "41113740", 3275]] },
+  { name: "Audra 3 ct Lab-Grown Diamond Engagement Ring", shape: "oval", carat: 3, accent: "none", styles: ["classic"], metals: [["14k-yellow-gold", "41107998", 4400], ["14k-white-gold", "41107989", 4400], ["platinum", "41108002", 4600]] },
+  { name: "Audra 1 ct Lab-Grown Diamond Engagement Ring", shape: "oval", carat: 1, accent: "none", styles: ["classic"], metals: [["14k-yellow-gold", "41107995", 1885], ["14k-white-gold", "41107980", 1885], ["platinum", "41107999", 2085]] },
+  { name: "2 ct Lab-Grown Diamond Tulip Engagement Ring", shape: "oval", carat: 2, accent: "none", styles: ["classic"], metals: [["14k-yellow-gold", "41107988", 2830], ["14k-white-gold", "41107982", 2830], ["platinum", "41107993", 3030]] },
+  { name: "1 ct Lab-Grown Diamond Bezel Engagement Ring", shape: "oval", carat: 1, accent: "none", styles: ["classic"], metals: [["14k-yellow-gold", "41105497", 2150], ["14k-white-gold", "41105496", 2150]] },
+  { name: "Audra 2 ct Lab-Grown Diamond Engagement Ring", shape: "oval", carat: 2, accent: "none", styles: ["classic"], metals: [["14k-yellow-gold", "41107997", 3055], ["14k-white-gold", "41107987", 3055], ["platinum", "41108001", 3255]] },
+  { name: "3 ct Lab-Grown Diamond Tulip Engagement Ring", shape: "oval", carat: 3, accent: "none", styles: ["classic"], metals: [["14k-yellow-gold", "41107990", 4175], ["14k-white-gold", "41107984", 4175], ["platinum", "41107994", 4375]] },
+  { name: "Evelyn 2 1/4 tcw Lab-Grown Diamond Engagement Ring", shape: "marquise", carat: 2, accent: "diamond", styles: ["classic"], metals: [["14k-yellow-gold", "41113785", 3365], ["14k-white-gold", "41113784", 3365], ["platinum", "41113763", 3565]] },
+  { name: "1 1/2 ct Lab-Grown Diamond Bezel Engagement Ring", shape: "oval", carat: 1.5, accent: "none", styles: ["classic"], metals: [["14k-yellow-gold", "41105499", 2850], ["14k-white-gold", "41105498", 2850]] },
+  { name: "Audra 1 ct Lab-Grown Diamond Engagement Ring", shape: "emerald", carat: 1, accent: "none", styles: ["classic"], metals: [["14k-yellow-gold", "41108037", 2000], ["14k-white-gold", "41108017", 2000], ["platinum", "41108049", 2200]] },
+  { name: "Audra 3 ct Lab-Grown Diamond Engagement Ring", shape: "emerald", carat: 3, accent: "none", styles: ["cathedral", "classic"], metals: [["14k-yellow-gold", "41108043", 4850], ["14k-white-gold", "41108032", 4850], ["platinum", "41108052", 5050]] },
+  { name: "Evelyn 3 1/4 tcw Lab-Grown Diamond Engagement Ring", shape: "oval", carat: 3, accent: "diamond", styles: ["classic"], metals: [["14k-yellow-gold", "41113753", 4420], ["14k-white-gold", "41113752", 4420], ["platinum", "41113744", 4620]] },
+  { name: "Evelyn 3 1/4 tcw Lab-Grown Diamond Engagement Ring", shape: "radiant", carat: 3, accent: "diamond", styles: ["classic"], metals: [["14k-yellow-gold", "41113773", 4875], ["14k-white-gold", "41113772", 4875], ["platinum", "41113757", 5075]] },
+  { name: "Evelyn 1 3/4 tcw Lab-Grown Diamond Engagement Ring", shape: "radiant", carat: 1.5, accent: "diamond", styles: ["classic"], metals: [["14k-yellow-gold", "41113765", 2665], ["14k-white-gold", "41113764", 2665], ["platinum", "41113755", 2865]] },
+  { name: "Willow 2 1/8 tcw Lab-Grown Diamond Engagement Ring", shape: "oval", carat: 2, accent: "diamond", styles: ["swirl"], metals: [["14k-yellow-gold", "41113217", 2925], ["14k-white-gold", "41113216", 2925], ["platinum", "41113192", 3125]] },
+  { name: "Evelyn 2 1/4 tcw Lab-Grown Diamond Engagement Ring", shape: "radiant", carat: 2, accent: "diamond", styles: ["classic"], metals: [["14k-yellow-gold", "41113769", 3365], ["14k-white-gold", "41113768", 3365], ["platinum", "41113756", 3565]] },
+  { name: "Evelyn 1 3/4 tcw Lab-Grown Diamond Engagement Ring", shape: "round", carat: 1.5, accent: "diamond", styles: ["classic"], metals: [["14k-white-gold", "41113796", 2245], ["14k-yellow-gold", "41113797", 2245], ["platinum", "41113775", 2445]] },
+  { name: "2 ct Lab-Grown Diamond Tulip Engagement Ring", shape: "pear", carat: 2, accent: "none", styles: ["classic"], metals: [["14k-yellow-gold", "41108077", 3120], ["14k-white-gold", "41108073", 3120], ["platinum", "41108081", 3320]] },
+  { name: "2 ct Lab-Grown Diamond Tulip Engagement Ring", shape: "radiant", carat: 2, accent: "none", styles: ["classic"], metals: [["14k-yellow-gold", "41108105", 3120], ["14k-white-gold", "41108101", 3120], ["platinum", "41108109", 3320]] },
+  { name: "Willow 3 1/8 tcw Lab-Grown Diamond Engagement Ring", shape: "marquise", carat: 3, accent: "diamond", styles: ["swirl"], metals: [["14k-yellow-gold", "41113292", 4725], ["14k-white-gold", "41113291", 4725], ["platinum", "41113359", 4925]] },
+  { name: "1 1/2 ct Lab-Grown Diamond Tulip Engagement Ring", shape: "pear", carat: 1.5, accent: "none", styles: ["classic"], metals: [["14k-yellow-gold", "41108076", 2420], ["14k-white-gold", "41108044", 2420], ["platinum", "41108080", 2620]] },
+  { name: "Willow 1 1/8 tcw Lab-Grown Diamond Engagement Ring", shape: "oval", carat: 1, accent: "diamond", styles: ["swirl"], metals: [["14k-yellow-gold", "41113229", 1750], ["14k-white-gold", "41113228", 1750], ["platinum", "41113337", 1950]] },
+  { name: "Audra 2 ct Lab-Grown Diamond Engagement Ring", shape: "marquise", carat: 2, accent: "none", styles: ["classic"], metals: [["14k-yellow-gold", "41108063", 3350], ["14k-white-gold", "41108059", 3350], ["platinum", "41108067", 3550]] },
+  { name: "Bree 2 ct Lab-Grown Diamond Engagement Ring", shape: "round", carat: 2, accent: "none", styles: ["classic"], metals: [["platinum", "41108178", 3850], ["14k-white-gold", "41108166", 3650], ["14k-yellow-gold", "41108172", 3650]] },
+  { name: "Willow 2 1/8 tcw Lab-Grown Diamond Engagement Ring", shape: "radiant", carat: 2, accent: "diamond", styles: ["swirl"], metals: [["14k-white-gold", "41113259", 3215], ["14k-yellow-gold", "41113260", 3215], ["platinum", "41113380", 3415]] },
+  { name: "1 ct Lab-Grown Diamond Tulip Engagement Ring", shape: "round", carat: 1, accent: "none", styles: ["classic"], metals: [["14k-white-gold", "41107954", 1515], ["14k-yellow-gold", "41107960", 1515], ["platinum", "41107971", 1715]] },
 ]
 
-const caratLabel = (c: number) => (c === 0.5 ? "1/2" : c === 0.75 ? "3/4" : c === 1.5 ? "1 1/2" : `${c}`)
+const presetImages = (itemId: string) => [`/images/plp/rts/${itemId}/main.webp`, `/images/plp/rts/${itemId}/side.webp`]
+const newestPresets = PRESET_RINGS.map((_, i) => i).sort((a, b) => Number(PRESET_RINGS[b].metals[0][1]) - Number(PRESET_RINGS[a].metals[0][1]))
 
-/** Two preset rings per design: its lead metal with its default shape, and another metal with a second shape. */
-export const READY_TO_SHIP: PlpProduct[] = DESIGNS.flatMap((d, di) =>
-  [0, 1].map((k) => {
-    const [metalId, itemId, settingPrice] = d.metals[k % d.metals.length]
+/**
+ * One card per preset ring × metal, like the settings, so a metal filter finds every ring made in it.
+ * "Recommended" lists every ring's lead metal first, then the other metals.
+ */
+export const READY_TO_SHIP: PlpProduct[] = PRESET_RINGS.flatMap((r, ri) =>
+  r.metals.map(([metalId, itemId, price], mi) => {
     const metal = metalById(metalId)
-    const shapeId = d.shapes[Math.min(k ? 1 + Math.floor(hash(`${d.id}shape`) * (d.shapes.length - 1)) : 0, d.shapes.length - 1)]
-    const stone = RTS_STONES[Math.floor(hash(`${k}:rts:${d.id}`) * RTS_STONES.length)]
-    const lab = hash(`${k}:lab:${d.id}`) < 0.45
-    const shape = SHAPES.find((s) => s.id === shapeId)!
-    const baseName = d.name.replace(/ Engagement Ring.*$/, "")
     return {
-      id: `rts-${d.id}-${k}`,
-      designId: d.id,
-      name: `${baseName} ${caratLabel(stone.carat)} ct. ${shape.label} ${lab ? "Lab-Grown " : ""}Diamond Engagement Ring`,
+      id: `rts-${itemId}`,
+      designId: `rts-${ri}`,
+      name: r.name,
       metal,
-      metals: [metal],
-      price: roundPrice(settingPrice + (lab ? stone.lab : stone.natural)),
+      metals: [metal, ...r.metals.filter(([m]) => m !== metalId).map(([m]) => metalById(m))],
+      price,
       itemId,
-      shapes: [shapeId],
-      styles: d.styles,
-      accent: d.accent,
-      badge: d.badge,
-      // Ready-to-ship rings are already made, so more are in store.
-      fulfilment: { instore: hash(`${k}:rtsf:${d.id}`) < 0.55, friday: true },
-      popularity: di * 2 + k,
-      newness: newestFirst.indexOf(d.id) * 2 + k,
+      shapes: [r.shape],
+      images: presetImages(itemId),
+      styles: r.styles,
+      accent: r.accent,
+      // Two labels across the listing, like the live site's sparing use.
+      badge: mi === 0 && (ri === 1 || ri === 6) ? "Top Seller" : undefined,
+      topSeller: ri < 8,
+      // Preset rings are already made, so more are in store than settings.
+      fulfilment: { instore: hash(`rts:${itemId}`) < 0.55 },
+      popularity: mi * 100 + ri,
+      newness: newestPresets.indexOf(ri) * 10 + mi,
     }
   }),
 )
+
+/** The same design in another metal (card swatches): a setting's sibling card, or a preset ring's variant. */
+export function productVariant(p: PlpProduct, metalId: string) {
+  const pool = p.images ? READY_TO_SHIP : SETTINGS
+  return pool.find((v) => v.designId === p.designId && v.metal.id === metalId)
+}
 
 // ---------------------------------------------------------------------------------------------
 // Filtering
@@ -267,6 +320,16 @@ export interface ListingFilters {
 }
 
 export const EMPTY_FILTERS: ListingFilters = { style: [], shape: [], metal: [], accent: [], minPrice: null, maxPrice: null, fulfil: null }
+
+/** Facets that take one value at a time: picking another replaces it, picking it again clears it. */
+const SINGLE_SELECT: ReadonlySet<string> = new Set(["shape"])
+
+/** Toggle a facet value (multi-select, except the single-select facets above). */
+export function toggleFilter(f: ListingFilters, key: "style" | "shape" | "metal" | "accent", value: string): ListingFilters {
+  const has = f[key].includes(value)
+  if (SINGLE_SELECT.has(key)) return { ...f, [key]: has ? [] : [value] }
+  return { ...f, [key]: has ? f[key].filter((v) => v !== value) : [...f[key], value] }
+}
 
 export const hasPrice = (f: ListingFilters) => f.minPrice !== null || f.maxPrice !== null
 
@@ -298,7 +361,7 @@ export function sortProducts(products: PlpProduct[], sort: string) {
   if (sort === "price-asc") list.sort((a, b) => a.price - b.price)
   else if (sort === "price-desc") list.sort((a, b) => b.price - a.price)
   else if (sort === "newest") list.sort((a, b) => a.newness - b.newness)
-  else if (sort === "best-selling") list.sort((a, b) => Number(b.badge === "Top Seller") - Number(a.badge === "Top Seller") || a.popularity - b.popularity)
+  else if (sort === "best-selling") list.sort((a, b) => Number(b.topSeller) - Number(a.topSeller) || a.popularity - b.popularity)
   else list.sort((a, b) => a.popularity - b.popularity)
   return list
 }
@@ -370,7 +433,7 @@ export const COLLECTIONS: Collection[] = [
     title: "Top Selling Engagement Rings",
     description: "Our customers’ favorite settings. Choose your setting, then add the perfect stone.",
     filters: {},
-    only: (p) => p.badge === "Top Seller",
+    only: (p) => p.topSeller,
   },
   {
     slug: "new-arrivals",

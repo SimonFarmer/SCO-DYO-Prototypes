@@ -1,5 +1,4 @@
 import {
-  CalendarCheckIcon,
   CaretDownIcon,
   MapPinIcon,
   SlidersHorizontalIcon,
@@ -17,18 +16,17 @@ import { FULFILMENT, PAGE_SIZE, SORTS, STORE, type FulfilmentId } from "@/data/p
 import { cn } from "@/lib/utils"
 import type { Listing } from "./use-listing"
 
-const ICONS = { pin: MapPinIcon, calendar: CalendarCheckIcon }
+const ICONS = { pin: MapPinIcon }
 
 /** Helper text next to a selected fulfilment chip (Figma "Fulfilment filters", 7845:197923). */
-function FulfilmentNote({ id, mode, compact }: { id: FulfilmentId; mode: Listing["mode"]; compact?: boolean }) {
+function FulfilmentNote({ mode, compact }: { mode: Listing["mode"]; compact?: boolean }) {
   const notInTest = useNotInTest()
   const link = (label: string) => (
     <button type="button" onClick={() => notInTest("Changing your store")} className="cursor-pointer font-semibold text-primary underline">
       {label}
     </button>
   )
-  if (id === "instore")
-    return compact ? (
+  return compact ? (
       <>at {link(STORE.name)}</>
     ) : (
       <>
@@ -37,13 +35,6 @@ function FulfilmentNote({ id, mode, compact }: { id: FulfilmentId; mode: Listing
         at {link(STORE.name)}
       </>
     )
-  return (
-    <>
-      Free by Friday,
-      <br />
-      $10 by Thursday
-    </>
-  )
 }
 
 /** Pill filter (Pattern Library Filter.Tag.Button): "Setting" eyebrow over the option. */
@@ -92,7 +83,7 @@ function FulfilmentChips({ listing, compact }: { listing: Listing; compact?: boo
       <div className="flex min-w-0 items-center gap-4">
         <FulfilmentChip id={filters.fulfil} selected mode={mode} compact={compact} onClick={() => setFulfil(null)} />
         <p className="type-caption text-muted-foreground">
-          <FulfilmentNote id={filters.fulfil} mode={mode} compact={compact} />
+          <FulfilmentNote mode={mode} compact={compact} />
         </p>
       </div>
     )
@@ -128,7 +119,7 @@ function SortMenu({ listing }: { listing: Listing }) {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuRadioGroup value={listing.sort} onValueChange={(v) => listing.setSort(v as string)}>
           {SORTS.map((s) => (
-            <DropdownMenuRadioItem key={s.id} value={s.id} className="py-2 text-sm">
+            <DropdownMenuRadioItem key={s.id} value={s.id} closeOnClick className="py-2 text-sm">
               {s.label}
             </DropdownMenuRadioItem>
           ))}

@@ -6,7 +6,8 @@ const PROTOTYPES = [
     test: "Engagement Ring PLP · DYO entry point",
     links: [
       { label: "Homepage: navigation entry point (start here)", to: "/shop" },
-      { label: "PLP: all engagement rings (DYO step 1)", to: "/engagement-rings" },
+      { label: "PLP: all engagement rings (DYO step 1) · A: shape illustrations", to: "/engagement-rings?variant=A" },
+      { label: "PLP: all engagement rings (DYO step 1) · B: shape product images", to: "/engagement-rings?variant=B" },
       { label: "PLP: Level 3 landing (Classic)", to: "/engagement-rings/classic" },
       { label: "PLP: Shop by Budget preset (under $1,000)", to: "/engagement-rings?price=under-1000" },
       { label: "PLP: Ready to Ship", to: "/engagement-rings/ready-to-ship" },

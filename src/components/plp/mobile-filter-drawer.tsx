@@ -3,7 +3,7 @@ import { XIcon } from "@phosphor-icons/react"
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
-import { SORTS, type ListingFilters } from "@/data/plp"
+import { SORTS, toggleFilter, type ListingFilters } from "@/data/plp"
 import { FilterPanel, RadioList } from "./filter-panel"
 import type { Listing } from "./use-listing"
 
@@ -50,9 +50,7 @@ export function MobileFilterDrawer({ listing, open, onClose }: { listing: Listin
             bounds={listing.bounds}
             onChange={setPending}
             defaultOpen={[]}
-            onToggle={(key, value) =>
-              setPending((p) => ({ ...p, [key]: p[key].includes(value) ? p[key].filter((v) => v !== value) : [...p[key], value] }))
-            }
+            onToggle={(key, value) => setPending((p) => toggleFilter(p, key, value))}
             onFulfil={(fulfil) => setPending((p) => ({ ...p, fulfil }))}
             onPrice={(minPrice, maxPrice) => setPending((p) => ({ ...p, minPrice, maxPrice }))}
             before={

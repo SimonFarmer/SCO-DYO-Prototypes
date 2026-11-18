@@ -231,7 +231,7 @@ export function FilterPanel({
             key={f.id}
             role="radio"
             label={mode === "dyo" ? `Setting ${f.label.toLowerCase()}` : f.label}
-            detail={f.id === "instore" ? `at ${STORE.name}` : "Free by Friday, $10 by Thursday"}
+            detail={`at ${STORE.name}`}
             checked={filters.fulfil === f.id}
             onChange={() => onFulfil(filters.fulfil === f.id ? null : f.id)}
           />
