@@ -27,8 +27,13 @@ export function NavTextLink({ link, onOpen, className }: { link: NavLink; onOpen
     <button
       type="button"
       onClick={() => onOpen(link)}
-      className={cn("cursor-pointer text-left text-sm leading-5 text-primary hover:underline", className)}
+      className={cn(
+        "cursor-pointer text-left text-sm leading-5 text-primary hover:underline",
+        link.icon && "flex items-center gap-2",
+        className,
+      )}
     >
+      {link.icon && <img src={link.icon} alt="" className="size-7 shrink-0" />}
       {link.label}
     </button>
   )

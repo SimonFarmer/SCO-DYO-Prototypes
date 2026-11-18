@@ -99,7 +99,12 @@ export function ProductGrid({ listing, wide }: { listing: Listing; wide: boolean
               </li>
             )}
             <li className="min-w-0">
-              <PlpProductCard product={p} priceLabel={mode === "dyo" ? "Setting only" : undefined} preferredShapes={listing.filters.shape} />
+              <PlpProductCard
+                product={p}
+                priceLabel={mode === "dyo" ? "Setting only" : undefined}
+                pricePrefix={mode === "rts" ? "Starting at" : undefined}
+                preferredShapes={listing.filters.shape}
+              />
             </li>
           </Fragment>
         ))}

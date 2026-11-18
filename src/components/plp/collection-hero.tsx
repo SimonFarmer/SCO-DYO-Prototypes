@@ -4,9 +4,9 @@ import { ArrowLeftIcon, ArrowRightIcon, CaretRightIcon, HandbagIcon, MagicWandIc
 import { Breadcrumb, type Crumb } from "@/components/site/breadcrumb"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
-import { PLP_PATH, RTS_PATH, SHAPES, STYLES, type ListingFilters } from "@/data/plp"
+import { PLP_PATH, RTS_PATH, SHAPES, STYLES, settingImage, toggleFilter, type ListingFilters } from "@/data/plp"
 import { cn } from "@/lib/utils"
-import type { Listing } from "./use-listing"
+import type { Listing, PlpVariant } from "./use-listing"
 
 type ExploreKey = "style" | "shape"
 
@@ -15,7 +15,10 @@ const EXPLORE: { key: ExploreKey; label: string }[] = [
   { key: "shape", label: "Stone Shape" },
 ]
 
-const tilesFor = (key: ExploreKey) =>
+/** Variant B pictures each stone shape set in the Timeless Solitaire (14k white gold, item 41004893). */
+const SHAPE_PHOTO_ITEM = "41004893"
+
+const tilesFor = (key: ExploreKey, variant: PlpVariant) =>
   key === "style"
     ? STYLES.map((s) => ({
         id: s.id,
@@ -26,8 +29,8 @@ const tilesFor = (key: ExploreKey) =>
     : SHAPES.map((s) => ({
         id: s.id,
         label: s.label,
-        image: s.icon,
-        icon: true,
+        image: variant === "B" ? settingImage(SHAPE_PHOTO_ITEM, s.id) : s.icon,
+        icon: variant !== "B",
       }))
 
 const DYO_COPY =
@@ -152,7 +155,7 @@ function ExploreCarousel({ listing }: { listing: Listing }) {
           ))}
         </div>
         <div ref={track} onScroll={update} className="flex snap-x gap-2 overflow-x-auto pt-1 [scrollbar-width:none]" role="tabpanel">
-          {tilesFor(tab).map((t) => (
+          {tilesFor(tab, listing.variant).map((t) => (
             <ExploreTile
               key={t.id}
               tile={t}
@@ -188,11 +191,7 @@ function ExploreDrawer({ listing, open, onClose }: { listing: Listing; open: Exp
   }
   const key = open ?? wasOpen ?? "style"
   const count = listing.countFor(pending)
-  const toggle = (id: string) =>
-    setPending((p) => ({
-      ...p,
-      [key]: p[key].includes(id) ? p[key].filter((v) => v !== id) : [...p[key], id],
-    }))
+  const toggle = (id: string) => setPending((p) => toggleFilter(p, key, id))
 
   return (
     <Sheet open={!!open} onOpenChange={(o) => !o && onClose()}>
@@ -209,7 +208,7 @@ function ExploreDrawer({ listing, open, onClose }: { listing: Listing; open: Exp
           </button>
         </div>
         <div className="grid min-h-0 flex-1 grid-cols-2 gap-x-3 gap-y-6 overflow-y-auto px-margin pb-6">
-          {tilesFor(key).map((t) => (
+          {tilesFor(key, listing.variant).map((t) => (
             <ExploreTile
               key={t.id}
               tile={t}
