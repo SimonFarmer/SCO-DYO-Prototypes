@@ -99,6 +99,7 @@ export function Test1() {
               media={media}
               previewLabel={`Previewing: ${shapeLabel} ∙ ${carat.toFixed(2)} ct`}
               previewMenu={previewMenu}
+              previewShape={previewShape}
             />
           )}
           <aside className="px-margin pt-8 pb-8 lg:px-14 lg:pt-5">

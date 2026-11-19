@@ -12,6 +12,8 @@ interface SettingGalleryProps {
   previewLabel: string
   /** Stone shape picker shown bottom-right of the hero, level with the badge */
   previewMenu?: ReactNode
+  /** Changing the shape scrolls the mobile carousel back to the first slide */
+  previewShape?: string
   className?: string
 }
 
@@ -54,13 +56,12 @@ function MediaTile({ item, onOpen }: { item: GalleryMedia; onOpen: () => void })
  * Photos with a note ("Shown in rose gold, round cut") show it on the main image / carousel slide. Clicking the main image opens the overlay.
  */
 const MAX_THUMBS = 4
-/** Carousel dots shown before the rest is summarised as "+N" (Figma 2009:35395 "Image Carousel"). */
-const MAX_DOTS = 4
 
 /**
- * Mobile PDP gallery (Figma SCO Drop 3a – PDP 2009:35395): full-width square slides that swipe
- * with scroll-snap, and a dot indicator bottom-right (active = 8×4 pill, others 4×4 at 50%),
- * with "+N" when there are more images than dots. Tapping a slide opens the gallery overlay there.
+ * Mobile PDP gallery for every Test 1 variant (Figma SCO Drop 3a – PDP 5492:71771): full-width
+ * square slides that swipe with scroll-snap, and a thumbnail row below on the secondary background
+ * (4 thumbnails, then "+X More", which opens the gallery overlay). Tapping a thumbnail scrolls to
+ * that slide; tapping a slide opens the overlay there. "Try it on" from the reference is not built.
  */
 function MobileCarousel({
   media,
@@ -71,7 +72,7 @@ function MobileCarousel({
 }: {
   media: GalleryMedia[]
   onOpen: (index: number) => void
-  /** Stone shape picker, bottom-left (the dots sit bottom-right) */
+  /** Stone shape picker, bottom-left of the first slide */
   previewMenu?: ReactNode
   /** Changing the shape scrolls back to the first slide, where the preview shows */
   previewShape?: string
@@ -80,68 +81,101 @@ function MobileCarousel({
   const [index, setIndex] = useState(0)
   const trackRef = useRef<HTMLUListElement>(null)
   const firstShape = useRef(previewShape)
+  const goTo = (i: number) => {
+    const el = trackRef.current
+    if (el) el.scrollTo({ left: el.clientWidth * i, behavior: "smooth" })
+  }
   useEffect(() => {
     if (previewShape === firstShape.current) return
     firstShape.current = previewShape
     trackRef.current?.scrollTo({ left: 0, behavior: "smooth" })
   }, [previewShape])
-  const dots = media.length > MAX_DOTS + 1 ? MAX_DOTS : media.length
-  const extra = media.length - dots
+  // Up to 5 items fit as thumbnails; beyond that the 5th slot becomes "+X More".
+  const shown = media.length > MAX_THUMBS + 1 ? media.slice(0, MAX_THUMBS) : media
+  const hidden = media.length - shown.length
   return (
-    <div className={cn("relative bg-secondary", className)}>
-      <ul
-        ref={trackRef}
-        aria-label="Product media"
-        className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none]"
-        onScroll={(e) => {
-          const el = e.currentTarget
-          setIndex(Math.round(el.scrollLeft / el.clientWidth))
-        }}
-      >
-        {media.map((item, i) => (
-          <li key={item.src} className="w-full shrink-0 snap-start">
+    <div className={cn("bg-secondary", className)}>
+      <div className="relative">
+        <ul
+          ref={trackRef}
+          aria-label="Product media"
+          className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none]"
+          onScroll={(e) => {
+            const el = e.currentTarget
+            setIndex(Math.round(el.scrollLeft / el.clientWidth))
+          }}
+        >
+          {media.map((item, i) => (
+            <li key={item.src} className="w-full shrink-0 snap-start">
+              <button
+                type="button"
+                onClick={() => onOpen(i)}
+                aria-label={`Enlarge: ${item.alt}`}
+                className={cn(zoomTrigger, "aspect-square")}
+              >
+                <img
+                  src={item.src}
+                  alt={item.alt}
+                  className="absolute inset-0 size-full object-cover mix-blend-multiply"
+                  loading={i === 0 ? undefined : "lazy"}
+                />
+                {item.kind === "video" && (
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="flex size-14 items-center justify-center rounded-full bg-white">
+                      <img src="/images/icons/play.svg" alt="" className="size-6" />
+                    </span>
+                  </span>
+                )}
+                {item.badge && <MediaNote className="bottom-2 left-2 max-w-[calc(100%-1rem)]">{item.badge}</MediaNote>}
+              </button>
+            </li>
+          ))}
+        </ul>
+        {/* The shape preview only changes the first image, so the picker shows only there
+            (Figma's "Try it on" slot, bottom-left). */}
+        {previewMenu && index === 0 && <div className="absolute bottom-2 left-2">{previewMenu}</div>}
+      </div>
+      <ul className="flex gap-1.5 px-2 pb-2" aria-label="Product media thumbnails">
+        {shown.map((item, i) => (
+          <li key={item.src} className="min-w-0 flex-1">
             <button
               type="button"
-              onClick={() => onOpen(i)}
-              aria-label={`Enlarge: ${item.alt}`}
-              className={cn(zoomTrigger, "aspect-square")}
+              aria-label={`Show ${item.alt}`}
+              aria-current={i === index}
+              onClick={() => goTo(i)}
+              className={cn(
+                "relative block aspect-square w-full overflow-clip border bg-primary-foreground",
+                i === index ? "border-primary" : "border-transparent",
+              )}
             >
-              <img
-                src={item.src}
-                alt={item.alt}
-                className="absolute inset-0 size-full object-cover mix-blend-multiply"
-                loading={i === 0 ? undefined : "lazy"}
-              />
+              <img src={item.src} alt="" className="size-full object-cover mix-blend-multiply" loading="lazy" />
               {item.kind === "video" && (
-                <span className="absolute inset-0 flex items-center justify-center">
-                  <span className="flex size-14 items-center justify-center rounded-full bg-white">
-                    <img src="/images/icons/play.svg" alt="" className="size-6" />
+                <span className="absolute inset-0 flex items-center justify-center bg-primary/20">
+                  <span className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Play className="size-4" weight="fill" />
                   </span>
                 </span>
               )}
-              {/* Bottom-left, level with the dots (bottom-right) */}
-              {item.badge && <MediaNote className="bottom-2 left-4 max-w-[calc(100%-6rem)]">{item.badge}</MediaNote>}
             </button>
           </li>
         ))}
+        {hidden > 0 && (
+          <li className="min-w-0 flex-1">
+            <button
+              type="button"
+              aria-label={`Show ${hidden} more`}
+              onClick={() => onOpen(MAX_THUMBS)}
+              className={cn(
+                "flex aspect-square w-full flex-col items-center justify-center border bg-primary-foreground type-label-xs text-primary",
+                index >= MAX_THUMBS ? "border-primary" : "border-transparent",
+              )}
+            >
+              <span>+{hidden}</span>
+              <span>More</span>
+            </button>
+          </li>
+        )}
       </ul>
-      {media.length > 1 && (
-        <div className="pointer-events-none absolute right-0 bottom-0 flex h-9 items-center p-2" aria-hidden>
-          <div className="flex h-5 items-center gap-1 px-2">
-            {Array.from({ length: dots }, (_, i) => (
-              <span
-                key={i}
-                className={cn("h-1 rounded-xs bg-primary transition-[width]", i === index ? "w-2" : "w-1 opacity-50")}
-              />
-            ))}
-          </div>
-          {extra > 0 && (
-            <span className={cn("type-label-xs text-primary", index < dots && "opacity-50")}>+{extra}</span>
-          )}
-        </div>
-      )}
-      {/* The shape preview only changes the first image, so the picker shows only there. */}
-      {previewMenu && index === 0 && <div className="absolute bottom-2 left-4">{previewMenu}</div>}
     </div>
   )
 }
@@ -259,11 +293,14 @@ export function ThumbnailGallery({
  * Settings PDP long-scroll gallery (Test 1 variants A and B): hero image + 2-column grid of supporting media.
  * Every image opens the zoomable gallery overlay at that image.
  */
-export function SettingGallery({ media, previewLabel, previewMenu, className }: SettingGalleryProps) {
+export function SettingGallery({ media, previewLabel, previewMenu, previewShape, className }: SettingGalleryProps) {
   const [hero, ...rest] = media
   const overlay = useOverlay()
   return (
-    <div className={cn("flex flex-col gap-2 px-2 lg:pb-8", className)}>
+    <div className={className}>
+    {/* Mobile (below lg): carousel + thumbnails, same as variant C (Figma 5492:71771). */}
+    <MobileCarousel media={media} onOpen={overlay.openAt} previewMenu={previewMenu} previewShape={previewShape} className="lg:hidden" />
+    <div className="hidden flex-col gap-2 px-2 pb-8 lg:flex">
       <div className="relative">
         <button type="button" onClick={() => overlay.openAt(0)} aria-label={`Enlarge: ${hero.alt}`} className={cn(zoomTrigger, "aspect-square")}>
           <img src={hero.src} alt={hero.alt} className="absolute inset-0 size-full object-cover mix-blend-multiply" />
@@ -280,6 +317,7 @@ export function SettingGallery({ media, previewLabel, previewMenu, className }: 
           <MediaTile key={item.src} item={item} onOpen={() => overlay.openAt(i + 1)} />
         ))}
       </div>
+    </div>
       <ImageGalleryOverlay key={overlay.session} media={media} open={overlay.open} onOpenChange={overlay.setOpen} startIndex={overlay.start} />
     </div>
   )
