@@ -59,7 +59,7 @@ export function FourCsReportCard({ diamond }: { diamond: Diamond }) {
   const notInTest = useNotInTest()
   const take = expertTake(diamond)
   return (
-    <section className="flex flex-col gap-6 bg-secondary px-margin py-14" aria-labelledby="four-cs">
+    <section className="flex flex-col gap-6 bg-secondary px-page py-14" aria-labelledby="four-cs">
       <div className="flex flex-col gap-2">
         <p className="type-label-xs font-semibold text-muted-foreground">
           {diamondName(diamond)} · {diamond.carat.toFixed(2)} ct
@@ -115,7 +115,7 @@ const DETAIL_ROWS = ["Diamond Details", "Grading Certificate", "Lifetime Diamond
 export const AboutDiamondBlock = forwardRef<HTMLElement, { diamond: Diamond }>(function AboutDiamondBlock({ diamond }, ref) {
   const notInTest = useNotInTest()
   return (
-    <section ref={ref} id="product-details" className="scroll-mt-4 bg-secondary px-margin py-14">
+    <section ref={ref} id="product-details" className="scroll-mt-4 bg-secondary px-page py-14">
       <div className="grid gap-8 lg:grid-cols-[762fr_542fr] lg:gap-2">
         <div className="flex flex-col gap-6 lg:pt-14 lg:pr-16">
           <SectionHeading eyebrow="About this diamond" title={diamondName(diamond)} />

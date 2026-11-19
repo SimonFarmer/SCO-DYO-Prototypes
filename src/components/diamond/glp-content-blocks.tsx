@@ -20,7 +20,7 @@ const itemClass = "border-b border-border-subtle"
 export function SeoIntroBlock() {
   const [expanded, setExpanded] = useState(false)
   return (
-    <section className="relative flex flex-col justify-end overflow-clip px-margin py-14 lg:min-h-152">
+    <section className="relative flex flex-col justify-end overflow-clip px-page py-14 lg:min-h-152">
       <img src="/images/diamonds/seo-hero.jpg" alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />
       <span aria-hidden className="absolute inset-0 bg-linear-to-b from-black/20 to-black/60" />
       <div className="relative flex max-w-2xl flex-col gap-6 text-primary-foreground">
@@ -132,20 +132,25 @@ export function NeedHelpBlock() {
     { icon: PhoneIcon, label: "(866) 467-4263" },
   ]
   return (
-    <section className="bg-secondary px-margin">
+    <section className="bg-secondary lg:px-page">
       {/* Figma: 110px side padding — closest token is px-28 (112px). */}
-      <div className="flex flex-col gap-8 bg-primary-foreground px-6 py-14 lg:flex-row lg:items-center lg:justify-between lg:px-28">
-        <div className="flex max-w-guided-intent flex-1 flex-col gap-4">
-          <h2 className="type-h3 font-medium text-primary">Need a Little Extra Help?</h2>
+      {/* Mobile (Figma 8048:108010): the white panel runs edge to edge with 20px padding. */}
+      <div className="flex flex-col gap-8 bg-primary-foreground px-5 py-14 lg:flex-row lg:items-center lg:justify-between lg:px-28">
+        <div className="flex flex-1 flex-col gap-4 lg:max-w-guided-intent">
+          <h2 className="type-h3 font-medium text-primary">
+            {/* Figma titles differ by breakpoint. */}
+            <span className="lg:hidden">Have Questions About Natural Diamonds?</span>
+            <span className="max-lg:hidden">Need a Little Extra Help?</span>
+          </h2>
           <p className="text-sm text-muted-foreground">Our knowledgeable and friendly team is here for you!</p>
         </div>
-        <ul className="flex max-w-guided-intent flex-1 flex-col gap-4 lg:min-w-80">
+        <ul className="flex flex-1 flex-col gap-4 lg:max-w-guided-intent lg:min-w-80">
           {links.map(({ icon: Icon, label }) => (
             <li key={label}>
               <button
                 type="button"
                 onClick={() => notInTest(label === "(866) 467-4263" ? "Calling" : label)}
-                className="flex cursor-pointer items-center gap-2 type-label-xs font-semibold text-primary underline"
+                className="flex cursor-pointer items-center gap-2 text-left type-label-xs font-semibold text-primary underline"
               >
                 <Icon className="size-4" />
                 {label}
@@ -190,11 +195,12 @@ const ARTICLES = [
 export function RelatedArticlesBlock() {
   const notInTest = useNotInTest()
   return (
-    <section className="flex flex-col gap-10 bg-secondary px-margin py-14">
+    <section className="flex flex-col gap-10 bg-secondary px-content-margin py-14 lg:px-page">
       <h2 className="type-h3 font-medium text-primary">Explore Related Articles</h2>
-      <div className="grid gap-2.5 md:grid-cols-2 lg:grid-cols-4">
+      {/* Phones (Figma 8048:108011): a swipeable rail of 224px cards that runs off the right edge. */}
+      <div className="-mr-content-margin flex snap-x gap-2.5 overflow-x-auto pr-content-margin [scrollbar-width:none] md:mr-0 md:grid md:grid-cols-2 md:overflow-visible md:pr-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
         {ARTICLES.map((a) => (
-          <article key={a.title} className="flex flex-col overflow-clip">
+          <article key={a.title} className="flex w-56 shrink-0 snap-start flex-col overflow-clip md:w-auto">
             <img src={a.image} alt="" loading="lazy" className={cn("aspect-square w-full object-cover", a.position)} />
             <div className="flex flex-1 flex-col gap-4 bg-background p-5">
               <div className="flex min-h-28 flex-col gap-3">

@@ -5,6 +5,7 @@ import { SectionHeading } from "@/components/shared/section-heading"
 import { UGC_PHOTOS, VALUE_PROPS, galleryFor, type MetalId, type Setting } from "@/data/products"
 import { ProductOverview } from "@/components/pdp/product-info"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { cn, PAGE_MAX } from "@/lib/utils"
 
 /** "About this setting" — description + detail rows, lifestyle image on the right. */
 export const ProductDetailsBlock = forwardRef<HTMLElement, { setting: Setting; metal: MetalId }>(function ProductDetailsBlock(
@@ -15,7 +16,7 @@ export const ProductDetailsBlock = forwardRef<HTMLElement, { setting: Setting; m
   // Last styled/on-hand shot of the selected metal (the gallery ends with the shared size guide).
   const lifestyle = galleryFor(setting, metal).filter((m) => m.kind === "image").at(-1)
   return (
-    <section ref={ref} id="product-details" className="scroll-mt-4 bg-secondary px-margin py-14">
+    <section ref={ref} id="product-details" className="scroll-mt-4 bg-secondary px-page py-14">
       <div className="grid gap-8 lg:grid-cols-[762fr_542fr] lg:gap-2">
         <div className="flex flex-col gap-6 lg:pt-14 lg:pr-16">
           <SectionHeading eyebrow="About this setting" title={setting.name} />
@@ -43,13 +44,17 @@ export const ProductDetailsBlock = forwardRef<HTMLElement, { setting: Setting; m
   )
 })
 
-/** "How We Do Right by You" value-prop rail — bleeds off the right edge. */
+/**
+ * "How We Do Right by You" value-prop rail — bleeds off the right edge of the screen (Figma, 1440).
+ * From 1680px (2xl, the page cap) the rail stops on the content grid's right edge instead.
+ */
 export function ValuePropsBlock() {
   const notInTest = useNotInTest()
   return (
-    <section className="flex flex-col gap-8 bg-secondary pb-14 pl-margin">
-      <SectionHeading eyebrow="We are more than a jeweler" title="How We Do Right by You" className="pr-margin" />
-      <div className="flex snap-x gap-card-gap overflow-x-auto pr-margin [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <section className="bg-secondary pb-14">
+      <div className={cn("flex flex-col gap-8 pl-margin 2xl:pr-margin", PAGE_MAX)}>
+      <SectionHeading eyebrow="We are more than a jeweler" title="How We Do Right by You" className="pr-margin 2xl:pr-0" />
+      <div className="flex snap-x gap-card-gap overflow-x-auto pr-margin 2xl:pr-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {VALUE_PROPS.map((card) => (
           <article key={card.title.join(" ")} className="flex w-card shrink-0 snap-start flex-col overflow-clip">
             <img
@@ -79,6 +84,7 @@ export function ValuePropsBlock() {
           </article>
         ))}
       </div>
+      </div>
     </section>
   )
 }
@@ -99,7 +105,7 @@ export function FeatureBlock({
 }: FeatureBlockProps = {}) {
   const notInTest = useNotInTest()
   return (
-    <section className="bg-primary-foreground px-margin py-14">
+    <section className="bg-primary-foreground px-page py-14">
       <div className="grid gap-8 lg:grid-cols-[542fr_762fr] lg:gap-2">
         <img src={image} alt={imageAlt} className="aspect-square w-full object-cover" loading="lazy" />
         <div className="flex flex-col justify-center gap-8 lg:pl-16">
@@ -125,7 +131,7 @@ export function FeatureBlock({
 export function UgcBlock() {
   const notInTest = useNotInTest()
   return (
-    <section className="flex flex-col bg-secondary px-margin py-14">
+    <section className="flex flex-col bg-secondary px-page py-14">
       <div className="flex w-full flex-col gap-8">
         <SectionHeading eyebrow="As Seen on You" title="#ShaneCo" />
         <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">

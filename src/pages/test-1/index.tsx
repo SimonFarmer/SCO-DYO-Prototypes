@@ -13,6 +13,7 @@ import {
   UgcBlock,
   ValuePropsBlock,
 } from "@/components/pdp/content-blocks"
+import { PdpStickyBar } from "@/components/pdp/pdp-sticky-bar"
 import { ReviewsBlock } from "@/components/pdp/reviews-block"
 import { InlineProductDetails, type ProductInfoTab } from "@/components/pdp/product-info"
 import { ProductInfoDrawer } from "@/components/pdp/product-info-drawer"
@@ -26,11 +27,12 @@ import {
   RECENTLY_VIEWED,
   SIMILAR_STYLES,
   ELLA_CATHEDRAL,
+  METALS,
   galleryFor,
   type MetalId,
 } from "@/data/products"
 import { useVariant } from "@/lib/hooks"
-import { cn } from "@/lib/utils"
+import { cn, PAGE_MAX } from "@/lib/utils"
 import { SETTING_PDP_VARIANTS, VARIANT_IDS } from "./variants"
 
 /** Matching set shown in variant C — same bands as the recommender, without merchandising badges (Figma). */
@@ -49,6 +51,7 @@ export function Test1() {
   const [detailsTab, setDetailsTab] = useState<ProductInfoTab>("overview")
   const inlineDetailsRef = useRef<HTMLDivElement>(null)
   const ctaRef = useRef<HTMLDivElement>(null)
+  const productDetailsRef = useRef<HTMLElement>(null)
   const notInTest = useNotInTest()
   const price = (setting.variants.find((v) => v.metal === metal) ?? setting.variants[0]).price
   const { carat } = setting.previewStone
@@ -75,12 +78,23 @@ export function Test1() {
 
   return (
     <div className="min-h-screen bg-background" data-variant={variant.id}>
-      <SiteHeader />
-      <DyoStepper current={1} />
+      <SiteHeader contained />
+      <DyoStepper current={1} contained />
+      <PdpStickyBar
+        image={media[0]?.src ?? ""}
+        imageAlt={media[0]?.alt ?? setting.name}
+        title={setting.name}
+        specs={[METALS[metal].label, `Previewing: ${shapeLabel} ∙ ${carat.toFixed(2)} ct`]}
+        price={formatPrice(price)}
+        showFrom={productDetailsRef}
+      />
 
       <main>
         {/* Figma: breadcrumb is its own 48px full-width row ("Section") above both columns,
             so the buy form starts 48 + 20 = 68px below the stepper. */}
+        {/* Gallery + buy form stop growing at 1680px and centre (PAGE_MAX, as Test 2); the bands below
+            keep a full-width background with their content on the same edges (px-page). */}
+        <div className={PAGE_MAX}>
         <div className="grid lg:grid-cols-[826fr_606fr] lg:gap-2">
           <Breadcrumb items={[...setting.breadcrumb, setting.name]} className="mx-2 bg-secondary" />
         </div>
@@ -89,7 +103,7 @@ export function Test1() {
             // Short gallery sticks while the (longer) buy form scrolls; it sits below the
             // sticky-on-intent header when that is showing (--header-offset).
             // Full-bleed carousel on mobile; framed gallery from lg up.
-            <div className="transition-[top] duration-300 ease-out lg:sticky lg:top-(--header-offset) lg:self-start lg:px-2">
+            <div className="transition-[top] duration-300 ease-out lg:sticky lg:top-[calc(var(--header-offset)+var(--sticky-bar-offset,0px))] lg:self-start lg:px-2">
               {/* Not keyed by metal: the selected image position is kept when the metal changes. */}
               <ThumbnailGallery media={media} previewMenu={previewMenu} previewShape={previewShape} />
             </div>
@@ -103,7 +117,7 @@ export function Test1() {
             />
           )}
           <aside className="px-margin pt-8 pb-8 lg:px-14 lg:pt-5">
-            <div className={cn(!isThumbnails && "transition-[top] duration-300 ease-out lg:sticky lg:top-[calc(var(--header-offset)+--spacing(5))]")}>
+            <div className={cn(!isThumbnails && "transition-[top] duration-300 ease-out lg:sticky lg:top-[calc(var(--header-offset)+var(--sticky-bar-offset,0px)+--spacing(5))]")}>
               <SettingBuyForm
                 setting={setting}
                 metal={metal}
@@ -127,10 +141,11 @@ export function Test1() {
             </div>
           </aside>
         </div>
+        </div>
 
-        <ProductCarousel title="Similar Styles" products={SIMILAR_STYLES} />
-        <ProductCarousel title="Matching Wedding Bands" products={MATCHING_BANDS} className="pt-0" />
-        <ProductDetailsBlock setting={setting} metal={metal} />
+        <ProductCarousel title="Similar Styles" products={SIMILAR_STYLES} contained />
+        <ProductCarousel title="Matching Wedding Bands" products={MATCHING_BANDS} className="pt-0" contained />
+        <ProductDetailsBlock ref={productDetailsRef} setting={setting} metal={metal} />
         <ValuePropsBlock />
         <FeatureBlock />
         <UgcBlock />
@@ -140,10 +155,11 @@ export function Test1() {
           products={RECENTLY_VIEWED}
           showWishlist
           className="border-t border-border-subtle"
+          contained
         />
       </main>
 
-      <SiteFooter />
+      <SiteFooter contained />
 
       {/* Mobile: navigation bar that swaps to the CTA once the buy form’s CTA scrolls away (fixes sheet #9). */}
       <MobileBottomNav

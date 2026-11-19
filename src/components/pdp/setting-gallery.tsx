@@ -305,8 +305,11 @@ export function SettingGallery({ media, previewLabel, previewMenu, previewShape,
           <img src={hero.src} alt={hero.alt} className="absolute inset-0 size-full object-cover mix-blend-multiply" />
         </button>
         {/* Badge and shape picker share a row along the bottom of the hero (Figma 7247:101450).
-            Phones: no room for both, so the badge hides and the picker carries the carat ("Round ∙ 1.00 ct"). */}
-        <div className="pointer-events-none absolute inset-x-4 bottom-2 flex items-center justify-between gap-2">
+            The hero is taller than the first fold, so the row sticks to the bottom of the viewport while
+            the hero is on screen: the picker is reachable without scrolling and the stone being previewed
+            stays in view above it. Once the hero's bottom scrolls up, the row settles back in place.
+            (-mt-12 = row height + bottom-2, mb-2 gives the 8px back, so the hero keeps its size.) */}
+        <div className="pointer-events-none sticky bottom-2 z-10 mx-4 -mt-12 mb-2 flex items-center justify-between gap-2">
           <Badge className="max-lg:hidden">{previewLabel}</Badge>
           {previewMenu && <div className="pointer-events-auto ml-auto">{previewMenu}</div>}
         </div>

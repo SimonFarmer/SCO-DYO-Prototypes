@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button"
 import type { Diamond } from "@/data/diamonds"
 import { RECENTLY_VIEWED } from "@/data/products"
 import { RESULTS_ID } from "@/lib/scroll-to-results"
-import { cn } from "@/lib/utils"
+import { cn, PAGE_MAX } from "@/lib/utils"
 
 /* ───────────────────────── In-grid banner ───────────────────────── */
 
@@ -53,7 +53,16 @@ function FourCsBanner() {
  * Natural Diamonds GLP, DYO step 2 (Figma "Diamond GLP — DYO Step 3": desktop 8032:112719, mobile 8032:112876).
  * `onOpen` decides what a tile does: the Quickview on the GLP prototype, the PDP in Test 3.1 variant A.
  */
-export function DiamondGlp({ onOpen, storageKey }: { onOpen: (d: Diamond) => void; storageKey?: string }) {
+export function DiamondGlp({
+  onOpen,
+  storageKey,
+  shopInTest = true,
+}: {
+  onOpen: (d: Diamond) => void
+  storageKey?: string
+  /** false: the mobile bar's Shop shows the "not part of this test" notice (Test 3) */
+  shopInTest?: boolean
+}) {
   const listing = useDiamondListing(storageKey)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -70,12 +79,13 @@ export function DiamondGlp({ onOpen, storageKey }: { onOpen: (d: Diamond) => voi
 
   return (
     <div className="min-h-svh bg-background">
-      <SiteHeader navigation />
+      <SiteHeader navigation contained />
       <main>
         <GlpHero listing={listing} />
-        <DyoStepper current={2} mobileTone="plp" />
+        <DyoStepper current={2} mobileTone="plp" contained />
 
-        <div id={RESULTS_ID} className="scroll-mt-(--header-offset)">
+        {/* Results capped at 1680px (PAGE_MAX, as the Test 2 PLP). */}
+        <div id={RESULTS_ID} className={cn("scroll-mt-(--header-offset)", PAGE_MAX)}>
           <GlpDesktopBar listing={listing} sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen((o) => !o)} />
           <GlpMobileBar listing={listing} onOpenFilters={() => setDrawerOpen(true)} />
 
@@ -134,10 +144,10 @@ export function DiamondGlp({ onOpen, storageKey }: { onOpen: (d: Diamond) => voi
         <NeedHelpBlock />
         <RelatedArticlesBlock />
         <RelatedCategoriesBlock />
-        <ProductCarousel title="Pick Up Where You Left Off" products={RECENTLY_VIEWED} showWishlist className="border-t border-border-subtle" />
+        <ProductCarousel title="Pick Up Where You Left Off" products={RECENTLY_VIEWED} showWishlist className="border-t border-border-subtle" contained />
       </main>
-      <SiteFooter />
-      <MobileBottomNav />
+      <SiteFooter contained />
+      <MobileBottomNav shopInTest={shopInTest} />
       <GlpMobileFilterDrawer listing={listing} open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </div>
   )

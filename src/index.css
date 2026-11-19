@@ -29,6 +29,16 @@
   --header-offset: 0px;
 }
 
+/* Side padding for full-bleed bands (background runs edge to edge) whose content follows the page cap:
+   the layout margin up to 1680px (--breakpoint-2xl, as PAGE_MAX in lib/utils), then it grows so the
+   content lines up with PAGE_MAX content on wider screens. */
+@utility px-page {
+  padding-inline: max(var(--layout-margin), calc((100% - var(--breakpoint-2xl)) / 2 + var(--layout-margin)));
+}
+@utility pl-page {
+  padding-left: max(var(--layout-margin), calc((100% - var(--breakpoint-2xl)) / 2 + var(--layout-margin)));
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

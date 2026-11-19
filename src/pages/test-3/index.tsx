@@ -52,7 +52,7 @@ export function Test3Quickview() {
 
   return (
     <div data-variant={variant}>
-      <DiamondGlp onOpen={opensQuickview ? setQuickview : toPdp} storageKey="test-3-glp" />
+      <DiamondGlp onOpen={opensQuickview ? setQuickview : toPdp} storageKey="test-3-glp" shopInTest={false} />
       {opensQuickview && (
         <DiamondQuickview
           diamond={quickview}
@@ -71,7 +71,7 @@ export function Test3QuickviewPdp() {
   const base = useBase("test-3-quickview", variant)
   const select = useSelectStone(base)
   const diamond = findDiamond(useParams().id) ?? DIAMONDS[0]
-  return <DiamondPdp key={diamond.id} diamond={diamond} specLayout={QUICKVIEW_PDP_LAYOUT} onSelect={() => select(diamond)} />
+  return <DiamondPdp key={diamond.id} diamond={diamond} specLayout={QUICKVIEW_PDP_LAYOUT} onSelect={() => select(diamond)} stickyBar />
 }
 
 /* ───────────────────────── 3.2 Spec layout ───────────────────────── */
@@ -83,7 +83,7 @@ export function Test3Specs() {
   const diamond = DIAMONDS[0]
   return (
     <div data-variant={variant}>
-      <DiamondPdp diamond={diamond} specLayout={SPECS_VARIANTS[variant].layout} onSelect={() => select(diamond)} />
+      <DiamondPdp diamond={diamond} specLayout={SPECS_VARIANTS[variant].layout} onSelect={() => select(diamond)} stickyBar />
     </div>
   )
 }
@@ -94,8 +94,8 @@ export function Test3Specs() {
 export function Test3Done() {
   return (
     <div className="min-h-svh bg-secondary">
-      <SiteHeader />
-      <DyoStepper current={3} />
+      <SiteHeader contained />
+      <DyoStepper current={3} contained />
       <main className="px-margin py-16 max-lg:py-8">
         <div className="mx-auto flex max-w-2xl flex-col gap-8 bg-background p-10 max-lg:p-6">
           <div className="flex flex-col items-center gap-4 text-center">

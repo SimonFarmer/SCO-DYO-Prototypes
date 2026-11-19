@@ -27,7 +27,7 @@ export function StoneTile({ diamond, onOpen }: { diamond: Diamond; onOpen: (d: D
       </div>
       <div className="flex flex-col gap-3 py-3 pr-4">
         <div className="flex min-h-12 flex-col gap-2">
-          <h3 className="font-sans text-sm font-medium text-primary">
+          <h3 className="font-sans text-sm font-medium text-primary max-lg:min-h-10 max-lg:leading-5">
             {/* Stretched button: the whole tile is the hit area (wishlist sits above it). */}
             <button type="button" onClick={() => onOpen(diamond)} className="cursor-pointer text-left after:absolute after:inset-0">
               {title}

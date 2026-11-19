@@ -52,13 +52,14 @@ export function SpecTiles({ diamond, order, className }: { diamond: Diamond; ord
 export function TileSpecs({ diamond }: { diamond: Diamond }) {
   const items: SpecKey[] = ["clarity", "color", "cut"]
   return (
-    <dl className="flex items-start gap-1.5 lg:gap-2">
+    // Mobile (Figma 8048:107952): one row per spec, 48px label column. Desktop: three columns with dividers.
+    <dl className="flex flex-col gap-1 lg:flex-row lg:items-start lg:gap-2">
       {items.map((key, i) => (
         <Fragment key={key}>
-          {i > 0 && <span aria-hidden className="h-8 w-px shrink-0 bg-border-subtle" />}
-          <div className="flex min-w-0 flex-1 flex-col gap-1 py-0.5 lg:min-w-16">
+          {i > 0 && <span aria-hidden className="h-8 w-px shrink-0 bg-border-subtle max-lg:hidden" />}
+          <div className="flex min-w-0 gap-0.5 py-0.5 lg:min-w-16 lg:flex-1 lg:flex-col lg:gap-1">
             {/* Figma: 10px medium label — closest token is text-xxs (11px). */}
-            <dt className="text-xxs leading-3 font-medium text-muted-foreground">{LABEL[key]}</dt>
+            <dt className="w-12 shrink-0 text-xxs leading-3 font-medium text-muted-foreground lg:w-auto">{LABEL[key]}</dt>
             <dd className="text-xxs leading-3 font-semibold tracking-[0.5px] text-primary">{specValue(diamond, key)}</dd>
           </div>
         </Fragment>

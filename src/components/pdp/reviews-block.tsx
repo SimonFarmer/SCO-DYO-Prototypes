@@ -564,7 +564,7 @@ function NoReviews() {
 /** Reviews + Q&A. `empty` shows the no-reviews state used on the Diamond PDP. */
 export function ReviewsBlock({ empty = false }: { empty?: boolean }) {
   return (
-    <section className="flex flex-col gap-14 bg-background px-margin py-14">
+    <section className="flex flex-col gap-14 bg-background px-page py-14">
       <div className="flex w-full max-w-5xl flex-col gap-8">
         <h2 className="type-h3 font-medium text-primary">Reviews</h2>
         {empty ? (
