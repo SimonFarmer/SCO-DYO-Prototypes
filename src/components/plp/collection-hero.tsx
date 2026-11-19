@@ -5,31 +5,11 @@ import { Breadcrumb, type Crumb } from "@/components/site/breadcrumb"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { PLP_PATH, RTS_PATH, SHAPES, STYLES, settingImage, toggleFilter, type ListingFilters } from "@/data/plp"
+import { scrollAfterUnlock, scrollToResults } from "@/lib/scroll-to-results"
 import { cn } from "@/lib/utils"
 import type { Listing, PlpVariant } from "./use-listing"
 
 type ExploreKey = "style" | "shape"
-
-/**
- * Glide down to the results after a hero choice, so it's clear the listing below was refined.
- * The site header hides on the way down, so the target leaves room only for the sticky mobile stepper bar.
- */
-function scrollToResults() {
-  const results = document.getElementById("plp-results")
-  if (!results) return
-  const bar = document.querySelector<HTMLElement>('[data-slot="stepper-bar"]')
-  const top = results.getBoundingClientRect().top + window.scrollY - (bar?.offsetHeight ?? 0)
-  window.scrollTo({ top, behavior: "smooth" })
-}
-
-/** Base UI releases the drawer's scroll lock a tick after closing and restores the old scroll position, so wait it out. */
-function scrollAfterUnlock(frames = 30) {
-  if (document.documentElement.hasAttribute("data-base-ui-scroll-locked") && frames > 0) {
-    window.setTimeout(() => scrollAfterUnlock(frames - 1), 16)
-  } else {
-    scrollToResults()
-  }
-}
 
 const EXPLORE: { key: ExploreKey; label: string }[] = [
   { key: "style", label: "Setting Style" },

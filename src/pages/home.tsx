@@ -11,6 +11,7 @@ const PROTOTYPES = [
       { label: "PLP: Level 3 landing (Classic)", to: "/engagement-rings/classic" },
       { label: "PLP: Shop by Budget preset (under $1,000)", to: "/engagement-rings?price=under-1000" },
       { label: "PLP: Ready to Ship", to: "/engagement-rings/ready-to-ship" },
+      { label: "GLP: Natural Diamonds (DYO step 2) · tile opens Quickview", to: "/natural-diamonds" },
     ],
   },
   {

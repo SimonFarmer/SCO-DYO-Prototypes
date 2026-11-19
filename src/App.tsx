@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router"
 import { NotInTestProvider } from "@/components/prototype/not-in-test"
+import { NaturalDiamondPdp, NaturalDiamondsGlp } from "@/pages/diamonds"
 import { Blank, Home } from "@/pages/home"
 import { EngagementRingPlp } from "@/pages/plp"
 import { StoreHome } from "@/pages/plp/store-home"
@@ -22,6 +23,8 @@ export default function App() {
             <Route path="/shop" element={<StoreHome />} />
             <Route path="/engagement-rings" element={<EngagementRingPlp />} />
             <Route path="/engagement-rings/:slug" element={<EngagementRingPlp />} />
+            <Route path="/natural-diamonds" element={<NaturalDiamondsGlp />} />
+            <Route path="/natural-diamonds/:id" element={<NaturalDiamondPdp />} />
             <Route path="/test-1/:variant?" element={<Test1 />} />
             <Route path="/test-3-quickview/:variant?" element={<Test3Quickview />} />
             <Route path="/test-3-quickview/:variant/diamond/:id" element={<Test3QuickviewPdp />} />

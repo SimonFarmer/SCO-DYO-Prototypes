@@ -4,7 +4,7 @@ import { useNotInTest } from "@/components/prototype/not-in-test"
 import { ProfileDiagram, TopDiagram } from "@/components/diamond/diamond-diagrams"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { Button } from "@/components/ui/button"
-import { DIAMOND_IMAGE, diamondName, expertTake, fourCs, type Diamond } from "@/data/diamonds"
+import { diamondName, expertTake, fourCs, type Diamond } from "@/data/diamonds"
 import { cn } from "@/lib/utils"
 
 /** 2-column media grid (Figma 7375:134706): 360° video, top view, size guide, At the Source, diagrams. */
@@ -29,7 +29,7 @@ export function DiamondGallery({ diamond }: { diamond: Diamond }) {
         </button>
       </div>
       <div className={tile}>
-        <img src={DIAMOND_IMAGE} alt={`${diamond.carat.toFixed(2)} ct diamond, top view`} className="size-full object-cover" />
+        <img src={diamond.image} alt={`${diamond.carat.toFixed(2)} ct diamond, top view`} className="size-full object-cover" />
       </div>
       <div className={tile}>
         <img src="/images/diamonds/size-guide.png" alt="Size guide: carat sizes on a hand" className="size-full object-cover" />
@@ -135,7 +135,7 @@ export const AboutDiamondBlock = forwardRef<HTMLElement, { diamond: Diamond }>(f
             ))}
           </ul>
         </div>
-        <img src={DIAMOND_IMAGE} alt="" className="aspect-square w-full object-cover" loading="lazy" />
+        <img src={diamond.image} alt="" className="aspect-square w-full object-cover" loading="lazy" />
       </div>
     </section>
   )

@@ -6,7 +6,7 @@ import { SpecList } from "@/components/diamond/diamond-specs"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { DIAMOND_IMAGE, diamondTitle, type Diamond } from "@/data/diamonds"
+import { diamondTitle, type Diamond } from "@/data/diamonds"
 import { DELIVERY } from "@/data/dyo"
 import { formatPrice } from "@/lib/format"
 
@@ -23,12 +23,19 @@ export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetail
   return (
     <Dialog open={diamond !== null} onOpenChange={onOpenChange}>
       {/* Figma: 920px wide dialog, 32px padding and gap. */}
-      <DialogContent showCloseButton={false} className="max-h-[calc(100svh-2rem)] gap-8 overflow-y-auto rounded-none bg-background p-8 ring-0 shadow-xl md:max-w-4xl md:grid-cols-2">
+      <DialogContent
+        showCloseButton={false}
+        className="max-h-[calc(100svh-2rem)] gap-5 overflow-y-auto rounded-none bg-background p-5 pt-12 ring-0 shadow-xl md:max-w-4xl md:grid-cols-2 md:gap-8 md:p-8"
+      >
         {diamond && (
           <>
+            {/* Mobile: the photo comes first, so the close button sits above it rather than beside the title. */}
+            <DialogPrimitive.Close render={<Button variant="ghost" size="icon" aria-label="Close" className="absolute top-2 right-2 md:hidden" />}>
+              <XIcon />
+            </DialogPrimitive.Close>
             <div className="flex flex-col gap-2">
               <div className="relative aspect-[412/400] overflow-clip">
-                <img src={DIAMOND_IMAGE} alt={`${diamondTitle(diamond)}, 360° view`} className="size-full object-cover" />
+                <img src={diamond.image} alt={`${diamondTitle(diamond)}, 360° view`} className="size-full object-cover" />
                 {diamond.topSeller && (
                   <span className="absolute top-3 left-3 flex h-5 items-center bg-primary px-2 text-xxs leading-3 font-semibold tracking-[1px] text-primary-foreground uppercase">
                     Top seller
@@ -48,7 +55,7 @@ export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetail
               </div>
               <div className="flex gap-2">
                 <span className="size-16 overflow-clip border border-primary">
-                  <img src={DIAMOND_IMAGE} alt="" className="size-full object-cover" />
+                  <img src={diamond.image} alt="" className="size-full object-cover" />
                 </span>
               </div>
             </div>
@@ -56,7 +63,7 @@ export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetail
             <div className="flex flex-col gap-4">
               <div className="flex items-start gap-4">
                 <DialogPrimitive.Title className="flex-1 type-h4 font-medium text-primary">{diamondTitle(diamond)}</DialogPrimitive.Title>
-                <DialogPrimitive.Close render={<Button variant="ghost" size="icon" aria-label="Close" />}>
+                <DialogPrimitive.Close render={<Button variant="ghost" size="icon" aria-label="Close" className="max-md:hidden" />}>
                   <XIcon />
                 </DialogPrimitive.Close>
               </div>
