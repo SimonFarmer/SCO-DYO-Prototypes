@@ -60,8 +60,9 @@ const MAX_THUMBS = 4
 /**
  * Mobile PDP gallery for every Test 1 variant (Figma SCO Drop 3a – PDP 5492:71771): full-width
  * square slides that swipe with scroll-snap, and a thumbnail row below on the secondary background
- * (4 thumbnails, then "+X More", which opens the gallery overlay). Tapping a thumbnail scrolls to
- * that slide; tapping a slide opens the overlay there. "Try it on" from the reference is not built.
+ * (4 thumbnails, then "+X More", which opens the gallery overlay). Only the thumbnailed photos swipe
+ * inline; the rest are seen in the overlay. Tapping a thumbnail scrolls to that slide; tapping a slide
+ * opens the overlay there. "Try it on" from the reference is not built.
  */
 function MobileCarousel({
   media,
@@ -105,7 +106,8 @@ function MobileCarousel({
             setIndex(Math.round(el.scrollLeft / el.clientWidth))
           }}
         >
-          {media.map((item, i) => (
+          {/* Only the thumbnailed photos swipe inline; the rest open in the expanded gallery ("+X More"). */}
+          {shown.map((item, i) => (
             <li key={item.src} className="w-full shrink-0 snap-start">
               <button
                 type="button"
@@ -165,10 +167,7 @@ function MobileCarousel({
               type="button"
               aria-label={`Show ${hidden} more`}
               onClick={() => onOpen(MAX_THUMBS)}
-              className={cn(
-                "flex aspect-square w-full flex-col items-center justify-center border bg-primary-foreground type-label-xs text-primary",
-                index >= MAX_THUMBS ? "border-primary" : "border-transparent",
-              )}
+              className="flex aspect-square w-full flex-col items-center justify-center border border-transparent bg-primary-foreground type-label-xs text-primary"
             >
               <span>+{hidden}</span>
               <span>More</span>
