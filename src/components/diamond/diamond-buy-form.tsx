@@ -12,7 +12,7 @@ import { formatPrice } from "@/lib/format"
 import { useRingBuild } from "@/state/ring-build"
 
 /** “Price explained” popover: setting + this stone = ring total (Figma 7336:167016). */
-function PriceExplained({ diamond }: { diamond: Diamond }) {
+export function PriceExplained({ diamond }: { diamond: Diamond }) {
   const { setting } = useRingBuild()
   const rows = [
     { label: "Setting", name: setting.name, price: setting.price },
