@@ -170,10 +170,10 @@ export interface ProductCardData {
 export const SIMILAR_STYLES: ProductCardData[] = [
   { id: "ss-heirloom-cathedral", name: "Heirloom Engraved Cathedral Engagement Ring", price: 1295, image: "/images/plp/rings/engraved-cathedral.png" },
   { id: "ss-privet", name: "Privet Engagement Ring (1/5 tcw Diamond Accents)", price: 1195, image: "/images/plp/rings/privet-oval.png", badge: "Top seller" },
-  { id: "ss-cathedral-solitaire", name: "Classic Cathedral Solitaire Engagement Ring", price: 1050, image: "/images/products/ring-1.png", badge: "Top seller" },
-  { id: "ss-celeste-halo", name: "Celeste Halo Engagement Ring (1/3 tcw)", price: 2450, image: "/images/plp/rings/halo-emerald.png", badge: "Top seller" },
+  { id: "ss-cathedral-solitaire", name: "Classic Cathedral Solitaire Engagement Ring", price: 1050, image: "/images/products/ring-1.png" },
+  { id: "ss-celeste-halo", name: "Celeste Halo Engagement Ring (1/3 tcw)", price: 2450, image: "/images/plp/rings/halo-emerald.png" },
   { id: "ss-aurora-halo", name: "Aurora Hidden Halo Engagement Ring (1/4 tcw)", price: 1890, image: "/images/crowns/ring-preview.png", badge: "New" },
-  { id: "ss-petite-trinity", name: "Petite Trinity Three-Stone Engagement Ring", price: 1450, image: "/images/plp/rings/petite-pave-accent.png", badge: "Top seller" },
+  { id: "ss-petite-trinity", name: "Petite Trinity Three-Stone Engagement Ring", price: 1450, image: "/images/plp/rings/petite-pave-accent.png" },
   { id: "ss-odette-vintage", name: "Odette Vintage Engagement Ring (1/6 tcw)", price: 1590, image: "/images/plp/rings/vintage-marquise.png", badge: "New" },
   { id: "ss-timeless-solitaire", name: "Timeless Solitaire Engagement Ring", price: 690, image: "/images/plp/rings/timeless-solitaire-yg.png", badge: "Top seller" },
   { id: "ss-knife-edge", name: "Knife-Edge Solitaire Engagement Ring", price: 795, image: "/images/matching-bands/ring-6-solitaire.png" },
