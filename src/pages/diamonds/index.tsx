@@ -53,6 +53,7 @@ export function NaturalDiamondsGlp() {
         diamond={quickview}
         onOpenChange={(open) => !open && setQuickview(null)}
         onSelect={select}
+        showRingTotal={start !== "stone"}
         onViewDetails={(d) => {
           setQuickview(null)
           navigate(`${GLP_PATH}/${d.id}${start === "stone" ? "?start=stone" : ""}`)

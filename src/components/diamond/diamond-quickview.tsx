@@ -2,6 +2,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { HeartStraightIcon, PlayIcon, XIcon } from "@phosphor-icons/react"
 import { EllipsisVertical } from "lucide-react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { PriceExplained } from "@/components/diamond/diamond-buy-form"
 import { SpecList } from "@/components/diamond/diamond-specs"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
@@ -9,17 +10,21 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { diamondTitle, type Diamond } from "@/data/diamonds"
 import { DELIVERY } from "@/data/dyo"
 import { formatPrice } from "@/lib/format"
+import { useRingBuild } from "@/state/ring-build"
 
 interface DiamondQuickviewProps {
   diamond: Diamond | null
   onOpenChange: (open: boolean) => void
   onSelect: (d: Diamond) => void
   onViewDetails: (d: Diamond) => void
+  /** Show the ring total (selected setting + this diamond). Off when the journey started at the stone, with no setting chosen yet. */
+  showRingTotal?: boolean
 }
 
 /** Stone Quickview modal (Figma “Diamond Overlay”, 7375:133345) — Test 3.1 variant B. */
-export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetails }: DiamondQuickviewProps) {
+export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetails, showRingTotal = true }: DiamondQuickviewProps) {
   const notInTest = useNotInTest()
+  const { setting } = useRingBuild()
   return (
     <Dialog open={diamond !== null} onOpenChange={onOpenChange}>
       {/* Figma: 920px wide dialog, 32px padding and gap. */}
@@ -67,10 +72,28 @@ export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetail
                   <XIcon />
                 </DialogPrimitive.Close>
               </div>
-              <p className="flex items-baseline gap-2 font-semibold text-muted-foreground">
-                <span className="text-lg leading-none">{formatPrice(diamond.price)}</span>
-                <span className="type-label-xs">Diamond only</span>
-              </p>
+              <div className="flex flex-col gap-2">
+                <p className="flex items-baseline gap-2 font-semibold text-muted-foreground">
+                  <span className="text-lg leading-none">{formatPrice(diamond.price)}</span>
+                  <span className="type-label-xs">Diamond only</span>
+                </p>
+                {showRingTotal && (
+                  // Ring total: the selected setting plus this diamond, with the PDP's "Price explained" breakdown.
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="flex items-baseline gap-2">
+                      <span className="text-lg leading-none font-semibold text-primary">{formatPrice(setting.price + diamond.price)}</span>
+                      <span className="type-label-xs font-semibold text-muted-foreground">Ring total</span>
+                    </span>
+                    {/* Mobile: no room on one line, so "Price explained" drops below without the dot. */}
+                    <span className="text-sm leading-none font-medium text-muted-foreground max-md:hidden" aria-hidden>
+                      ∙
+                    </span>
+                    <span className="max-md:w-full">
+                      <PriceExplained diamond={diamond} />
+                    </span>
+                  </div>
+                )}
+              </div>
               <SpecList diamond={diamond} order={["carat", "clarity", "color", "cut"]} />
               <Button variant="link" className="h-auto px-0 w-fit" onClick={() => onViewDetails(diamond)}>
                 View more specifications
