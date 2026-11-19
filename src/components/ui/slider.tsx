@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils"
  * light track, charcoal range, round white thumbs with a charcoal border.
  * Optional `marks` draw 1px step ticks on the track (Figma “Point”), e.g. the diamond color/clarity grades.
  * `children` render inside the track, under the thumbs, so overlays (bands, ticks) share the thumbs' % positions.
+ * Optional `getAriaValueText` (passed to each thumb) announces a readable value when positions are not the value
+ * itself, e.g. the eased price slider.
  */
 function Slider({
   className,
@@ -17,6 +19,7 @@ function Slider({
   thumbClassName,
   thumbContent,
   children,
+  getAriaValueText,
   ...props
 }: Omit<SliderPrimitive.Root.Props<number[]>, "children"> & {
   marks?: number[]
@@ -29,6 +32,7 @@ function Slider({
   /** Content inside each thumb (e.g. a grip icon) */
   thumbContent?: ReactNode
   children?: ReactNode
+  getAriaValueText?: SliderPrimitive.Thumb.Props["getAriaValueText"]
 }) {
   const min = props.min ?? 0
   const max = props.max ?? 100
@@ -51,6 +55,7 @@ function Slider({
             <SliderPrimitive.Thumb
               key={i}
               index={i}
+              getAriaValueText={getAriaValueText}
               className={cn(
                 "size-4 cursor-grab rounded-full border border-primary bg-background outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:cursor-grabbing",
                 thumbClassName,

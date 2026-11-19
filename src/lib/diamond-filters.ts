@@ -5,6 +5,7 @@
 import {
   CLARITY_GRADES,
   COLOR_GRADES,
+  DIAMONDS,
   type CutGrade,
   type Diamond,
   type Shape,
@@ -23,10 +24,19 @@ export interface DiamondFilterState {
   /** Index range into CLARITY_GRADES (0 = I3 … 9 = IF) */
   clarity: [number, number]
   preset: Preset | null
+  /** Only stones that can be seen in store today */
+  instore: boolean
 }
 
-export const PRICE_BOUNDS: [number, number] = [500, 12000]
-export const CARAT_BOUNDS: [number, number] = [0.5, 2.5]
+/** Slider ends from the catalog: price to the nearest $100 / $1,000, carat to the nearest 0.1 ct. */
+export const PRICE_BOUNDS: [number, number] = [
+  Math.floor(Math.min(...DIAMONDS.map((d) => d.price)) / 100) * 100,
+  Math.ceil(Math.max(...DIAMONDS.map((d) => d.price)) / 1000) * 1000,
+]
+export const CARAT_BOUNDS: [number, number] = [
+  Math.floor(Math.min(...DIAMONDS.map((d) => d.carat)) * 10) / 10,
+  Math.ceil(Math.max(...DIAMONDS.map((d) => d.carat)) * 10) / 10,
+]
 
 export const NO_FILTERS: DiamondFilterState = {
   price: PRICE_BOUNDS,
@@ -36,6 +46,7 @@ export const NO_FILTERS: DiamondFilterState = {
   color: [0, COLOR_GRADES.length - 1],
   clarity: [0, CLARITY_GRADES.length - 1],
   preset: null,
+  instore: false,
 }
 
 const idx = <T extends string>(list: readonly T[], v: T) => list.indexOf(v)
@@ -76,6 +87,7 @@ export function appliedFilters(f: DiamondFilterState): { label: string; clear: (
     chips.push({ label: `Color ${COLOR_GRADES[f.color[0]]}–${COLOR_GRADES[f.color[1]]}`, clear: (s) => ({ ...s, color: NO_FILTERS.color, preset: null }) })
   if (f.clarity[0] !== NO_FILTERS.clarity[0] || f.clarity[1] !== NO_FILTERS.clarity[1])
     chips.push({ label: `${CLARITY_GRADES[f.clarity[0]]}–${CLARITY_GRADES[f.clarity[1]]}`, clear: (s) => ({ ...s, clarity: NO_FILTERS.clarity, preset: null }) })
+  if (f.instore) chips.push({ label: "In-Store", clear: (s) => ({ ...s, instore: false }) })
   return chips
 }
 
@@ -93,6 +105,7 @@ export function matchesFilters(d: Diamond, f: DiamondFilterState) {
     color >= f.color[0] &&
     color <= f.color[1] &&
     clarity >= f.clarity[0] &&
-    clarity <= f.clarity[1]
+    clarity <= f.clarity[1] &&
+    (!f.instore || d.instore)
   )
 }

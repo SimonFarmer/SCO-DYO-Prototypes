@@ -1,7 +1,7 @@
 import { HeartStraightIcon, PlayIcon } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { TileSpecs } from "@/components/diamond/diamond-specs"
-import { DIAMOND_IMAGE, diamondTitle, type Diamond } from "@/data/diamonds"
+import { diamondTitle, type Diamond } from "@/data/diamonds"
 import { formatPrice } from "@/lib/format"
 
 /**
@@ -15,7 +15,7 @@ export function StoneTile({ diamond, onOpen }: { diamond: Diamond; onOpen: (d: D
     <article className="group relative flex flex-col bg-bg-input-30">
       <div className="relative aspect-square overflow-clip">
         <img
-          src={DIAMOND_IMAGE}
+          src={diamond.image}
           alt=""
           loading="lazy"
           className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
@@ -26,7 +26,7 @@ export function StoneTile({ diamond, onOpen }: { diamond: Diamond; onOpen: (d: D
         </span>
       </div>
       <div className="flex flex-col gap-3 py-3 pr-4">
-        <div className="flex h-12 flex-col gap-2">
+        <div className="flex min-h-12 flex-col gap-2">
           <h3 className="font-sans text-sm font-medium text-primary">
             {/* Stretched button: the whole tile is the hit area (wishlist sits above it). */}
             <button type="button" onClick={() => onOpen(diamond)} className="cursor-pointer text-left after:absolute after:inset-0">

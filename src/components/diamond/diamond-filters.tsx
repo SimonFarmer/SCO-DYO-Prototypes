@@ -4,7 +4,7 @@ import { useNotInTest } from "@/components/prototype/not-in-test"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
-import { CLARITY_GRADES, COLOR_GRADES, CUT_GRADES, SHAPES, shapeIcon, type CutGrade } from "@/data/diamonds"
+import { CLARITY_GRADES, COLOR_GRADES, CUT_GRADES, shapeIcon, type CutGrade, type Shape } from "@/data/diamonds"
 import {
   CARAT_BOUNDS,
   NO_FILTERS,
@@ -17,7 +17,9 @@ import {
 import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-const CUT_HINT: Record<CutGrade, string> = {
+const SIDEBAR_SHAPES: Shape[] = ["Round", "Oval", "Marquise", "Heart", "Princess", "Pear", "Asscher", "Cushion", "Emerald", "Radiant"]
+
+export const CUT_HINT: Record<CutGrade, string> = {
   "Shane Classic": "Maximum sparkle and brilliance",
   Excellent: "Magnificent sparkle and light return",
   "Very Good": "Exceptional sparkle at a great value",
@@ -74,7 +76,7 @@ function FilterSection({
  * update; the filter (grid, count and applied chips) changes once the thumb is released, so
  * the chip row doesn't reflow on every step.
  */
-function RangeFields({
+export function RangeFields({
   value,
   bounds,
   step,
@@ -82,6 +84,7 @@ function RangeFields({
   parse,
   onChange,
   label,
+  curve = 1,
 }: {
   value: [number, number]
   bounds: [number, number]
@@ -90,11 +93,25 @@ function RangeFields({
   parse: (s: string) => number
   onChange: (v: [number, number]) => void
   label: string
+  /**
+   * Slider easing. 1 is linear; higher values give the low end more of the track (price: most stones
+   * cost a few thousand dollars, a few cost tens of thousands).
+   */
+  curve?: number
 }) {
   // Only set while a thumb is being dragged; otherwise the committed filter value shows,
   // so outside changes (chip removed, Clear Filter(s)) come straight through.
   const [dragging, setDragging] = useState<[number, number] | null>(null)
   const draft = dragging ?? value
+  // Slider positions run 0…1000 and map onto the value range through the curve.
+  const [lo, hi] = bounds
+  const toPos = (v: number) => Math.round(((v - lo) / (hi - lo)) ** (1 / curve) * 1000)
+  const fromPos = (t: number) => {
+    if (t <= 0) return lo
+    if (t >= 1000) return hi
+    return Math.min(hi, Math.max(lo, Math.round((lo + (hi - lo) * (t / 1000) ** curve) / step) * step))
+  }
+  const fromSlider = (v: number[]) => v.map(fromPos) as [number, number]
 
   const field = (i: 0 | 1) => (
     <input
@@ -121,14 +138,15 @@ function RangeFields({
       </div>
       <Slider
         aria-label={label}
-        min={bounds[0]}
-        max={bounds[1]}
-        step={step}
-        value={draft}
-        onValueChange={(v) => setDragging(v as [number, number])}
+        min={0}
+        max={1000}
+        step={1}
+        value={draft.map(toPos)}
+        getAriaValueText={(_text, _value, i) => format(draft[i])}
+        onValueChange={(v) => setDragging(fromSlider(v as number[]))}
         onValueCommitted={(v) => {
           setDragging(null)
-          onChange(v as [number, number])
+          onChange(fromSlider(v as number[]))
         }}
       />
     </div>
@@ -140,17 +158,22 @@ function RangeFields({
  * mark the steps between grades and the thumbs snap to those steps. Segments are weighted by
  * label length (Figma frames use min-widths for the same reason), so “VVS2” never overlaps.
  */
-function GradeSlider({
+export function GradeSlider({
   grades,
   value,
   onChange,
   label,
+  groups,
+  className,
 }: {
   grades: readonly string[]
   /** Inclusive grade index range */
   value: [number, number]
   onChange: (v: [number, number]) => void
   label: string
+  /** Optional band labels under the grades, e.g. Faint Yellow / Near Colorless / Colorless: [label, first, last] index */
+  groups?: [string, number, number][]
+  className?: string
 }) {
   // Width per grade, roughly its label width plus breathing room (single letters share the track evenly).
   const weights = grades.map((g) => ({ 1: 24, 2: 18, 3: 27 })[g.length] ?? 38)
@@ -161,7 +184,7 @@ function GradeSlider({
     bounds.reduce((best, b, i) => (Math.abs(b - v) < Math.abs(bounds[best] - v) ? i : best), 0)
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={cn("flex flex-col gap-2", className)}>
       <Slider
         aria-label={label}
         min={0}
@@ -204,6 +227,19 @@ function GradeSlider({
           </li>
         ))}
       </ol>
+      {groups && (
+        <ol className="grid px-2" style={{ gridTemplateColumns: weights.map((w) => `${w}fr`).join(" ") }}>
+          {groups.map(([name, first, last]) => (
+            <li
+              key={name}
+              style={{ gridColumn: `${first + 1} / ${last + 2}` }}
+              className="border-x border-border px-1 text-center text-xxs leading-3 font-medium tracking-[1px] text-muted-foreground uppercase first:border-l-0 last:border-r-0"
+            >
+              {name}
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   )
 }
@@ -240,7 +276,8 @@ export function DiamondFilters({ value, onChange }: { value: DiamondFilterState;
           label="Diamond price"
           value={value.price}
           bounds={PRICE_BOUNDS}
-          step={100}
+          step={50}
+          curve={2.6}
           format={formatPrice}
           parse={(s) => Number(s.replace(/[^\d.]/g, ""))}
           onChange={(price) => set({ price })}
@@ -248,8 +285,9 @@ export function DiamondFilters({ value, onChange }: { value: DiamondFilterState;
       </FilterSection>
 
       <FilterSection title="Stone Shape">
-        <div className="grid grid-cols-2 gap-3">
-          {SHAPES.map((shape) => {
+        {/* Figma fills the two columns top to bottom: Round…Princess, then Pear…Radiant. */}
+        <div className="grid grid-flow-col grid-cols-2 grid-rows-5 gap-3">
+          {SIDEBAR_SHAPES.map((shape) => {
             const on = value.shapes.includes(shape)
             return (
               <button

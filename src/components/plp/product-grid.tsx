@@ -35,6 +35,7 @@ function InGridBanner() {
   )
 }
 
+/** Numbered pagination (1 2 3 … n) with previous/next carets. Shared with the diamond GLP. */
 export function Pagination({ page, pageCount, onPage }: { page: number; pageCount: number; onPage: (p: number) => void }) {
   if (pageCount <= 1) return null
   // 1 2 3 … n, keeping the current page and its neighbours visible.

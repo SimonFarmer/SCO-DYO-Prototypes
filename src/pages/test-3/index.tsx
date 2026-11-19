@@ -52,7 +52,7 @@ export function Test3Quickview() {
 
   return (
     <div data-variant={variant}>
-      <DiamondGlp onOpen={opensQuickview ? setQuickview : toPdp} />
+      <DiamondGlp onOpen={opensQuickview ? setQuickview : toPdp} storageKey="test-3-glp" />
       {opensQuickview && (
         <DiamondQuickview
           diamond={quickview}
