@@ -3,6 +3,7 @@ import { DiamondBuyForm } from "@/components/diamond/diamond-buy-form"
 import { AboutDiamondBlock, DiamondGallery, FourCsReportCard } from "@/components/diamond/diamond-pdp-sections"
 import type { SpecLayout } from "@/components/diamond/diamond-specs"
 import { DyoStepper } from "@/components/dyo/dyo-stepper"
+import { PdpStickyBar } from "@/components/pdp/pdp-sticky-bar"
 import { FeatureBlock, UgcBlock, ValuePropsBlock } from "@/components/pdp/content-blocks"
 import { ReviewsBlock } from "@/components/pdp/reviews-block"
 import { ProductCarousel } from "@/components/shared/product-carousel"
@@ -11,24 +12,40 @@ import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { diamondName, type Diamond } from "@/data/diamonds"
 import { RECENTLY_VIEWED } from "@/data/products"
+import { formatPrice } from "@/lib/format"
+import { PAGE_MAX } from "@/lib/utils"
 
 interface DiamondPdpProps {
   diamond: Diamond
   specLayout: SpecLayout
   onSelect: () => void
+  /** Desktop sticky product bar from “About this diamond” down (Tests 3.1 and 3.2). */
+  stickyBar?: boolean
 }
 
 /**
  * Diamond PDP — DYO step 2 (Figma “Diamond PDP — DYO Step 9”, 7375:129294 / 7375:134699).
  * Shared by Test 3.1 (full-details destination) and Test 3.2 (spec layouts).
  */
-export function DiamondPdp({ diamond, specLayout, onSelect }: DiamondPdpProps) {
+export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false }: DiamondPdpProps) {
   const aboutRef = useRef<HTMLElement>(null)
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <DyoStepper current={2} />
+      <SiteHeader contained />
+      <DyoStepper current={2} contained />
+      {stickyBar && (
+        <PdpStickyBar
+          image={diamond.image}
+          imageAlt={`${diamond.carat.toFixed(2)} ct diamond, top view`}
+          title={diamondName(diamond)}
+          specs={[`${diamond.carat.toFixed(2)} ct`, `${diamond.color} Color`, `${diamond.clarity} Clarity`, `${diamond.cut} Cut`]}
+          price={formatPrice(diamond.price)}
+          showFrom={aboutRef}
+        />
+      )}
       <main>
+        {/* Gallery + buy form capped at 1680px (PAGE_MAX, as Test 2); the bands below use px-page. */}
+        <div className={PAGE_MAX}>
         <div className="grid lg:grid-cols-[826fr_606fr] lg:gap-2">
           <Breadcrumb items={["Home", "Diamonds", diamondName(diamond)]} className="mx-2 bg-secondary" />
         </div>
@@ -37,7 +54,7 @@ export function DiamondPdp({ diamond, specLayout, onSelect }: DiamondPdpProps) {
             <DiamondGallery diamond={diamond} />
           </div>
           <aside className="px-margin pb-8 lg:px-14 lg:pt-5">
-            <div className="transition-[top] duration-300 ease-out lg:sticky lg:top-[calc(var(--header-offset)+--spacing(5))]">
+            <div className="transition-[top] duration-300 ease-out lg:sticky lg:top-[calc(var(--header-offset)+var(--sticky-bar-offset,0px)+--spacing(5))]">
               <DiamondBuyForm
                 diamond={diamond}
                 specLayout={specLayout}
@@ -46,6 +63,7 @@ export function DiamondPdp({ diamond, specLayout, onSelect }: DiamondPdpProps) {
               />
             </div>
           </aside>
+        </div>
         </div>
         <FourCsReportCard diamond={diamond} />
         <AboutDiamondBlock ref={aboutRef} diamond={diamond} />
@@ -63,9 +81,10 @@ export function DiamondPdp({ diamond, specLayout, onSelect }: DiamondPdpProps) {
           products={RECENTLY_VIEWED}
           showWishlist
           className="border-t border-border-subtle"
+          contained
         />
       </main>
-      <SiteFooter />
+      <SiteFooter contained />
     </div>
   )
 }

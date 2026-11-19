@@ -115,20 +115,21 @@ export function BelowGridContent({ contained = false }: { contained?: boolean } 
         </Accordion>
       </section>
 
-      <section className="px-margin">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 bg-background px-6 py-10 lg:flex-row lg:items-center lg:justify-between lg:px-14">
-          <div className="flex flex-col gap-2">
+      {/* Mobile (Figma 8048:108010): the white panel runs edge to edge, 20px padding, 56px tall padding. */}
+      <section className="lg:px-margin">
+        <div className="mx-auto flex max-w-7xl flex-col gap-8 bg-background px-5 py-14 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:px-14 lg:py-10">
+          <div className="flex flex-col gap-4 lg:gap-2">
             <h2 className={sectionTitle}>Need a Little Extra Help?</h2>
             <p className="text-sm leading-5 text-muted-foreground">Our knowledgeable and friendly team is here for you!</p>
           </div>
-          <ul className="flex flex-col gap-3 lg:w-guided-intent">
+          <ul className="flex flex-col gap-4 lg:w-guided-intent lg:gap-3">
             {[
               { label: "Chat with a Jewelry Consultant", icon: ChatTextIcon },
               { label: "Schedule an In-Store or Online Appointment", icon: CalendarBlankIcon },
               { label: "(866) 467-4263", icon: PhoneIcon },
             ].map(({ label, icon: IconCmp }) => (
               <li key={label}>
-                <button type="button" onClick={() => notInTest(label)} className="flex cursor-pointer items-center gap-2 type-label-xs text-primary underline underline-offset-4">
+                <button type="button" onClick={() => notInTest(label)} className="flex cursor-pointer items-center gap-2 text-left type-label-xs text-primary underline lg:underline-offset-4">
                   <IconCmp className="size-4" />
                   {label}
                 </button>
@@ -138,11 +139,12 @@ export function BelowGridContent({ contained = false }: { contained?: boolean } 
         </div>
       </section>
 
-      <section className={cn("flex flex-col gap-8 px-margin py-14", contained && PAGE_MAX)}>
+      {/* Mobile (Figma 8048:108011): 32px side margin, 224px cards in a rail that runs off the right edge. */}
+      <section className={cn("flex flex-col gap-10 px-content-margin py-14 lg:gap-8 lg:px-margin", contained && PAGE_MAX)}>
         <h2 className={sectionTitle}>Explore Related Articles</h2>
-        <ul className="-mr-margin flex snap-x gap-card-gap overflow-x-auto pr-margin [scrollbar-width:none] lg:mr-0 lg:grid lg:grid-cols-4 lg:pr-0">
+        <ul className="-mr-content-margin flex snap-x gap-card-gap overflow-x-auto pr-content-margin [scrollbar-width:none] lg:mr-0 lg:grid lg:grid-cols-4 lg:pr-0 [&::-webkit-scrollbar]:hidden">
           {ARTICLES.map((a) => (
-            <li key={a.title} className="flex w-card shrink-0 snap-start flex-col bg-background lg:w-auto">
+            <li key={a.title} className="flex w-56 shrink-0 snap-start flex-col bg-background lg:w-auto">
               <img src={a.image} alt="" loading="lazy" className="aspect-square w-full object-cover" />
               <div className="flex flex-1 flex-col items-start gap-3 p-5">
                 <h3 className="type-h4 text-primary">{a.title}</h3>
