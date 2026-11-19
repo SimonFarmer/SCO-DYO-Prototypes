@@ -20,7 +20,7 @@ function PriceExplained({ diamond }: { diamond: Diamond }) {
   ]
   return (
     <Popover>
-      <PopoverTrigger render={<Button variant="link" className="h-auto px-0 gap-0.5" />}>
+      <PopoverTrigger openOnHover delay={100} render={<Button variant="link" className="h-auto px-0 gap-0.5" />}>
         Price explained
         <InfoIcon />
       </PopoverTrigger>

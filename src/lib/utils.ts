@@ -8,6 +8,8 @@ import { createCn } from "cn/config"
  */
 export const cn = createCn({
   extend: {
+    // `border-w-300` etc. are widths; without this they read as border colours and get dropped next to `border-primary`.
+    classGroups: { "border-w": [{ border: ["w-0", "w-50", "w-100", "w-200", "w-300"] }] },
     theme: {
       text: ["xxs", "xs-2"],
       spacing: [

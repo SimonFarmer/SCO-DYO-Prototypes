@@ -10,7 +10,7 @@ import {
   ShieldCheck,
 } from "@phosphor-icons/react"
 import { EllipsisVertical, MessageCircle } from "lucide-react"
-import { useState, type ReactNode } from "react"
+import { useState, type ReactNode, type Ref } from "react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -18,8 +18,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
-import { METALS, descriptionFor, monthlyPayment, type MetalId, type Setting } from "@/data/products"
+import { METALS, descriptionFor, type MetalId, type Setting } from "@/data/products"
 import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { useNotInTest } from "@/components/prototype/not-in-test"
@@ -36,23 +37,32 @@ interface SettingBuyFormProps {
   afterActions?: ReactNode
   /** Rendered between assurances and delivery, e.g. inline details tabs (variant C) */
   beforeDelivery?: ReactNode
+  /** Main CTA row — the mobile bottom bar swaps to the CTA once this scrolls out of view. */
+  ctaRef?: Ref<HTMLDivElement>
 }
 
+/**
+ * Figma SCO Drop 3a – PDP 2871:35830 (selected) / 2871:35770 (hover):
+ * default = 1px border-subtle, hover = 1px border, selected = 2px primary.
+ * On hover the label row shows the hovered metal with its price.
+ */
 function MetalSelector({
   options,
   value,
   onChange,
 }: {
-  options: MetalId[]
+  options: { metal: MetalId; price: number }[]
   value: MetalId
   onChange: (m: MetalId) => void
 }) {
   const notInTest = useNotInTest()
+  const [hovered, setHovered] = useState<MetalId | null>(null)
+  const hoveredOption = options.find((o) => o.metal === hovered)
   return (
     <div className="flex flex-col gap-6">
       <h2 className="type-h4 font-medium text-primary">Select your Metal</h2>
-      <div role="radiogroup" aria-label="Metal" className="flex flex-wrap gap-1.5">
-        {options.map((id) => {
+      <div role="radiogroup" aria-label="Metal" className="flex flex-wrap gap-1.5" onMouseLeave={() => setHovered(null)}>
+        {options.map(({ metal: id }) => {
           const selected = id === value
           return (
             <button
@@ -62,9 +72,10 @@ function MetalSelector({
               aria-checked={selected}
               aria-label={METALS[id].label}
               onClick={() => onChange(id)}
+              onMouseEnter={() => setHovered(id)}
               className={cn(
                 "flex size-11 items-center rounded-full p-1.5",
-                selected ? "border-w-300 border-primary" : "border border-border-subtle hover:border-primary",
+                selected ? "border-w-300 border-primary" : "border border-border-subtle hover:border-border",
               )}
             >
               <span className="block size-full rounded-full" style={{ backgroundColor: METALS[id].swatch }} />
@@ -72,7 +83,10 @@ function MetalSelector({
           )
         })}
       </div>
-      <p className="text-sm leading-none font-semibold text-muted-foreground">{METALS[value].label}</p>
+      <p className="flex items-center gap-2 text-sm leading-none">
+        <span className="font-semibold text-muted-foreground">{METALS[hoveredOption?.metal ?? value].label}</span>
+        {hoveredOption && <span className="font-medium text-primary">{formatPrice(hoveredOption.price)}</span>}
+      </p>
       <div className="flex flex-col gap-2 bg-bg-input-50 p-3">
         <Button variant="link" className="h-auto gap-0.5 px-0 w-fit" onClick={() => notInTest("Metal education")}>
           Learn about Metals
@@ -86,35 +100,38 @@ function MetalSelector({
   )
 }
 
-function FinancingCard({ price }: { price: number }) {
-  const notInTest = useNotInTest()
+/** “Price explained” popover on the Settings PDP — opens on hover, click/tap still works (Figma 7342:118262). */
+function PriceExplained({ price }: { price: number }) {
+  const rows = [
+    { label: "Setting, incl. accent stones", value: formatPrice(price) },
+    { label: "Center stone", value: "Chosen in step 2" },
+  ]
   return (
-    <div className="flex items-start gap-3 bg-bg-input-50 p-3">
-      {/* Figma: 52px tile, fill #5C0017 — no tokens; closest are size-12 and tertiary (signature-burgundy-900). */}
-      <div className="flex size-12 shrink-0 items-center justify-center rounded-xs bg-tertiary">
-        <img src="/images/misc/finance-badge.png" alt="Shane Co. credit card" className="aspect-[208/134] w-full rounded-xs object-cover" />
-      </div>
-      <div className="flex flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-1">
-          <p className="text-sm font-semibold text-primary">Financing Available</p>
-          <p className="text-xs font-medium text-primary">
-            {formatPrice(monthlyPayment(price))}/mo suggested payments with 12-month special financing.
-          </p>
-        </div>
-        <Button variant="link" className="h-auto gap-0.5 px-0 w-fit" onClick={() => notInTest("Financing")}>
-          Learn More
-        </Button>
-      </div>
-    </div>
+    <Popover>
+      <PopoverTrigger openOnHover delay={100} render={<Button variant="link" className="h-auto gap-0.5 px-0" />}>
+        Price explained
+        <Info />
+      </PopoverTrigger>
+      {/* Figma: 302px wide, left-aligned under the price row — closest width token is w-80 (320px). */}
+      <PopoverContent align="start" className="flex w-80 flex-col gap-2 text-xs leading-4 text-muted-foreground">
+        {rows.map((row) => (
+          <div key={row.label} className="flex items-start justify-between gap-2">
+            <p>{row.label}</p>
+            <p className="font-semibold">{row.value}</p>
+          </div>
+        ))}
+        <p>Your ring total updates once you choose a center stone.</p>
+      </PopoverContent>
+    </Popover>
   )
 }
 
-function BuyActions({ onSelect }: { onSelect?: () => void }) {
+function BuyActions({ onSelect, ctaRef }: { onSelect?: () => void; ctaRef?: Ref<HTMLDivElement> }) {
   const notInTest = useNotInTest()
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex w-full flex-col gap-2">
-        <div className="flex gap-2">
+        <div ref={ctaRef} className="flex gap-2">
           <Button className="flex-1" onClick={onSelect ?? (() => notInTest("Selecting the setting"))}>
             Select this Setting
           </Button>
@@ -122,11 +139,11 @@ function BuyActions({ onSelect }: { onSelect?: () => void }) {
             <DropdownMenuTrigger render={<Button variant="outline" size="icon" aria-label="More options" />}>
               <EllipsisVertical />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              {/* Out of scope for Test 1. */}
-              <DropdownMenuItem onClick={() => notInTest("Editing ring size")}>Edit Ring Size</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => notInTest("Reviewing your design")}>Review your design</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => notInTest("Sharing")}>Share</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-56">
+              {/* The only option that applies at the setting step; out of scope for Test 1. */}
+              <DropdownMenuItem onClick={() => notInTest("Adding the setting to your bag")}>
+                Add Setting Only to Bag
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -179,7 +196,6 @@ export function DyoAssurances() {
 
 /** Shipping / faster delivery / store pickup rows — shared by the setting and diamond buy forms. */
 export function DeliveryOptions() {
-  const [open, setOpen] = useState(false)
   const notInTest = useNotInTest()
   return (
     <div className="flex flex-col">
@@ -189,15 +205,14 @@ export function DeliveryOptions() {
       </div>
       <button
         type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => notInTest("Faster shipping")}
         className="flex items-center gap-3 border-t border-muted bg-primary-foreground p-4 text-left"
       >
         <span className="flex flex-1 flex-col gap-2">
           <span className="type-label-xs font-semibold text-primary">Need it sooner?</span>
           <span className="type-caption text-secondary-foreground">$10 faster shipping: by Sat, Nov 7</span>
         </span>
-        <CaretDown className={cn("size-4 text-primary transition-transform", open && "rotate-180")} />
+        <CaretDown className="size-4 text-primary" />
       </button>
       <a
         href="#"
@@ -231,9 +246,9 @@ export function SettingBuyForm({
   teaser = false,
   afterActions,
   beforeDelivery,
+  ctaRef,
 }: SettingBuyFormProps) {
   const variant = setting.variants.find((v) => v.metal === metal) ?? setting.variants[0]
-  const notInTest = useNotInTest()
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-8">
@@ -251,10 +266,7 @@ export function SettingBuyForm({
               <span className="text-sm leading-none font-medium text-muted-foreground" aria-hidden>
                 ∙
               </span>
-              <Button variant="link" className="h-auto gap-0.5 px-0" onClick={() => notInTest("Pricing details")}>
-                Price explained
-                <Info />
-              </Button>
+              <PriceExplained price={variant.price} />
             </div>
           </div>
           {teaser ? (
@@ -272,11 +284,11 @@ export function SettingBuyForm({
           )}
         </div>
         <Separator className="my-3 bg-muted" />
-        <MetalSelector options={setting.variants.map((v) => v.metal)} value={metal} onChange={onMetalChange} />
+        <MetalSelector options={setting.variants.map((v) => ({ metal: v.metal, price: v.price }))} value={metal} onChange={onMetalChange} />
         <Separator className="my-3 bg-muted" />
       </div>
-      <FinancingCard price={variant.price} />
-      <BuyActions onSelect={onSelect} />
+      {/* Financing is hidden until the ring is complete (fixes sheet, Settings PDP #12). */}
+      <BuyActions onSelect={onSelect} ctaRef={ctaRef} />
       {afterActions}
       <DyoAssurances />
       {beforeDelivery}

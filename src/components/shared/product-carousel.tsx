@@ -74,7 +74,8 @@ export function ProductCarousel({ title, products, showWishlist, className, cont
           <ProductCard key={key} product={product} showWishlist={showWishlist} />
         ))}
       </div>
-      <div className="flex justify-end gap-card-gap">
+      {/* Arrows on desktop only; on mobile the row is swiped. */}
+      <div className="hidden justify-end gap-card-gap lg:flex">
         <Button variant="outline" size="icon" aria-label="Previous" disabled={!canPrev} onClick={() => scroll(-1)}>
           <ArrowLeft />
         </Button>
