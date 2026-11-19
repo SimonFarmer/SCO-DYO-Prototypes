@@ -474,6 +474,7 @@ export interface NavSection {
 
 export const PLP_PATH = "/engagement-rings"
 export const RTS_PATH = "/engagement-rings/ready-to-ship"
+export const GLP_PATH = "/natural-diamonds"
 
 export const NAV_TOP_LINKS: NavLink[] = [
   { label: "Ring Finder Quiz", to: null },
@@ -517,7 +518,8 @@ export const NAV_SECTIONS: NavSection[] = [
         // Figma order (SCO Drop 1, 4548:45957 / 4548:45788): column 1 then column 2.
         links: ["oval", "round", "marquise", "radiant", "cushion", "princess", "emerald", "pear", "heart", "asscher"].map((id) => ({
           label: id === "emerald" ? "Emerald Cut" : SHAPES.find((s) => s.id === id)!.label,
-          to: toCollection(`${id}-shape`),
+          // Shopping by stone starts the DYO flow at the stone: the diamond GLP, filtered to the shape.
+          to: `${GLP_PATH}?shape=${id}&start=stone`,
           icon: `/images/nav/shapes/${id}.png`,
         })),
       },

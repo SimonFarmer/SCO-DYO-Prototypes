@@ -2,7 +2,7 @@ import { useRef } from "react"
 import { DiamondBuyForm } from "@/components/diamond/diamond-buy-form"
 import { AboutDiamondBlock, DiamondGallery, FourCsReportCard } from "@/components/diamond/diamond-pdp-sections"
 import type { SpecLayout } from "@/components/diamond/diamond-specs"
-import { DyoStepper } from "@/components/dyo/dyo-stepper"
+import { DyoStepper, type DyoStart } from "@/components/dyo/dyo-stepper"
 import { FeatureBlock, UgcBlock, ValuePropsBlock } from "@/components/pdp/content-blocks"
 import { ReviewsBlock } from "@/components/pdp/reviews-block"
 import { ProductCarousel } from "@/components/shared/product-carousel"
@@ -16,18 +16,20 @@ interface DiamondPdpProps {
   diamond: Diamond
   specLayout: SpecLayout
   onSelect: () => void
+  /** DYO entry point; stone-first journeys show the stone as step 1. */
+  start?: DyoStart
 }
 
 /**
  * Diamond PDP — DYO step 2 (Figma “Diamond PDP — DYO Step 9”, 7375:129294 / 7375:134699).
  * Shared by Test 3.1 (full-details destination) and Test 3.2 (spec layouts).
  */
-export function DiamondPdp({ diamond, specLayout, onSelect }: DiamondPdpProps) {
+export function DiamondPdp({ diamond, specLayout, onSelect, start = "setting" }: DiamondPdpProps) {
   const aboutRef = useRef<HTMLElement>(null)
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
-      <DyoStepper current={2} />
+      <DyoStepper current={start === "stone" ? 1 : 2} start={start} showTotal={start !== "stone"} />
       <main>
         <div className="grid lg:grid-cols-[826fr_606fr] lg:gap-2">
           <Breadcrumb items={["Home", "Diamonds", diamondName(diamond)]} className="mx-2 bg-secondary" />

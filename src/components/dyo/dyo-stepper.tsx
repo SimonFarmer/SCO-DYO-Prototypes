@@ -6,12 +6,25 @@ import { cn, PAGE_MAX } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
 
 type StepNumber = 1 | 2 | 3
+type StepKind = "setting" | "stone" | "finishing"
+/** Where the shopper entered the DYO flow: a setting (PLP) or a stone (Shop by Stone → diamond GLP). */
+export type DyoStart = "setting" | "stone"
+
+/** Step order for each entry point. Finishing touches is always last. */
+const ORDER: Record<DyoStart, StepKind[]> = {
+  setting: ["setting", "stone", "finishing"],
+  stone: ["stone", "setting", "finishing"],
+}
+
+const STEP_LABEL: Record<StepKind, string> = { setting: "Setting", stone: "Stone", finishing: "Finishing Touches" }
+/** Short labels for the 375px accordion header. */
+const STEP_TITLE: Record<StepKind, string> = { setting: "Setting", stone: "Stone", finishing: "Review" }
 
 /** Shown for steps that are current or not started yet (Figma Drop 3b setting step). */
-const STEP_DESCRIPTION: Record<StepNumber, string> = {
-  1: "Select your setting",
-  2: "Find your perfect stone",
-  3: "Size, personalize & review",
+const STEP_DESCRIPTION: Record<StepKind, string> = {
+  setting: "Select your setting",
+  stone: "Find your perfect stone",
+  finishing: "Size, personalize & review",
 }
 
 /** Numbered step marker. Done steps get a check badge; the current step is filled. */
@@ -57,12 +70,16 @@ function StepMarker({
  */
 export function DyoStepper({
   current,
+  start = "setting",
   mobileLabel,
   showTotal = true,
   mobileTone = "secondary",
   contained = false,
 }: {
+  /** Position of the current step (1–3) in this journey's order. */
   current: StepNumber
+  /** Entry point: decides the step order (stone-first puts Stone at step 1). */
+  start?: DyoStart
   /** Short label for the 375px accordion header. */
   mobileLabel?: string
   /** Show the running total on step 3 (off on the PLP, before anything is chosen). */
@@ -77,8 +94,13 @@ export function DyoStepper({
   const [open, setOpen] = useState(false)
 
   const stateOf = (n: StepNumber) => (n < current ? "done" : n === current ? "current" : "upcoming")
-  // Short labels for the 375px accordion header.
-  const stepTitle = { 1: "Setting", 2: "Stone", 3: "Review" } as const
+  const order = ORDER[start]
+  const numbered = order.map((kind, i) => ({ kind, n: (i + 1) as StepNumber }))
+  const chosen = {
+    setting: { price: setting.price, detail: setting.name, lines: [setting.name, setting.metal] },
+    stone: { price: stone.price, detail: stone.title, lines: [stone.title] },
+    finishing: { price: 0, detail: "", lines: [] as string[] },
+  }
 
   return (
     <>
@@ -88,18 +110,15 @@ export function DyoStepper({
       <div className={cn("flex items-center gap-2 px-margin py-3", contained && PAGE_MAX)}>
         <p className="w-card shrink-0 type-h5 text-primary">Design Your Ring</p>
         <ol className="flex min-w-0 flex-1 items-center gap-4">
-          {[
-            { n: 1 as const, label: "Setting", price: setting.price, detail: setting.name },
-            { n: 2 as const, label: "Stone", price: stone.price, detail: stone.title },
-            { n: 3 as const, label: "Finishing Touches", price: 0, detail: "" },
-          ].map((step) => {
+          {numbered.map(({ kind, n }) => {
+            const step = { n, label: STEP_LABEL[kind], ...chosen[kind] }
             const state = stateOf(step.n)
             return (
               <Fragment key={step.n}>
                 {step.n > 1 && <li aria-hidden className="w-px self-stretch bg-muted" />}
                 <li className="flex min-w-0 flex-1 items-center gap-3" aria-current={state === "current" ? "step" : undefined}>
                   <StepMarker n={step.n} state={state} shape="circle" />
-                  {state === "done" && step.n < 3 ? (
+                  {state === "done" && kind !== "finishing" ? (
                     <div className="flex min-w-0 flex-col gap-1">
                       <div className="flex items-center gap-3 type-label-xs text-primary">
                         <span className="flex gap-2">
@@ -119,7 +138,7 @@ export function DyoStepper({
                     // Current / upcoming step: title + description, no price.
                     <div className="flex min-w-0 flex-col gap-0.75">
                       <span className="truncate type-label-xs text-primary">{step.label}</span>
-                      <span className="truncate type-caption text-muted-foreground">{STEP_DESCRIPTION[step.n]}</span>
+                      <span className="truncate type-caption text-muted-foreground">{STEP_DESCRIPTION[kind]}</span>
                     </div>
                   )}
                 </li>
@@ -150,7 +169,7 @@ export function DyoStepper({
         >
           <span className="type-label-xs text-primary">Design Your Own</span>
           <span className="flex min-w-0 items-center gap-2 type-label-xs text-primary">
-            <span className="truncate">Step {current}. {mobileLabel ?? stepTitle[current]}</span>
+            <span className="truncate">Step {current}. {mobileLabel ?? STEP_TITLE[order[current - 1]]}</span>
             <CaretDownIcon className={cn("size-4 shrink-0 transition-transform", open && "rotate-180")} />
           </span>
         </button>
@@ -163,15 +182,13 @@ export function DyoStepper({
         )}
         {open && (
           <ol className="absolute inset-x-0 top-full border-b border-border-subtle bg-background px-margin shadow-lg animate-in fade-in slide-in-from-top-1">
-            {[
-              stateOf(1) === "done"
-                ? { n: 1 as const, label: "Setting", lines: [setting.name, setting.metal], price: formatPrice(setting.price) }
-                : { n: 1 as const, label: "Setting", lines: [STEP_DESCRIPTION[1]], price: "" },
-              stateOf(2) === "done"
-                ? { n: 2 as const, label: "Stone", lines: [stone.title], price: formatPrice(stone.price) }
-                : { n: 2 as const, label: "Stone", lines: [STEP_DESCRIPTION[2]], price: "" },
-              { n: 3 as const, label: "Finishing Touches", lines: ["Size, personalize & review"], price: showTotal ? `Total: ${formatPrice(total)}` : "" },
-            ].map((step, i, all) => (
+            {numbered.map(({ kind, n }) =>
+              kind === "finishing"
+                ? { n, label: STEP_LABEL[kind], lines: [STEP_DESCRIPTION[kind]], price: showTotal ? `Total: ${formatPrice(total)}` : "" }
+                : stateOf(n) === "done"
+                  ? { n, label: STEP_LABEL[kind], lines: chosen[kind].lines, price: formatPrice(chosen[kind].price) }
+                  : { n, label: STEP_LABEL[kind], lines: [STEP_DESCRIPTION[kind]], price: "" },
+            ).map((step, i, all) => (
               <li
                 key={step.n}
                 className={cn("flex gap-3 py-4", i < all.length - 1 && "border-b border-muted")}
