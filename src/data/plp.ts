@@ -333,8 +333,9 @@ export function toggleFilter(f: ListingFilters, key: "style" | "shape" | "metal"
 
 export const hasPrice = (f: ListingFilters) => f.minPrice !== null || f.maxPrice !== null
 
+/** Filters counted on the mobile "Filter & Sort" button. Fulfilment isn't counted: its own chip shows it. */
 export const filterCount = (f: ListingFilters) =>
-  f.style.length + f.shape.length + f.metal.length + f.accent.length + (hasPrice(f) ? 1 : 0) + (f.fulfil ? 1 : 0)
+  f.style.length + f.shape.length + f.metal.length + f.accent.length + (hasPrice(f) ? 1 : 0)
 
 /** Slider bounds for a catalogue: its cheapest and dearest prices, rounded out to $50. */
 export function priceBounds(products: PlpProduct[]) {
