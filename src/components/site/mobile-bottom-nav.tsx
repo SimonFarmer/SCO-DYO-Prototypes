@@ -117,7 +117,14 @@ function useScrolledPast(ref: RefObject<HTMLElement | null> | undefined) {
   return past
 }
 
-export function MobileBottomNav({ cta }: { cta?: BottomNavCta }) {
+export function MobileBottomNav({
+  cta,
+  shopInTest = true,
+}: {
+  cta?: BottomNavCta
+  /** false: Shop shows the "not part of this test" notice instead of opening the menu (e.g. Test 1) */
+  shopInTest?: boolean
+}) {
   const notInTest = useNotInTest()
   const showCta = useScrolledPast(cta?.watch)
   const [screen, setScreen] = useState<Screen | null>(null)
@@ -236,7 +243,7 @@ export function MobileBottomNav({ cta }: { cta?: BottomNavCta }) {
               {label}
             </button>
           ))}
-          <ShopToggle open={!!screen} onClick={() => setScreen((s) => (s ? null : { level: 1 }))} />
+          <ShopToggle open={!!screen} onClick={shopInTest ? () => setScreen((s) => (s ? null : { level: 1 })) : () => notInTest("Shop menu")} />
         </nav>
         {cta && (
           <div
@@ -251,7 +258,7 @@ export function MobileBottomNav({ cta }: { cta?: BottomNavCta }) {
             <Button className="flex-1" onClick={cta.onClick}>
               {cta.label}
             </Button>
-            <ShopToggle open={false} onClick={() => setScreen({ level: 1 })} className="w-10" />
+            <ShopToggle open={false} onClick={shopInTest ? () => setScreen({ level: 1 }) : () => notInTest("Shop menu")} className="w-10" />
           </div>
         )}
       </div>

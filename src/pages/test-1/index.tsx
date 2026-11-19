@@ -147,6 +147,7 @@ export function Test1() {
 
       {/* Mobile: navigation bar that swaps to the CTA once the buy form’s CTA scrolls away (fixes sheet #9). */}
       <MobileBottomNav
+        shopInTest={false}
         cta={{
           label: `${formatPrice(price)} - Select this Setting`,
           onClick: () => notInTest("Selecting the setting"),
