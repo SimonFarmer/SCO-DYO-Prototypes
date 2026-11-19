@@ -5,7 +5,6 @@ import { DyoStepper } from "@/components/dyo/dyo-stepper"
 import { BelowGridContent } from "@/components/plp/below-grid"
 import { Pagination } from "@/components/plp/product-grid"
 import { useNotInTest } from "@/components/prototype/not-in-test"
-import { Breadcrumb } from "@/components/site/breadcrumb"
 import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
@@ -269,7 +268,6 @@ export function Test2DiamondsPlp() {
         {/* The hero's background runs full width; its content stops at the 1680px page width. */}
         <section className="bg-secondary">
           <div className={cn("flex flex-col gap-5 px-margin pt-5 pb-10", PAGE_MAX)}>
-          <Breadcrumb items={["Home", "Diamonds", title]} className="p-0" />
           <div className="flex flex-col gap-8 lg:flex-row lg:gap-16">
             <div className="flex flex-col gap-5 lg:w-108 lg:shrink-0 lg:border-r lg:border-input lg:pr-16 lg:pb-7">
               <h1 className="type-h2 text-primary max-lg:type-h3">{title}</h1>

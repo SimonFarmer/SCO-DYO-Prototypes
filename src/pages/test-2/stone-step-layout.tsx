@@ -1,10 +1,8 @@
 import { useEffect, type ReactNode } from "react"
 import { useLocation } from "react-router"
 import { DyoStepper } from "@/components/dyo/dyo-stepper"
-import { Breadcrumb } from "@/components/site/breadcrumb"
 import { SiteHeader } from "@/components/site/site-header"
 import { StoneStepGallery, type StoneGalleryMode } from "@/components/stones/stone-step-gallery"
-import { SETTING } from "@/data/dyo"
 import { cn, PAGE_MAX } from "@/lib/utils"
 import { chosenSize, effectiveShape, type StonePrefs } from "./preferences"
 
@@ -46,16 +44,15 @@ export function StoneStepLayout({
       <DyoStepper current={2} mobileLabel="Stone" contained />
       {/* Content stops growing at 1680px and centres; the header and stepper bars still run full width. */}
       <main className={PAGE_MAX}>
-        {/* Figma: breadcrumb is its own 48px row above the gallery column. */}
-        <div className={COLUMNS}>
-          <Breadcrumb items={["Home", "Engagement Rings", SETTING.name]} className="mx-2 bg-secondary" />
-        </div>
+        {/* No breadcrumb in Test 2: the gallery starts 8px below the stepper, matching its side gutter. */}
         <div className={COLUMNS}>
           {/* Sticky column (below the sticky-on-intent header, --header-offset): the preview on 2a, so it's
               always on screen while the handles move; the buy form on 2b, beside the long gallery. */}
           <div
             className={cn(
-              "px-2",
+              // 8px gutter; on desktop 2b, Test 1's long gallery brings its own (so it isn't doubled).
+              "px-2 pt-2",
+              gallery === "full" && "lg:px-0",
               gallery === "preview" && "transition-[top] duration-300 ease-out lg:sticky lg:top-(--header-offset) lg:self-start lg:pb-8",
             )}
           >
