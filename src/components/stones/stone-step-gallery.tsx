@@ -75,8 +75,9 @@ export function StoneStepGallery({
     return [
       hero,
       // The 360 still already carries its play button.
-      { kind: "image", src: video.src, alt: video.alt, badge: "360 view" },
-      { kind: "image", src: diamondTop.src, alt: diamondTop.alt },
+      // The 360 view and close-up are of the chosen diamond, so they're labelled with it ("Round · 1.25 ct").
+      { kind: "image", src: video.src, alt: `360° view of the ${shown} ${stoneShape(shape).label.toLowerCase()} diamond`, badge: `${stoneShape(shape).label} · ${shown}` },
+      { kind: "image", src: diamondTop.src, alt: `${shown} ${stoneShape(shape).label.toLowerCase()} diamond, top view`, badge: `${stoneShape(shape).label} · ${shown}` },
       { kind: "image", src: sizeGuide.src, alt: sizeGuide.alt },
       { kind: "image", src: REVIEW_GALLERY[4].src, alt: REVIEW_GALLERY[4].alt },
       { kind: "image", src: REVIEW_GALLERY[5].src, alt: REVIEW_GALLERY[5].alt },

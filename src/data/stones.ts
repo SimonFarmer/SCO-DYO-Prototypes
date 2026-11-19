@@ -585,6 +585,8 @@ export interface StonePick {
   kind: PickKind
   label: string
   who: string
+  /** One line under the stone title (Figma 8038:26505) */
+  summary: string
   /** "Optimized for …" */
   optimizedFor: string
   why: string
@@ -597,6 +599,7 @@ interface PickRecipe {
   kind: PickKind
   label: string
   who: string
+  summary: Record<"diamond" | "gemstone", string>
   optimizedFor: Record<"diamond" | "gemstone", string>
   highlight: SpecKey[]
   why: Record<StoneTypeId, string>
@@ -609,6 +612,7 @@ const RECIPES: PickRecipe[] = [
     kind: "value",
     label: "Best Value",
     who: "For the budget-minded",
+    summary: { diamond: "Great grades for the price.", gemstone: "The best color for the price." },
     optimizedFor: { diamond: "balanced grades", gemstone: "color for the price" },
     highlight: ["color", "clarity"],
     why: {
@@ -622,6 +626,7 @@ const RECIPES: PickRecipe[] = [
     kind: "size",
     label: "Largest Size",
     who: "For the size-seeker",
+    summary: { diamond: "The biggest stone that fits.", gemstone: "The biggest stone that fits." },
     optimizedFor: { diamond: "carat weight", gemstone: "size" },
     highlight: ["size"],
     why: {
@@ -635,6 +640,7 @@ const RECIPES: PickRecipe[] = [
     kind: "quality",
     label: "Finest Quality",
     who: "For the quality-minded",
+    summary: { diamond: "Top grades in a slightly smaller size.", gemstone: "The most vivid color in a slightly smaller size." },
     optimizedFor: { diamond: "cut, color and clarity", gemstone: "color, clarity and cut" },
     highlight: ["cut", "color", "clarity"],
     why: {
@@ -720,6 +726,7 @@ export function recommend(ctx: PickContext): StonePick[] {
       kind: r.kind,
       label: r.label,
       who: r.who,
+      summary: r.summary[kind],
       optimizedFor: r.optimizedFor[kind],
       highlight: r.highlight,
       why: r.why[ctx.scope.type].replace("{gem}", gem),
