@@ -10,6 +10,27 @@ import type { Listing, PlpVariant } from "./use-listing"
 
 type ExploreKey = "style" | "shape"
 
+/**
+ * Glide down to the results after a hero choice, so it's clear the listing below was refined.
+ * The site header hides on the way down, so the target leaves room only for the sticky mobile stepper bar.
+ */
+function scrollToResults() {
+  const results = document.getElementById("plp-results")
+  if (!results) return
+  const bar = document.querySelector<HTMLElement>('[data-slot="stepper-bar"]')
+  const top = results.getBoundingClientRect().top + window.scrollY - (bar?.offsetHeight ?? 0)
+  window.scrollTo({ top, behavior: "smooth" })
+}
+
+/** Base UI releases the drawer's scroll lock a tick after closing and restores the old scroll position, so wait it out. */
+function scrollAfterUnlock(frames = 30) {
+  if (document.documentElement.hasAttribute("data-base-ui-scroll-locked") && frames > 0) {
+    window.setTimeout(() => scrollAfterUnlock(frames - 1), 16)
+  } else {
+    scrollToResults()
+  }
+}
+
 const EXPLORE: { key: ExploreKey; label: string }[] = [
   { key: "style", label: "Setting Style" },
   { key: "shape", label: "Stone Shape" },
@@ -160,7 +181,10 @@ function ExploreCarousel({ listing }: { listing: Listing }) {
               key={t.id}
               tile={t}
               selected={listing.filters[tab].includes(t.id)}
-              onClick={() => listing.toggle(tab, t.id)}
+              onClick={() => {
+                listing.toggle(tab, t.id)
+                scrollToResults()
+              }}
               className="w-category-wayfinder-hero shrink-0 snap-start"
             />
           ))}
@@ -192,9 +216,19 @@ function ExploreDrawer({ listing, open, onClose }: { listing: Listing; open: Exp
   const key = open ?? wasOpen ?? "style"
   const count = listing.countFor(pending)
   const toggle = (id: string) => setPending((p) => toggleFilter(p, key, id))
+  // Set by "View N Items"; the scroll waits until the drawer has closed and released its scroll lock.
+  const applied = useRef(false)
 
   return (
-    <Sheet open={!!open} onOpenChange={(o) => !o && onClose()}>
+    <Sheet
+      open={!!open}
+      onOpenChange={(o) => !o && onClose()}
+      onOpenChangeComplete={(o) => {
+        if (o || !applied.current) return
+        applied.current = false
+        scrollAfterUnlock()
+      }}
+    >
       <SheetContent side="bottom" showCloseButton={false} className="top-auto! max-h-[calc(100svh-12rem)] border-t-0 lg:hidden">
         <div className="flex items-center justify-between px-margin pt-6 pb-4">
           <SheetTitle className="type-h4 font-normal text-primary">{EXPLORE.find((e) => e.key === key)?.label}</SheetTitle>
@@ -224,6 +258,7 @@ function ExploreDrawer({ listing, open, onClose }: { listing: Listing; open: Exp
             disabled={count === 0}
             onClick={() => {
               listing.setFilters(pending)
+              applied.current = true
               onClose()
             }}
           >

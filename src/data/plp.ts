@@ -400,7 +400,7 @@ export const COLLECTIONS: Collection[] = [
   })),
   ...SHAPES.map((s) => ({
     slug: `${s.id}-shape`,
-    title: `${s.label} Engagement Rings`,
+    title: `${s.label} Cut Engagement Rings`,
     description: `Settings designed to hold a ${s.label.toLowerCase()} center stone. Choose your setting, then find your perfect ${s.label.toLowerCase()} diamond or gemstone.`,
     filters: { shape: [s.id] },
   })),

@@ -132,6 +132,7 @@ export function DyoStepper({
 
       {/* Mobile accordion: opens over the page, dimming only what's below the bar (not the header or hero above it) */}
       <div
+        data-slot="stepper-bar"
         className={cn(
           "sticky top-(--header-offset) z-30 bg-background transition-[top] duration-300 ease-out lg:hidden",
           mobileTone === "secondary" && "border-b border-border-subtle",
