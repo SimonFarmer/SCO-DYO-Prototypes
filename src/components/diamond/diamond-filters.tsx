@@ -265,7 +265,7 @@ export function DiamondFilters({ value, onChange }: { value: DiamondFilterState;
               <XIcon className="size-4" />
             </button>
           ))}
-          <Button variant="link" className="h-6 px-3" onClick={() => onChange(NO_FILTERS)}>
+          <Button variant="link" className="h-6 px-3" onClick={() => onChange({ ...NO_FILTERS, instore: value.instore })}>
             Clear Filter(s)
           </Button>
         </div>
