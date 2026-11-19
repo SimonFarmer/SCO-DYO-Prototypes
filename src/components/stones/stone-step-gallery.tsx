@@ -95,7 +95,7 @@ export function StoneStepGallery({
   const isDesktop = useIsDesktop()
 
   if (mode === "preview") return <PreviewStage hero={media[0]} label={previewLabel} />
-  if (isDesktop) return <SettingGallery media={media} previewLabel={previewLabel} className="px-0" />
+  if (isDesktop) return <SettingGallery media={media} previewLabel={previewLabel} />
   // Mobile: Test 1 C's image + thumbnail strip. Keyed by the preview, so changing the stone, shape or
   // size brings the stage back to it.
   return <ThumbnailGallery key={media[0].src} media={media} />
