@@ -2,6 +2,8 @@
  * Shared mock data for the DYO prototypes. Keep products identical across test variants.
  */
 
+import { SETTINGS, productImage } from "./plp"
+
 export type MetalId = "14k-white-gold" | "14k-yellow-gold" | "14k-rose-gold" | "platinum" | "sterling-silver"
 
 export interface Metal {
@@ -166,20 +168,29 @@ export interface ProductCardData {
   metals?: MetalId[]
 }
 
-/** Engagement rings from the PLP catalogue (same names, 14k prices and photos as src/data/plp.ts), closest styles first. */
-export const SIMILAR_STYLES: ProductCardData[] = [
-  { id: "ss-heirloom-cathedral", name: "Heirloom Engraved Cathedral Engagement Ring", price: 1295, image: "/images/plp/rings/engraved-cathedral.png" },
-  { id: "ss-privet", name: "Privet Engagement Ring (1/5 tcw Diamond Accents)", price: 1195, image: "/images/plp/rings/privet-oval.png", badge: "Top seller" },
-  { id: "ss-cathedral-solitaire", name: "Classic Cathedral Solitaire Engagement Ring", price: 1050, image: "/images/products/ring-1.png" },
-  { id: "ss-celeste-halo", name: "Celeste Halo Engagement Ring (1/3 tcw)", price: 2450, image: "/images/plp/rings/halo-emerald.png" },
-  { id: "ss-aurora-halo", name: "Aurora Hidden Halo Engagement Ring (1/4 tcw)", price: 1890, image: "/images/crowns/ring-preview.png", badge: "New" },
-  { id: "ss-petite-trinity", name: "Petite Trinity Three-Stone Engagement Ring", price: 1450, image: "/images/plp/rings/petite-pave-accent.png" },
-  { id: "ss-odette-vintage", name: "Odette Vintage Engagement Ring (1/6 tcw)", price: 1590, image: "/images/plp/rings/vintage-marquise.png", badge: "New" },
-  { id: "ss-timeless-solitaire", name: "Timeless Solitaire Engagement Ring", price: 690, image: "/images/plp/rings/timeless-solitaire-yg.png", badge: "Top seller" },
-  { id: "ss-knife-edge", name: "Knife-Edge Solitaire Engagement Ring", price: 795, image: "/images/matching-bands/ring-6-solitaire.png" },
-  { id: "ss-princess-solitaire", name: "Princess Cut Classic Solitaire Engagement Ring", price: 640, image: "/images/plp/rings/princess-solitaire-wg.png" },
-  { id: "ss-willow", name: "Willow Leaf Engagement Ring", price: 1150, image: "/images/plp/rings/willow-swirl-rg.png", badge: "Exclusive" },
+/** PLP designs shown in Similar Styles, closest styles to the Ella Cathedral first. Two keep a Top seller badge. */
+const SIMILAR_DESIGNS: { id: string; badge?: string }[] = [
+  { id: "modena-cathedral" },
+  { id: "aspen-cathedral" },
+  { id: "vista-pave", badge: "Top seller" },
+  { id: "privet" },
+  { id: "marianne-three-stone" },
+  { id: "ella-halo" },
+  { id: "willow-infinity" },
+  { id: "timeless-solitaire", badge: "Top seller" },
+  { id: "plume" },
+  { id: "poesie-three-stone" },
+  { id: "luminary-solitaire" },
 ]
+
+/**
+ * Engagement rings from the PLP catalogue (src/data/plp.ts): each design's lead-metal card, with the
+ * same name, price and Shane Co. render the PLP shows, so the images follow the PLP data.
+ */
+export const SIMILAR_STYLES: ProductCardData[] = SIMILAR_DESIGNS.flatMap(({ id, badge }) => {
+  const card = SETTINGS.find((p) => p.designId === id)
+  return card ? [{ id: `ss-${id}`, name: card.name, price: card.price, image: productImage(card), badge }] : []
+})
 
 export const MATCHING_BANDS: ProductCardData[] = [
   { id: "mb-1", name: "Vista Diamond Pave Band", price: 1195, image: "/images/matching-bands/band-1-vista.png", badge: "Top seller" },
