@@ -8,6 +8,8 @@ import { galleryFor, type MetalId, type Setting } from "@/data/products"
 interface ProductInfoDrawerProps {
   setting: Setting
   metal: MetalId
+  /** Stone preview shape chosen on the gallery, so the drawer shows the same hero */
+  previewShape?: string
   open: boolean
   onOpenChange: (open: boolean) => void
   tab: ProductInfoTab
@@ -18,9 +20,9 @@ interface ProductInfoDrawerProps {
  * "Product Info Overlay" (Figma 7342:118093) — right-hand drawer opened by "View product details".
  * Test 1, details variants A and B.
  */
-export function ProductInfoDrawer({ setting, metal, open, onOpenChange, tab, onTabChange }: ProductInfoDrawerProps) {
+export function ProductInfoDrawer({ setting, metal, previewShape, open, onOpenChange, tab, onTabChange }: ProductInfoDrawerProps) {
   const variant = setting.variants.find((v) => v.metal === metal) ?? setting.variants[0]
-  const hero = galleryFor(setting, metal)[0]
+  const hero = galleryFor(setting, metal, previewShape)[0]
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

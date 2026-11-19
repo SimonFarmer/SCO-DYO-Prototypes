@@ -14,8 +14,8 @@ export interface Metal {
 export const METALS: Record<MetalId, Metal> = {
   "14k-white-gold": { id: "14k-white-gold", label: "14k White Gold", swatch: "#dedede" },
   "14k-yellow-gold": { id: "14k-yellow-gold", label: "14k Yellow Gold", swatch: "#eed9ac" },
-  "14k-rose-gold": { id: "14k-rose-gold", label: "14k Rose Gold", swatch: "#efb8a7" },
-  platinum: { id: "platinum", label: "Platinum", swatch: "#c5c5c5" },
+  "14k-rose-gold": { id: "14k-rose-gold", label: "14k Rose Gold", swatch: "#edbea0" },
+  platinum: { id: "platinum", label: "Platinum", swatch: "#d6d6d6" },
   "sterling-silver": { id: "sterling-silver", label: "Sterling Silver", swatch: "#dedede" },
 }
 
@@ -49,7 +49,11 @@ export interface Setting {
   defaultMetal: MetalId
   /** Center stone the gallery hero is previewed with */
   previewStone: { shape: string; carat: number }
-  /** Gallery per metal — the image count can differ by metal (Test 1 variant A: exact-metal images only). */
+  /** Center-stone shapes the setting is made for (ids from SHAPES in plp.ts), first = default preview. */
+  shapes: string[]
+  /** Hero image per metal and preview shape (stone preview dropdown). The default shape keeps the gallery's own hero. */
+  shapeImages?: Partial<Record<MetalId, Record<string, string>>>
+  /** Gallery per metal: the first three images follow the metal, the styled photos after them are shared. */
   gallery: Partial<Record<MetalId, GalleryMedia[]>>
   /** `{metal}` is replaced with the selected metal (see descriptionFor). */
   description: string
@@ -67,6 +71,18 @@ const G = "/images/gallery/ella"
  * (e.g. /p/41072560, Nov 2026). Chosen for Test 1 because its description carries stone-fit
  * info ("Best fits up to a 1.50 ct. diamond") and its metals have different image sets.
  */
+/**
+ * Styled photos shown for every metal, after the metal's own three shots. Each badge says which
+ * metal and center stone the photo actually shows, since it may differ from the selection.
+ */
+const STYLED: GalleryMedia[] = [
+  { kind: "image", src: `${G}/white-gold/styled.jpg`, alt: "Ring in 14k white gold with a round diamond, resting on rosemary", badge: "Shown in white gold, round cut" },
+  { kind: "image", src: `${G}/yellow-gold/on-hand-princess.jpg`, alt: "Ring in 14k yellow gold with a princess-cut diamond, on hand", badge: "Shown in yellow gold, princess cut" },
+  { kind: "image", src: `${G}/rose-gold/styled-box.jpg`, alt: "Ring in 14k rose gold with a round diamond, in a green velvet ring box", badge: "Shown in rose gold, round cut" },
+  { kind: "image", src: `${G}/platinum/styled-blush-box-oval.jpg`, alt: "Ring in platinum with an oval diamond, in a blush velvet ring box", badge: "Shown in platinum, oval cut" },
+  { kind: "image", src: `${G}/white-gold/on-hand-lace.jpg`, alt: "Ring in 14k white gold with a round diamond, on hand against a lace wedding dress", badge: "Shown in white gold, round cut" },
+]
+
 export const ELLA_CATHEDRAL: Setting = {
   id: "ella-cathedral",
   name: "Ella Cathedral Engagement Ring",
@@ -79,39 +95,42 @@ export const ELLA_CATHEDRAL: Setting = {
   ],
   defaultMetal: "14k-white-gold",
   previewStone: { shape: "Round", carat: 1 },
-  // Exact-metal images only, so the image count differs by metal. Styled shots that shaneco.com
-  // shows on another metal's page are filed under the metal they actually show.
-  gallery: {
-    "14k-white-gold": [
-      { kind: "image", src: `${G}/white-gold/main.jpg`, alt: "Ella Cathedral in 14k white gold with a 1 ct round diamond" },
-      { kind: "image", src: `${G}/white-gold/side.jpg`, alt: "Side profile showing the diamond pavé cathedral" },
-      { kind: "image", src: `${G}/white-gold/front.jpg`, alt: "Front view through the band, showing the pavé gallery under the head" },
-      { kind: "image", src: `${G}/white-gold/styled.jpg`, alt: "Ring resting on rosemary with a round diamond", badge: "Shown with round diamond" },
-      SIZE_GUIDE,
-    ],
-    "14k-yellow-gold": [
-      { kind: "image", src: `${G}/yellow-gold/main.jpg`, alt: "Ella Cathedral in 14k yellow gold with a 1 ct round diamond" },
-      { kind: "image", src: `${G}/yellow-gold/side.jpg`, alt: "Side profile showing the diamond pavé cathedral" },
-      { kind: "image", src: `${G}/yellow-gold/front.jpg`, alt: "Front view through the band, showing the pavé gallery under the head" },
-      { kind: "image", src: `${G}/yellow-gold/styled-princess.jpg`, alt: "Ring with a princess-cut diamond on a gift box", badge: "Shown with princess-cut diamond" },
-      { kind: "image", src: `${G}/yellow-gold/on-hand-princess.jpg`, alt: "Ring on hand with a princess-cut diamond", badge: "Shown with princess-cut diamond" },
-      SIZE_GUIDE,
-    ],
-    "14k-rose-gold": [
-      { kind: "image", src: `${G}/rose-gold/main.jpg`, alt: "Ella Cathedral in 14k rose gold with a 1 ct round diamond" },
-      { kind: "image", src: `${G}/rose-gold/side.jpg`, alt: "Side profile showing the diamond pavé cathedral" },
-      { kind: "image", src: `${G}/rose-gold/front.jpg`, alt: "Front view through the band, showing the pavé gallery under the head" },
-      { kind: "image", src: `${G}/rose-gold/on-hand.jpg`, alt: "Ring on hand with a round diamond, mountains behind", badge: "Shown with round diamond" },
-      SIZE_GUIDE,
-    ],
-    platinum: [
-      { kind: "image", src: `${G}/platinum/main.jpg`, alt: "Ella Cathedral in platinum with a 1 ct round diamond" },
-      { kind: "image", src: `${G}/platinum/side.jpg`, alt: "Side profile showing the diamond pavé cathedral" },
-      { kind: "image", src: `${G}/platinum/front.jpg`, alt: "Front view through the band, showing the pavé gallery under the head" },
-      { kind: "image", src: `${G}/platinum/styled-pear.jpg`, alt: "Ring with a pear-shaped pink sapphire", badge: "Shown with pear-shaped pink sapphire" },
-      SIZE_GUIDE,
-    ],
-  },
+  // Same shapes as the Ella Cathedral card on the PLP.
+  shapes: ["round", "oval", "cushion", "princess"],
+  shapeImages: Object.fromEntries(
+    (
+      [
+        ["14k-white-gold", "white-gold"],
+        ["14k-yellow-gold", "yellow-gold"],
+        ["14k-rose-gold", "rose-gold"],
+        ["platinum", "platinum"],
+      ] as const
+    ).map(([metal, dir]) => [
+      metal,
+      Object.fromEntries(["round", "oval", "cushion", "princess"].map((s) => [s, `${G}/${dir}/shape-${s}.webp`])),
+    ]),
+  ),
+  // The first three images follow the selected metal; the styled photos after them are the same
+  // for every metal, each annotated with the metal and stone it actually shows (see STYLED below).
+  gallery: Object.fromEntries(
+    (
+      [
+        ["14k-white-gold", "white-gold", "14k white gold"],
+        ["14k-yellow-gold", "yellow-gold", "14k yellow gold"],
+        ["14k-rose-gold", "rose-gold", "14k rose gold"],
+        ["platinum", "platinum", "platinum"],
+      ] as const
+    ).map(([metal, dir, name]) => [
+      metal,
+      [
+        { kind: "image", src: `${G}/${dir}/main.jpg`, alt: `Ella Cathedral in ${name} with a 1 ct round diamond` },
+        { kind: "image", src: `${G}/${dir}/side.jpg`, alt: "Side profile showing the diamond pavé cathedral" },
+        { kind: "image", src: `${G}/${dir}/front.jpg`, alt: "Front view through the band, showing the pavé gallery under the head" },
+        ...STYLED,
+        SIZE_GUIDE,
+      ] satisfies GalleryMedia[],
+    ]),
+  ),
   description:
     "This {metal} engagement ring offers sparkle from all angles. It features a natural diamond pavé band and a shimmering cathedral encrusted with more natural diamond accents. Add the center stone of your choice to complete this dreamy ring. For more information on selecting your center stone, including accommodating a center stone larger than 1.50 ct. or adding a decorative crown, live chat online, call a customer service representative at 1-866-467-4263, or visit one of our store locations.",
   highlights: [
@@ -147,20 +166,19 @@ export interface ProductCardData {
   metals?: MetalId[]
 }
 
+/** Engagement rings from the PLP catalogue (same names, 14k prices and photos as src/data/plp.ts), closest styles first. */
 export const SIMILAR_STYLES: ProductCardData[] = [
-  { id: "ss-1", name: "Vista Diamond Pave Band", price: 1195, image: "/images/products/ring-1-alt.png", badge: "Top seller" },
-  { id: "ss-2", name: "Baguette & Round Diamond Band", price: 2365, image: "/images/products/ring-2.png" },
-  { id: "ss-3", name: "Margaret Double Row Diamond Band", price: 2950, image: "/images/products/ring-3.png", badge: "Top seller" },
-  { id: "ss-4", name: "14K Yellow Gold Band (1.3mm)", price: 315, image: "/images/products/ring-4.png" },
-  { id: "ss-5", name: "Orbit 0.25 tcw Diamond Band", price: 1657, image: "/images/products/ring-5.png", badge: "Top seller" },
-  { id: "ss-6", name: "Solitaire Engagement Ring", price: 460, image: "/images/products/ring-1.png" },
-  // Added beyond the Figma frame so the carousel fills wide screens (images reused from the library).
-  { id: "ss-7", name: "Classic Marquise Bezel Solitaire", price: 890, image: "/images/matching-bands/band-2-baguette.png" },
-  { id: "ss-8", name: "Princess Cut Cathedral Solitaire", price: 1240, image: "/images/matching-bands/gallery-placeholder.png", badge: "Top seller" },
-  { id: "ss-9", name: "Petite Knife-Edge Solitaire", price: 640, image: "/images/products/ring-4.png" },
-  { id: "ss-10", name: "Twisted Pavé Bypass Ring", price: 1875, image: "/images/products/ring-5.png" },
-  { id: "ss-11", name: "Hidden Halo Solitaire", price: 1490, image: "/images/products/ring-3.png", badge: "Top seller" },
-  { id: "ss-12", name: "Rose Gold Comfort Fit Solitaire", price: 720, image: "/images/recommender/rec-5-rose-band.png" },
+  { id: "ss-heirloom-cathedral", name: "Heirloom Engraved Cathedral Engagement Ring", price: 1295, image: "/images/plp/rings/engraved-cathedral.png" },
+  { id: "ss-privet", name: "Privet Engagement Ring (1/5 tcw Diamond Accents)", price: 1195, image: "/images/plp/rings/privet-oval.png", badge: "Top seller" },
+  { id: "ss-cathedral-solitaire", name: "Classic Cathedral Solitaire Engagement Ring", price: 1050, image: "/images/products/ring-1.png", badge: "Top seller" },
+  { id: "ss-celeste-halo", name: "Celeste Halo Engagement Ring (1/3 tcw)", price: 2450, image: "/images/plp/rings/halo-emerald.png", badge: "Top seller" },
+  { id: "ss-aurora-halo", name: "Aurora Hidden Halo Engagement Ring (1/4 tcw)", price: 1890, image: "/images/crowns/ring-preview.png", badge: "New" },
+  { id: "ss-petite-trinity", name: "Petite Trinity Three-Stone Engagement Ring", price: 1450, image: "/images/plp/rings/petite-pave-accent.png", badge: "Top seller" },
+  { id: "ss-odette-vintage", name: "Odette Vintage Engagement Ring (1/6 tcw)", price: 1590, image: "/images/plp/rings/vintage-marquise.png", badge: "New" },
+  { id: "ss-timeless-solitaire", name: "Timeless Solitaire Engagement Ring", price: 690, image: "/images/plp/rings/timeless-solitaire-yg.png", badge: "Top seller" },
+  { id: "ss-knife-edge", name: "Knife-Edge Solitaire Engagement Ring", price: 795, image: "/images/matching-bands/ring-6-solitaire.png" },
+  { id: "ss-princess-solitaire", name: "Princess Cut Classic Solitaire Engagement Ring", price: 640, image: "/images/plp/rings/princess-solitaire-wg.png" },
+  { id: "ss-willow", name: "Willow Leaf Engagement Ring", price: 1150, image: "/images/plp/rings/willow-swirl-rg.png", badge: "Exclusive" },
 ]
 
 export const MATCHING_BANDS: ProductCardData[] = [
@@ -218,8 +236,13 @@ export function monthlyPayment(total: number, months = 12) {
 }
 
 /** Gallery for the selected metal, falling back to the default metal's images. */
-export function galleryFor(setting: Setting, metal: MetalId): GalleryMedia[] {
-  return setting.gallery[metal] ?? setting.gallery[setting.defaultMetal] ?? []
+export function galleryFor(setting: Setting, metal: MetalId, previewShape?: string): GalleryMedia[] {
+  const media = setting.gallery[metal] ?? setting.gallery[setting.defaultMetal] ?? []
+  // Stone preview: a non-default shape swaps the hero for that shape's render in this metal.
+  const src = previewShape && previewShape !== setting.shapes[0] ? setting.shapeImages?.[metal]?.[previewShape] : undefined
+  if (!src || media.length === 0) return media
+  const [hero, ...rest] = media
+  return [{ ...hero, src, alt: `${setting.name} in ${METALS[metal].label.toLowerCase()} with a 1 ct ${previewShape} diamond` }, ...rest]
 }
 
 const METAL_PHRASE: Record<MetalId, string> = {

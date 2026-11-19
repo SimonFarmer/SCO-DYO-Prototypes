@@ -16,12 +16,24 @@ export function useStickyOnIntent(ref: RefObject<HTMLElement | null>) {
     let shown = true
     let frame = 0
 
+    // A click can change the page height above the viewport (e.g. a metal with fewer gallery images);
+    // the browser then shifts scrollY to keep the content in place. That isn't the user scrolling,
+    // so scroll changes right after a click don't show or hide the header.
+    let ignoreUntil = 0
+    const onClick = () => {
+      ignoreUntil = performance.now() + 400
+    }
+
     const publish = () => root.style.setProperty("--header-offset", shown ? `${el.offsetHeight}px` : "0px")
     const onScroll = () => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
         const y = window.scrollY
         const delta = y - lastY
+        if (performance.now() < ignoreUntil) {
+          lastY = y
+          return
+        }
         if (Math.abs(delta) < 4) return // ignore jitter
         const next = y <= el.offsetHeight || delta < 0
         if (next !== shown) {
@@ -37,10 +49,12 @@ export function useStickyOnIntent(ref: RefObject<HTMLElement | null>) {
     const ro = new ResizeObserver(publish)
     ro.observe(el)
     window.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("click", onClick, { capture: true })
     return () => {
       cancelAnimationFrame(frame)
       ro.disconnect()
       window.removeEventListener("scroll", onScroll)
+      window.removeEventListener("click", onClick, { capture: true })
       root.style.removeProperty("--header-offset")
     }
   }, [ref])

@@ -3,6 +3,9 @@ import { DyoStepper } from "@/components/dyo/dyo-stepper"
 import { Breadcrumb } from "@/components/site/breadcrumb"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
+import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
+import { useNotInTest } from "@/components/prototype/not-in-test"
+import { formatPrice } from "@/lib/format"
 import { CompleteTheLook } from "@/components/pdp/complete-the-look"
 import {
   FeatureBlock,
@@ -15,6 +18,8 @@ import { InlineProductDetails, type ProductInfoTab } from "@/components/pdp/prod
 import { ProductInfoDrawer } from "@/components/pdp/product-info-drawer"
 import { SettingBuyForm } from "@/components/pdp/setting-buy-form"
 import { SettingGallery, ThumbnailGallery } from "@/components/pdp/setting-gallery"
+import { StonePreviewMenu } from "@/components/pdp/stone-preview-menu"
+import { SHAPES } from "@/data/plp"
 import { ProductCarousel } from "@/components/shared/product-carousel"
 import {
   MATCHING_BANDS,
@@ -43,9 +48,24 @@ export function Test1() {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [detailsTab, setDetailsTab] = useState<ProductInfoTab>("overview")
   const inlineDetailsRef = useRef<HTMLDivElement>(null)
-  const { shape, carat } = setting.previewStone
-  const media = galleryFor(setting, metal)
+  const ctaRef = useRef<HTMLDivElement>(null)
+  const notInTest = useNotInTest()
+  const price = (setting.variants.find((v) => v.metal === metal) ?? setting.variants[0]).price
+  const { carat } = setting.previewStone
+  const [previewShape, setPreviewShape] = useState(setting.shapes[0])
+  const shapeLabel = SHAPES.find((s) => s.id === previewShape)?.label ?? setting.previewStone.shape
   const isThumbnails = variant.gallery === "thumbnails"
+  // The stone preview dropdown swaps the hero image in every variant.
+  const media = galleryFor(setting, metal, previewShape)
+  // Same selector in every variant; on phones it also carries the carat (no room for a separate badge).
+  const previewMenu = (
+    <StonePreviewMenu
+      shapes={setting.shapes}
+      value={previewShape}
+      onChange={setPreviewShape}
+      mobileDetail={`${carat.toFixed(2)} ct`}
+    />
+  )
 
   const viewDetails = () => {
     setDetailsTab("overview")
@@ -68,20 +88,27 @@ export function Test1() {
           {isThumbnails ? (
             // Short gallery sticks while the (longer) buy form scrolls; it sits below the
             // sticky-on-intent header when that is showing (--header-offset).
-            <div className="px-2 transition-[top] duration-300 ease-out lg:sticky lg:top-(--header-offset) lg:self-start">
+            // Full-bleed carousel on mobile; framed gallery from lg up.
+            <div className="transition-[top] duration-300 ease-out lg:sticky lg:top-(--header-offset) lg:self-start lg:px-2">
               {/* Not keyed by metal: the selected image position is kept when the metal changes. */}
-              <ThumbnailGallery media={media} />
+              <ThumbnailGallery media={media} previewMenu={previewMenu} previewShape={previewShape} />
             </div>
           ) : (
-            <SettingGallery key={metal} media={media} previewLabel={`Previewing: ${shape} ∙ ${carat.toFixed(2)} ct`} />
+            <SettingGallery
+              key={metal}
+              media={media}
+              previewLabel={`Previewing: ${shapeLabel} ∙ ${carat.toFixed(2)} ct`}
+              previewMenu={previewMenu}
+            />
           )}
-          <aside className="px-margin pb-8 lg:px-14 lg:pt-5">
+          <aside className="px-margin pt-8 pb-8 lg:px-14 lg:pt-5">
             <div className={cn(!isThumbnails && "transition-[top] duration-300 ease-out lg:sticky lg:top-[calc(var(--header-offset)+--spacing(5))]")}>
               <SettingBuyForm
                 setting={setting}
                 metal={metal}
                 onMetalChange={setMetal}
                 onViewDetails={viewDetails}
+                ctaRef={ctaRef}
                 teaser={variant.teaser}
                 afterActions={variant.completeTheLook ? <CompleteTheLook products={COMPLETE_THE_LOOK} /> : null}
                 beforeDelivery={
@@ -117,10 +144,20 @@ export function Test1() {
 
       <SiteFooter />
 
+      {/* Mobile: navigation bar that swaps to the CTA once the buy form’s CTA scrolls away (fixes sheet #9). */}
+      <MobileBottomNav
+        cta={{
+          label: `${formatPrice(price)} - Select this Setting`,
+          onClick: () => notInTest("Selecting the setting"),
+          watch: ctaRef,
+        }}
+      />
+
       {variant.details === "drawer" && (
         <ProductInfoDrawer
           setting={setting}
           metal={metal}
+          previewShape={previewShape}
           open={detailsOpen}
           onOpenChange={setDetailsOpen}
           tab={detailsTab}
