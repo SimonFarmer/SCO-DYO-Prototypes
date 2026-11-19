@@ -12,7 +12,7 @@ import { useNavigate } from "react-router"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { MegaMenu } from "@/components/site/mega-menu"
 import { useStickyOnIntent } from "@/components/site/use-sticky-on-intent"
-import { cn } from "@/lib/utils"
+import { cn, PAGE_MAX } from "@/lib/utils"
 
 import { NAV_LEVEL_1, PLP_PATH, STORE } from "@/data/plp"
 
@@ -47,8 +47,11 @@ function UtilityLink({ icon: IconCmp, label }: { icon: Icon; label: string }) {
 export function SiteHeader({
   navigation = false,
   mobileHidden = false,
+  contained = false,
 }: {
   navigation?: boolean
+  /** Cap the header's contents at the page max width (1680px); the bar itself stays full width. */
+  contained?: boolean
   /** Hide the mobile logo bar (the homepage overlays its own logo on the hero). */
   mobileHidden?: boolean
 }) {
@@ -102,7 +105,7 @@ export function SiteHeader({
 
       {/* Desktop */}
       <div className="hidden lg:block">
-        <div className="relative flex h-22 items-center justify-between px-margin">
+        <div className={cn("relative flex h-22 items-center justify-between px-margin", contained && PAGE_MAX)}>
           <div className="flex items-center gap-6">
             <UtilityLink icon={MagnifyingGlassIcon} label="Search" />
             <UtilityLink icon={DiamondIcon} label="Care" />
