@@ -40,22 +40,3 @@
     @apply font-heading;
   }
 }
-
-/* PLP product imagery: shift a ring photographed in one metal to another metal's tone, so each
-   design × metal card shows the right colour (photo filters, not UI colour, so no token applies). */
-.metal-yellow-to-white,
-.metal-rose-to-white {
-  filter: grayscale(1) brightness(1.05) contrast(1.02);
-}
-.metal-yellow-to-rose {
-  filter: hue-rotate(-14deg) saturate(1.25) brightness(1.02);
-}
-.metal-rose-to-yellow {
-  filter: hue-rotate(14deg) saturate(1.1);
-}
-.metal-white-to-yellow {
-  filter: sepia(0.55) saturate(1.7) hue-rotate(-6deg) brightness(1.02);
-}
-.metal-white-to-rose {
-  filter: sepia(0.5) saturate(1.6) hue-rotate(-28deg) brightness(1.02);
-}

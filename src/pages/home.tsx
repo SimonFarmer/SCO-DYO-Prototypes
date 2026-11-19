@@ -6,10 +6,12 @@ const PROTOTYPES = [
     test: "Engagement Ring PLP · DYO entry point",
     links: [
       { label: "Homepage: navigation entry point (start here)", to: "/shop" },
-      { label: "PLP: all engagement rings (DYO step 1)", to: "/engagement-rings" },
+      { label: "PLP: all engagement rings (DYO step 1) · A: shape illustrations", to: "/engagement-rings?variant=A" },
+      { label: "PLP: all engagement rings (DYO step 1) · B: shape product images", to: "/engagement-rings?variant=B" },
       { label: "PLP: Level 3 landing (Classic)", to: "/engagement-rings/classic" },
       { label: "PLP: Shop by Budget preset (under $1,000)", to: "/engagement-rings?price=under-1000" },
       { label: "PLP: Ready to Ship", to: "/engagement-rings/ready-to-ship" },
+      { label: "GLP: Natural Diamonds (DYO step 2) · tile opens Quickview", to: "/natural-diamonds" },
     ],
   },
   {
@@ -32,6 +34,14 @@ const PROTOTYPES = [
     links: [
       { label: "Variant A: horizontal spec tiles", to: "/test-3-specs/a" },
       { label: "Variant B: vertical spec table", to: "/test-3-specs/b" },
+    ],
+  },
+  {
+    test: "Test 2 · Stone Preferences & Recommendations",
+    links: [
+      { label: "Variant A: carat first (size → ring price range)", to: "/test-2/a" },
+      { label: "Variant B: budget first (budget → sizes in stock)", to: "/test-2/b" },
+      { label: "Variant C: size + budget (size priced inside your budget)", to: "/test-2/c" },
     ],
   },
   {

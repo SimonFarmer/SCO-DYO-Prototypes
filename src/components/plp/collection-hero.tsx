@@ -4,9 +4,10 @@ import { ArrowLeftIcon, ArrowRightIcon, CaretRightIcon, HandbagIcon, MagicWandIc
 import { Breadcrumb, type Crumb } from "@/components/site/breadcrumb"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
-import { PLP_PATH, RTS_PATH, SHAPES, STYLES, type ListingFilters } from "@/data/plp"
+import { PLP_PATH, RTS_PATH, SHAPES, STYLES, settingImage, toggleFilter, type ListingFilters } from "@/data/plp"
+import { scrollAfterUnlock, scrollToResults } from "@/lib/scroll-to-results"
 import { cn } from "@/lib/utils"
-import type { Listing } from "./use-listing"
+import type { Listing, PlpVariant } from "./use-listing"
 
 type ExploreKey = "style" | "shape"
 
@@ -15,41 +16,58 @@ const EXPLORE: { key: ExploreKey; label: string }[] = [
   { key: "shape", label: "Stone Shape" },
 ]
 
-const tilesFor = (key: ExploreKey) =>
+/** Variant B pictures each stone shape set in the Timeless Solitaire (14k white gold, item 41004893). */
+const SHAPE_PHOTO_ITEM = "41004893"
+
+const tilesFor = (key: ExploreKey, variant: PlpVariant) =>
   key === "style"
-    ? STYLES.map((s) => ({ id: s.id, label: s.label, image: s.image, icon: false }))
-    : SHAPES.map((s) => ({ id: s.id, label: s.label, image: s.icon, icon: true }))
+    ? STYLES.map((s) => ({
+        id: s.id,
+        label: s.label,
+        image: s.image,
+        icon: false,
+      }))
+    : SHAPES.map((s) => ({
+        id: s.id,
+        label: s.label,
+        image: variant === "B" ? settingImage(SHAPE_PHOTO_ITEM, s.id) : s.icon,
+        icon: variant !== "B",
+      }))
 
 const DYO_COPY =
   "Create the perfect custom engagement ring, uniquely built for you. Start designing your own Gemstone or Diamond engagement ring by choosing a setting or a stone."
 const RTS_COPY =
   "Beautiful engagement rings with the center stone already set, ready to ship or pick up in store. Prefer to choose every detail? Switch to Design Your Own."
 
-/** Design Your Own / Ready to Ship switch (Figma hero "Fullfilment Filters" buttons). */
+/**
+ * Design Your Own / Ready to Ship switch (Figma hero "Fullfilment Filters"): two joined tiles, icon over
+ * label. The active tile has the heavy charcoal border; the other drops the edge it shares with it.
+ */
 function ModeToggle({ mode }: { mode: Listing["mode"] }) {
   const navigate = useNavigate()
   const go = (to: string) => {
     navigate(to)
     window.scrollTo({ top: 0 })
   }
-  const item = (active: boolean, label: string, Icon: typeof MagicWandIcon, to: string) => (
+  const item = (active: boolean, side: "left" | "right", label: string, Icon: typeof MagicWandIcon, to: string) => (
     <button
       type="button"
       aria-pressed={active}
       onClick={() => !active && go(to)}
       className={cn(
-        "flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 border px-4 type-label-xs text-primary lg:flex-none",
-        active ? "border-primary" : "border-border-subtle hover:border-border",
+        "flex flex-1 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-sm bg-background px-2 py-3 type-label-xs text-primary lg:px-5",
+        active ? "border-2 border-primary" : "border border-border-subtle hover:border-border",
+        !active && (side === "left" ? "border-r-0" : "border-l-0"),
       )}
     >
-      <Icon className="size-4 max-lg:hidden" />
+      <Icon className="size-4" />
       {label}
     </button>
   )
   return (
-    <div className="flex gap-2" role="group" aria-label="Shopping mode">
-      {item(mode === "dyo", "Design Your Own", MagicWandIcon, PLP_PATH)}
-      {item(mode === "rts", "Ready to Ship", HandbagIcon, RTS_PATH)}
+    <div className="flex w-full" role="group" aria-label="Shopping mode">
+      {item(mode === "dyo", "left", "Design Your Own", MagicWandIcon, PLP_PATH)}
+      {item(mode === "rts", "right", "Ready to Ship", HandbagIcon, RTS_PATH)}
     </div>
   )
 }
@@ -67,18 +85,19 @@ function ExploreTile({
   className?: string
 }) {
   return (
-    <button type="button" aria-pressed={selected} onClick={onClick} className={cn("group flex cursor-pointer flex-col gap-4 text-left", className)}>
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={cn("group flex cursor-pointer flex-col gap-4 text-left", className)}
+    >
       <span
         className={cn(
           "flex aspect-square w-full items-center justify-center border bg-background",
           selected ? "border-primary" : "border-transparent group-hover:border-border-subtle",
         )}
       >
-        <img
-          src={tile.image}
-          alt=""
-          className={cn("object-contain mix-blend-multiply", tile.icon ? "size-1/3" : "size-full")}
-        />
+        <img src={tile.image} alt="" className={cn("object-contain mix-blend-multiply", tile.icon ? "size-1/3" : "size-full")} />
       </span>
       <span className={cn("type-label-xs text-primary underline underline-offset-4", selected && "decoration-2")}>{tile.label}</span>
     </button>
@@ -109,51 +128,55 @@ function ExploreCarousel({ listing }: { listing: Listing }) {
     return () => ro.disconnect()
   }, [tab])
 
-  const scroll = (dir: 1 | -1) => track.current?.scrollBy({ left: dir * track.current.clientWidth * 0.8, behavior: "smooth" })
+  const scroll = (dir: 1 | -1) =>
+    track.current?.scrollBy({
+      left: dir * track.current.clientWidth * 0.8,
+      behavior: "smooth",
+    })
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-4">
+    <div className="flex min-w-0 flex-1 flex-col gap-2">
       <p className="type-label-xs text-muted-foreground">Explore by</p>
-      <div role="tablist" className="flex gap-4">
-        {EXPLORE.map((e) => (
-          <button
-            key={e.key}
-            role="tab"
-            type="button"
-            aria-selected={tab === e.key}
-            onClick={() => setTab(e.key)}
-            className={cn(
-              "cursor-pointer border-b-2 pb-1 type-h4 text-primary",
-              tab === e.key ? "border-primary" : "border-transparent text-muted-foreground hover:text-primary",
-            )}
-          >
-            {e.label}
-          </button>
-        ))}
-      </div>
-      <div
-        ref={track}
-        onScroll={update}
-        className="flex snap-x gap-2 overflow-x-auto pt-1 [scrollbar-width:none]"
-        role="tabpanel"
-      >
-        {tilesFor(tab).map((t) => (
-          <ExploreTile
-            key={t.id}
-            tile={t}
-            selected={listing.filters[tab].includes(t.id)}
-            onClick={() => listing.toggle(tab, t.id)}
-            className="w-category-wayfinder-hero shrink-0 snap-start"
-          />
-        ))}
-      </div>
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" size="icon" aria-label="Previous" disabled={!canPrev} onClick={() => scroll(-1)}>
-          <ArrowLeftIcon />
-        </Button>
-        <Button variant="outline" size="icon" aria-label="Next" disabled={!canNext} onClick={() => scroll(1)}>
-          <ArrowRightIcon />
-        </Button>
+      <div className="flex min-w-0 flex-col gap-5">
+        <div role="tablist" className="flex gap-4">
+          {EXPLORE.map((e) => (
+            <button
+              key={e.key}
+              role="tab"
+              type="button"
+              aria-selected={tab === e.key}
+              onClick={() => setTab(e.key)}
+              className={cn(
+                "cursor-pointer border-b-2 pb-1 type-h4 text-primary",
+                tab === e.key ? "border-primary" : "border-transparent text-muted-foreground hover:text-primary",
+              )}
+            >
+              {e.label}
+            </button>
+          ))}
+        </div>
+        <div ref={track} onScroll={update} className="flex snap-x gap-2 overflow-x-auto pt-1 [scrollbar-width:none]" role="tabpanel">
+          {tilesFor(tab, listing.variant).map((t) => (
+            <ExploreTile
+              key={t.id}
+              tile={t}
+              selected={listing.filters[tab].includes(t.id)}
+              onClick={() => {
+                listing.toggle(tab, t.id)
+                scrollToResults()
+              }}
+              className="w-category-wayfinder-hero shrink-0 snap-start"
+            />
+          ))}
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="icon" aria-label="Previous" disabled={!canPrev} onClick={() => scroll(-1)}>
+            <ArrowLeftIcon />
+          </Button>
+          <Button variant="outline" size="icon" aria-label="Next" disabled={!canNext} onClick={() => scroll(1)}>
+            <ArrowRightIcon />
+          </Button>
+        </div>
       </div>
     </div>
   )
@@ -172,21 +195,41 @@ function ExploreDrawer({ listing, open, onClose }: { listing: Listing; open: Exp
   }
   const key = open ?? wasOpen ?? "style"
   const count = listing.countFor(pending)
-  const toggle = (id: string) =>
-    setPending((p) => ({ ...p, [key]: p[key].includes(id) ? p[key].filter((v) => v !== id) : [...p[key], id] }))
+  const toggle = (id: string) => setPending((p) => toggleFilter(p, key, id))
+  // Set by "View N Items"; the scroll waits until the drawer has closed and released its scroll lock.
+  const applied = useRef(false)
 
   return (
-    <Sheet open={!!open} onOpenChange={(o) => !o && onClose()}>
+    <Sheet
+      open={!!open}
+      onOpenChange={(o) => !o && onClose()}
+      onOpenChangeComplete={(o) => {
+        if (o || !applied.current) return
+        applied.current = false
+        scrollAfterUnlock()
+      }}
+    >
       <SheetContent side="bottom" showCloseButton={false} className="top-auto! max-h-[calc(100svh-12rem)] border-t-0 lg:hidden">
         <div className="flex items-center justify-between px-margin pt-6 pb-4">
           <SheetTitle className="type-h4 font-normal text-primary">{EXPLORE.find((e) => e.key === key)?.label}</SheetTitle>
-          <button type="button" onClick={onClose} aria-label="Close" className="flex size-8 cursor-pointer items-center justify-center text-primary">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="flex size-8 cursor-pointer items-center justify-center text-primary"
+          >
             <XIcon className="size-5" weight="light" />
           </button>
         </div>
         <div className="grid min-h-0 flex-1 grid-cols-2 gap-x-3 gap-y-6 overflow-y-auto px-margin pb-6">
-          {tilesFor(key).map((t) => (
-            <ExploreTile key={t.id} tile={t} selected={pending[key].includes(t.id)} onClick={() => toggle(t.id)} className="[&>span:first-child]:bg-secondary" />
+          {tilesFor(key, listing.variant).map((t) => (
+            <ExploreTile
+              key={t.id}
+              tile={t}
+              selected={pending[key].includes(t.id)}
+              onClick={() => toggle(t.id)}
+              className="[&>span:first-child]:bg-secondary"
+            />
           ))}
         </div>
         <div className="border-t border-border-subtle px-margin py-5">
@@ -195,6 +238,7 @@ function ExploreDrawer({ listing, open, onClose }: { listing: Listing; open: Exp
             disabled={count === 0}
             onClick={() => {
               listing.setFilters(pending)
+              applied.current = true
               onClose()
             }}
           >
@@ -206,67 +250,84 @@ function ExploreDrawer({ listing, open, onClose }: { listing: Listing; open: Exp
   )
 }
 
-/** Collection Hero (Figma 7845:197922 "Collection Hero" / mobile 7845:198032). */
+/** Mobile "Explore by" pills: Setting Style and Stone Shape open the drawer. */
+function ExplorePills({ filters, onOpen }: { filters: ListingFilters; onOpen: (key: ExploreKey) => void }) {
+  return (
+    <div className="flex gap-2 lg:hidden">
+      {EXPLORE.map((e) => {
+        const n = filters[e.key].length
+        return (
+          <button
+            key={e.key}
+            type="button"
+            onClick={() => onOpen(e.key)}
+            className={cn(
+              "flex h-10 cursor-pointer items-center gap-2 rounded-full border bg-background pr-4 pl-5 type-label-xs whitespace-nowrap text-primary",
+              n ? "border-primary" : "border-border-subtle",
+            )}
+          >
+            {e.label}
+            {n > 0 && ` (${n})`}
+            <CaretRightIcon className="size-4" />
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
+ * Collection Hero (desktop 7845:197922, mobile 7845:198032). Mobile stacks eyebrow and title, the Explore
+ * pills, the copy, then the mode toggle, on a stone-to-white gradient. Desktop keeps a flat stone fill
+ * with the intro column beside the Explore carousel.
+ */
 export function CollectionHero({ listing }: { listing: Listing }) {
   const { mode, collection, filters } = listing
   const [readMore, setReadMore] = useState(false)
   const [drawer, setDrawer] = useState<ExploreKey | null>(null)
 
-  const title = mode === "rts" ? "Ready to Ship Engagement Rings" : collection?.title ?? "Engagement Rings"
+  const title = mode === "rts" ? "Ready to Ship Engagement Rings" : (collection?.title ?? "Engagement Rings")
   const crumbs: Crumb[] = [{ label: "Home", to: "/shop" }]
   if (mode === "rts" || collection) crumbs.push({ label: "Engagement Rings", to: PLP_PATH })
   crumbs.push(title)
-  const copy = mode === "rts" ? RTS_COPY : collection?.description ?? DYO_COPY
+  const copy = mode === "rts" ? RTS_COPY : (collection?.description ?? DYO_COPY)
 
   return (
-    <section className="bg-secondary">
-      <Breadcrumb items={crumbs} className="px-margin pt-5 pb-0 lg:pt-5" />
+    <section className="flex flex-col gap-8 bg-linear-to-b from-secondary from-32% to-secondary/0 px-margin pt-5 pb-8 lg:bg-secondary lg:bg-none lg:pb-10">
+      <Breadcrumb items={crumbs} className="p-0" />
 
-      <div className="flex flex-col gap-5 px-margin pt-4 pb-6 lg:flex-row lg:gap-16 lg:pt-6 lg:pb-10">
-        <div className="flex flex-col gap-5 lg:w-guided-intent lg:shrink-0 lg:gap-6 lg:pr-16">
-          <h1 className="type-h2 text-primary">{title}</h1>
-          <div className="flex flex-col items-start gap-2">
-            <p className={cn("text-base leading-6 text-primary", !readMore && "max-lg:line-clamp-2")}>{copy}</p>
-            <button
-              type="button"
-              onClick={() => setReadMore((r) => !r)}
-              className="cursor-pointer type-label-xs text-primary underline underline-offset-4 lg:hidden"
-            >
-              {readMore ? "Read Less" : "Read More"}
-            </button>
+      <div className="flex flex-col lg:flex-row lg:gap-16">
+        <div className="flex flex-col gap-6 lg:w-guided-intent lg:shrink-0 lg:gap-8 lg:border-r lg:border-border-subtle lg:pr-16 lg:pb-7">
+          <div className="flex flex-col gap-6 lg:gap-4">
+            <div className="flex flex-col gap-3">
+              {/* Ready to Ship sits outside Design Your Own, so it has no eyebrow. */}
+              {mode === "dyo" && (
+                <p className="type-label-xs text-muted-foreground">
+                  Design Your Own <span className="font-normal">∙</span> <span className="font-medium">Select Your Setting</span>
+                </p>
+              )}
+              <h1 className="type-h2 text-primary">{title}</h1>
+            </div>
+            <ExplorePills filters={filters} onOpen={setDrawer} />
+            <div className="flex flex-col items-start gap-1">
+              <p className={cn("text-sm leading-5 text-primary lg:text-base lg:leading-6", !readMore && "max-lg:line-clamp-2")}>{copy}</p>
+              <button
+                type="button"
+                onClick={() => setReadMore((r) => !r)}
+                className="cursor-pointer type-label-xs text-primary underline underline-offset-4 lg:hidden"
+              >
+                {readMore ? "Read Less" : "Read More"}
+              </button>
+            </div>
           </div>
-          <ModeToggle mode={mode} />
+          <div className="lg:pt-4">
+            <ModeToggle mode={mode} />
+          </div>
         </div>
 
-        {/* Desktop carousel, with the column divider */}
-        <div className="hidden min-w-0 flex-1 gap-16 lg:flex">
-          <span aria-hidden className="-my-4 w-px shrink-0 bg-border-subtle" />
+        {/* Desktop carousel */}
+        <div className="hidden min-w-0 flex-1 lg:flex">
           <ExploreCarousel key={`${mode}-${collection?.slug ?? ""}`} listing={listing} />
-        </div>
-
-        {/* Mobile: Explore by pills open the drawer */}
-        <div className="flex flex-col gap-4 border-t border-border-subtle pt-5 lg:hidden">
-          <p className="type-label-xs text-muted-foreground">Explore by</p>
-          <div className="flex gap-2">
-            {EXPLORE.map((e) => {
-              const n = filters[e.key].length
-              return (
-                <button
-                  key={e.key}
-                  type="button"
-                  onClick={() => setDrawer(e.key)}
-                  className={cn(
-                    "flex h-10 cursor-pointer items-center gap-1.5 rounded-full border bg-background px-4 type-label-xs whitespace-nowrap text-primary",
-                    n ? "border-primary" : "border-border-subtle",
-                  )}
-                >
-                  {e.label}
-                  {n > 0 && ` (${n})`}
-                  <CaretRightIcon className="size-4" />
-                </button>
-              )
-            })}
-          </div>
         </div>
       </div>
       <ExploreDrawer listing={listing} open={drawer} onClose={() => setDrawer(null)} />

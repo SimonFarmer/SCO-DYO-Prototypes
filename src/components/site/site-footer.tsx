@@ -1,3 +1,4 @@
+import { cn, PAGE_MAX } from "@/lib/utils"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 
 const COLUMNS: { heading: string; links: string[] }[] = [
@@ -43,7 +44,7 @@ const LEGAL = ["Privacy Policy", "Terms & Conditions", "Site Map", "Accessibilit
 
 
 /** Global site footer (Pattern Library "Footer", desktop 1440). */
-export function SiteFooter() {
+export function SiteFooter({ contained = false }: { /** Cap the contents at the page max width (1680px) */ contained?: boolean } = {}) {
   const notInTest = useNotInTest()
   const inert = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -51,7 +52,7 @@ export function SiteFooter() {
   }
   return (
     <footer className="bg-secondary">
-      <div className="flex flex-col px-margin py-10">
+      <div className={cn("flex flex-col px-margin py-10", contained && PAGE_MAX)}>
         <div className="flex w-full flex-col gap-10">
           <img src="/images/footer/logo.svg" alt="Shane Co." className="h-11 w-fit" />
           <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4">

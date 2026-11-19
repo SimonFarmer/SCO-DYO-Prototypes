@@ -2,7 +2,7 @@ import { Fragment, useState } from "react"
 import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { formatPrice } from "@/lib/format"
-import { cn } from "@/lib/utils"
+import { cn, PAGE_MAX } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
 
 type StepNumber = 1 | 2 | 3
@@ -60,14 +60,17 @@ export function DyoStepper({
   mobileLabel,
   showTotal = true,
   mobileTone = "secondary",
+  contained = false,
 }: {
   current: StepNumber
   /** Short label for the 375px accordion header. */
   mobileLabel?: string
   /** Show the running total on step 3 (off on the PLP, before anything is chosen). */
   showTotal?: boolean
-  /** Mobile bar fill: the PLP uses the accent strip (Figma Drop 3b PLP); the tests keep secondary. */
-  mobileTone?: "secondary" | "accent"
+  /** Mobile bar style: the PLP strip is secondary with light top and bottom borders (Figma Drop 3b PLP); the tests keep the taller secondary bar. */
+  mobileTone?: "secondary" | "plp"
+  /** Cap the desktop bar's contents at the page max width (1680px); the bar itself stays full width. */
+  contained?: boolean
 }) {
   const { setting, stone, total } = useRingBuild()
   const notInTest = useNotInTest()
@@ -81,7 +84,8 @@ export function DyoStepper({
     <>
       {/* Desktop bar (Figma 7336:177134): title column, then three equal steps split by dividers,
           so the steps stretch with the viewport instead of sitting at fixed widths. */}
-      <div className="hidden items-center gap-2 border-y border-border-subtle bg-primary-foreground px-margin py-3 lg:flex">
+      <div className="hidden border-y border-border-subtle bg-primary-foreground lg:block">
+      <div className={cn("flex items-center gap-2 px-margin py-3", contained && PAGE_MAX)}>
         <p className="w-card shrink-0 type-h5 text-primary">Design Your Ring</p>
         <ol className="flex min-w-0 flex-1 items-center gap-4">
           {[
@@ -124,10 +128,15 @@ export function DyoStepper({
           })}
         </ol>
       </div>
+      </div>
 
       {/* Mobile accordion: opens over the page, dimming only what's below the bar (not the header or hero above it) */}
       <div
-        className="sticky top-(--header-offset) z-30 border-b border-border-subtle bg-background transition-[top] duration-300 ease-out lg:hidden"
+        data-slot="stepper-bar"
+        className={cn(
+          "sticky top-(--header-offset) z-30 bg-background transition-[top] duration-300 ease-out lg:hidden",
+          mobileTone === "secondary" && "border-b border-border-subtle",
+        )}
         onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
       >
         <button
@@ -135,8 +144,8 @@ export function DyoStepper({
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
           className={cn(
-            "flex h-12 w-full cursor-pointer items-center justify-between gap-3 px-margin whitespace-nowrap",
-            mobileTone === "accent" ? "bg-accent" : "bg-secondary",
+            "flex w-full cursor-pointer items-center justify-between gap-3 bg-secondary px-margin whitespace-nowrap",
+            mobileTone === "plp" ? "h-10 border-y border-border-light" : "h-12",
           )}
         >
           <span className="type-label-xs text-primary">Design Your Own</span>

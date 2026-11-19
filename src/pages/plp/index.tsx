@@ -36,7 +36,7 @@ export function EngagementRingPlp() {
       <main>
         <CollectionHero listing={listing} />
         {/* Ready to Ship is outside Design Your Own, so it has no progress stepper. */}
-        {mode === "dyo" && <DyoStepper current={1} showTotal={false} mobileTone="accent" />}
+        {mode === "dyo" && <DyoStepper current={1} showTotal={false} mobileTone="plp" />}
 
         <div id="plp-results" className="scroll-mt-(--header-offset)">
           <DesktopFilterBar listing={listing} sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen((o) => !o)} />

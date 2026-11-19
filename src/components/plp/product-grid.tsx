@@ -35,7 +35,8 @@ function InGridBanner() {
   )
 }
 
-function Pagination({ page, pageCount, onPage }: { page: number; pageCount: number; onPage: (p: number) => void }) {
+/** Numbered pagination (1 2 3 … n) with previous/next carets. Shared with the diamond GLP. */
+export function Pagination({ page, pageCount, onPage }: { page: number; pageCount: number; onPage: (p: number) => void }) {
   if (pageCount <= 1) return null
   // 1 2 3 … n, keeping the current page and its neighbours visible.
   const pages = Array.from({ length: pageCount }, (_, i) => i + 1).filter(
@@ -99,7 +100,12 @@ export function ProductGrid({ listing, wide }: { listing: Listing; wide: boolean
               </li>
             )}
             <li className="min-w-0">
-              <PlpProductCard product={p} priceLabel={mode === "dyo" ? "Setting only" : undefined} />
+              <PlpProductCard
+                product={p}
+                priceLabel={mode === "dyo" ? "Setting only" : undefined}
+                pricePrefix={mode === "rts" ? "Starting at" : undefined}
+                preferredShapes={listing.filters.shape}
+              />
             </li>
           </Fragment>
         ))}

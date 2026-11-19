@@ -4,20 +4,22 @@ import { Button } from "@/components/ui/button"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { ProductCard } from "@/components/shared/product-card"
 import type { ProductCardData } from "@/data/products"
-import { cn } from "@/lib/utils"
+import { cn, PAGE_MAX } from "@/lib/utils"
 
 interface ProductCarouselProps {
   title: string
   products: ProductCardData[]
   showWishlist?: boolean
   className?: string
+  /** Cap the contents at the page max width (1680px); the section background stays full width. */
+  contained?: boolean
 }
 
 /**
  * Pattern Library "Recommender": H3 title, horizontally scrolling product cards, prev/next controls.
  * Always fills its track: on screens wider than the list, items repeat so there is no empty tail.
  */
-export function ProductCarousel({ title, products, showWishlist, className }: ProductCarouselProps) {
+export function ProductCarousel({ title, products, showWishlist, className, contained = false }: ProductCarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null)
   const [canPrev, setCanPrev] = useState(false)
   const [canNext, setCanNext] = useState(true)
@@ -60,8 +62,8 @@ export function ProductCarousel({ title, products, showWishlist, className }: Pr
     el.scrollBy({ left: dir * (card.offsetWidth + gap), behavior: "smooth" })
   }
 
-  return (
-    <section className={cn("flex flex-col gap-8 bg-background px-margin py-14", className)}>
+  const body = (
+    <>
       <SectionHeading title={title} />
       <div
         ref={trackRef}
@@ -81,6 +83,15 @@ export function ProductCarousel({ title, products, showWishlist, className }: Pr
           <ArrowRight />
         </Button>
       </div>
-    </section>
+    </>
   )
+
+  if (contained) {
+    return (
+      <section className={cn("bg-background py-14", className)}>
+        <div className={cn("flex flex-col gap-8 px-margin", PAGE_MAX)}>{body}</div>
+      </section>
+    )
+  }
+  return <section className={cn("flex flex-col gap-8 bg-background px-margin py-14", className)}>{body}</section>
 }

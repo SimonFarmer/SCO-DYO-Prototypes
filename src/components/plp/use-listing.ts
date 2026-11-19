@@ -12,6 +12,7 @@ import {
   collectionBySlug,
   priceBounds,
   sortProducts,
+  toggleFilter,
   type FulfilmentId,
   type ListingFilters,
 } from "@/data/plp"
@@ -33,12 +34,13 @@ function parseFilters(params: URLSearchParams): ListingFilters {
   const [minPrice, maxPrice] = parsePrice(params.get("price"))
   return {
     style: list("style"),
-    shape: list("shape"),
+    // Stone shape is single-select.
+    shape: list("shape").slice(0, 1),
     metal: list("metal"),
     accent: list("accent"),
     minPrice,
     maxPrice,
-    fulfil: fulfil === "instore" || fulfil === "sameday" || fulfil === "friday" ? (fulfil as FulfilmentId) : null,
+    fulfil: fulfil === "instore" ? (fulfil as FulfilmentId) : null,
   }
 }
 
@@ -55,6 +57,28 @@ function toQuery(f: ListingFilters, sort: string) {
 export type ListingMode = "dyo" | "rts"
 
 /**
+ * Hero test variant. A (control): Stone Shape tiles are line illustrations. B: each shape is shown as a
+ * ring holding that stone. Set with `?variant=B` (or A); remembered for the session so it survives
+ * filtering, the nav and the mode toggle.
+ */
+export const PLP_VARIANTS = ["A", "B"] as const
+export type PlpVariant = (typeof PLP_VARIANTS)[number]
+const VARIANT_KEY = "plp-variant"
+
+function usePlpVariant(params: URLSearchParams): PlpVariant {
+  const fromUrl = params.get("variant")?.toUpperCase()
+  let stored: string | null = null
+  try {
+    if (fromUrl && (PLP_VARIANTS as readonly string[]).includes(fromUrl)) sessionStorage.setItem(VARIANT_KEY, fromUrl)
+    stored = sessionStorage.getItem(VARIANT_KEY)
+  } catch {
+    // Storage blocked: fall back to the URL only.
+  }
+  const v = fromUrl ?? stored
+  return v === "B" ? "B" : "A"
+}
+
+/**
  * PLP state lives in the URL so every view is linkable from the nav:
  *  /engagement-rings                    Level 2, all settings (DYO step 1)
  *  /engagement-rings?price=under-1000   Level 2 with a preset filter (Shop by Budget)
@@ -69,6 +93,7 @@ export function useListing() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
 
+  const variant = usePlpVariant(params)
   const mode: ListingMode = pathname.startsWith(RTS_PATH) ? "rts" : "dyo"
   const collection = mode === "dyo" ? collectionBySlug(slug) : undefined
   const basePath = mode === "rts" ? RTS_PATH : PLP_PATH
@@ -97,10 +122,7 @@ export function useListing() {
     navigate(`${basePath}${toQuery(next, nextSort)}`, { preventScrollReset: true })
   }
 
-  const toggle = (key: ListKey, value: string) => {
-    const has = filters[key].includes(value)
-    setFilters({ ...filters, [key]: has ? filters[key].filter((v) => v !== value) : [...filters[key], value] })
-  }
+  const toggle = (key: ListKey, value: string) => setFilters(toggleFilter(filters, key, value))
 
   const setFulfil = (fulfil: FulfilmentId | null) => setFilters({ ...filters, fulfil })
 
@@ -128,6 +150,7 @@ export function useListing() {
   const current = Math.min(page, pageCount)
 
   return {
+    variant,
     mode,
     collection,
     filters,
