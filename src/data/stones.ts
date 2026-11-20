@@ -1,4 +1,6 @@
 import { SETTING } from "@/data/dyo"
+import { DIAMOND_STOCK } from "@/data/diamond-stock"
+import { GEM_PHOTOS } from "@/data/stone-photos"
 import { ringRender } from "@/data/stone-renders"
 
 /**
@@ -10,7 +12,8 @@ import { ringRender } from "@/data/stone-renders"
  * Gemstones follow shaneco.com's Timeless Solitaire page (p/41004888): Shane Co.'s 20 gemstones, sized
  * in millimetres, each with the shapes and size range Shane Co. offers for this setting.
  *
- * Every number comes from this one seeded catalogue, so the simulator, the picks, the
+ * Diamonds follow Shane Co.'s own stock (catalog export, Nov 2026, see diamond-stock.ts): the count and price
+ * range at every size window match it. Every number comes from this one seeded catalogue, so the simulator, the picks, the
  * "View All (N)" counts and the PLP always agree, and they're the same on every visit.
  */
 
@@ -47,24 +50,22 @@ export interface StoneShape {
   label: string
   /** Pattern Library "Stone Shape" line icon */
   icon: string
-  /** Diamond price relative to a round of the same weight and grades */
-  factor: number
   /** Gemstone weight relative to a round of the same millimetre size */
   volume: number
 }
 
 /** Order of the preferences form (Figma): the first 8 show, the rest sit behind "+N". */
 export const STONE_SHAPES: StoneShape[] = [
-  { id: "round", label: "Round", icon: "/images/plp/shapes/round.png", factor: 1, volume: 1 },
-  { id: "oval", label: "Oval", icon: "/images/plp/shapes/oval.png", factor: 0.85, volume: 0.85 },
-  { id: "pear", label: "Pear", icon: "/images/plp/shapes/pear.png", factor: 0.8, volume: 0.75 },
-  { id: "emerald", label: "Emerald", icon: "/images/plp/shapes/emerald.png", factor: 0.78, volume: 0.95 },
-  { id: "princess", label: "Princess", icon: "/images/plp/shapes/princess.png", factor: 0.82, volume: 1.2 },
-  { id: "cushion", label: "Cushion", icon: "/images/plp/shapes/cushion.png", factor: 0.8, volume: 1.1 },
-  { id: "heart", label: "Heart", icon: "/images/plp/shapes/heart.png", factor: 0.85, volume: 0.9 },
-  { id: "asscher", label: "Asscher", icon: "/images/plp/shapes/asscher.png", factor: 0.78, volume: 1.15 },
-  { id: "marquise", label: "Marquise", icon: "/images/plp/shapes/marquise.png", factor: 0.8, volume: 0.55 },
-  { id: "radiant", label: "Radiant", icon: "/images/plp/shapes/radiant.png", factor: 0.8, volume: 1.05 },
+  { id: "round", label: "Round", icon: "/images/plp/shapes/round.png", volume: 1 },
+  { id: "oval", label: "Oval", icon: "/images/plp/shapes/oval.png", volume: 0.85 },
+  { id: "pear", label: "Pear", icon: "/images/plp/shapes/pear.png", volume: 0.75 },
+  { id: "emerald", label: "Emerald", icon: "/images/plp/shapes/emerald.png", volume: 0.95 },
+  { id: "princess", label: "Princess", icon: "/images/plp/shapes/princess.png", volume: 1.2 },
+  { id: "cushion", label: "Cushion", icon: "/images/plp/shapes/cushion.png", volume: 1.1 },
+  { id: "heart", label: "Heart", icon: "/images/plp/shapes/heart.png", volume: 0.9 },
+  { id: "asscher", label: "Asscher", icon: "/images/plp/shapes/asscher.png", volume: 1.15 },
+  { id: "marquise", label: "Marquise", icon: "/images/plp/shapes/marquise.png", volume: 0.55 },
+  { id: "radiant", label: "Radiant", icon: "/images/plp/shapes/radiant.png", volume: 1.05 },
 ]
 
 export const stoneShape = (id: string) => STONE_SHAPES.find((s) => s.id === id) ?? STONE_SHAPES[0]
@@ -113,7 +114,8 @@ export const GEMS: Gem[] = [
   { id: "cognac-sapphire", label: "Cognac Sapphire", render: "cognac", icon: "/images/gemstones/cognac-sapphire.png", sizeMm: { min: 4.5, max: 5 }, shapes: ["round", "heart", "oval", "cushion"], perCarat: 650, sg: 4 },
 ]
 
-export const DEFAULT_GEM = "traditional-sapphire"
+/** Switching to Gemstones starts on the first gem in the picker (White Sapphire), not a favourite. */
+export const DEFAULT_GEM = GEMS[0].id
 export const gemById = (id: string | undefined) => GEMS.find((g) => g.id === id) ?? GEMS[0]
 
 /** Shapes on offer for a scope: every shape for diamonds, Shane Co.'s list for a gemstone. */
@@ -192,15 +194,8 @@ const STOCKED = {
   gemstone: { color: [0, 3], clarity: [0, 3], cut: [0, 2] },
 } as const
 
-/** Diamond price model: price = base × carat^exp × shape × color × clarity × cut. */
-const DIAMOND_MODEL: Record<"natural" | "lab", { base: number; exp: number }> = {
-  // Calibrated so a 1.21 ct G VS2 Very Good round lands at $5,825 (the Test 4 stone).
-  natural: { base: 4134, exp: 1.8 },
-  lab: { base: 1050, exp: 1.5 },
-}
-
-/** Diamonds are stocked from 0.25 to 4 ct. */
-export const CARAT = { min: 0.25, max: 4 }
+/** Diamonds in stock run from 0.18 to 5.16 ct (Shane Co. catalog export); the PLP size filter covers that. */
+export const CARAT = { min: 0.15, max: 5.2 }
 
 const roundTo = (n: number, step: number) => Math.round(n / step) * step
 
@@ -281,8 +276,8 @@ const SHAPE_MIX: Record<string, number> = {
   cushion: 0.09, heart: 0.03, asscher: 0.04, marquise: 0.05, radiant: 0.1,
 }
 
-/** Catalogue sizes; natural matches the Figma PLP ("5,295 Items"). Gemstones: per gem. */
-const STOCK_SIZE = { natural: 5295, lab: 3640, perGem: 180 }
+/** Gemstones per gem (simulated; diamonds come from Shane Co.'s stock bands). */
+const STOCK_SIZE = { perGem: 180 }
 
 /** Index in [lo, hi] leaning to the middle grades (where most stock sits). */
 const pickGrade = (r: () => number, [lo, hi]: readonly [number, number]) =>
@@ -290,21 +285,40 @@ const pickGrade = (r: () => number, [lo, hi]: readonly [number, number]) =>
 
 function generate(): LooseStone[] {
   const out: LooseStone[] = []
+  // Diamonds: Shane Co.'s stock bands (DIAMOND_STOCK), so every size window shows the real count and price
+  // range. Each band's exact prices (the windows' cheapest and dearest stones) come first, on the lowest or
+  // highest stocked grades; the rest are priced inside the band's range by grade and weight.
   for (const type of ["natural", "lab"] as const) {
     const r = rng(type.length * 7919 + 17)
-    const { base, exp } = DIAMOND_MODEL[type]
+    const s = STOCKED[type]
+    const qLo = Math.log(quality(type, s.color[0], s.clarity[0], s.cut[0]))
+    const qHi = Math.log(quality(type, s.color[1], s.clarity[1], s.cut[1]))
     for (const shape of STONE_SHAPES) {
-      const count = Math.round(STOCK_SIZE[type] * SHAPE_MIX[shape.id])
-      for (let i = 0; i < count; i++) {
-        // Weights cluster around 0.5–1.5 ct with a long tail up to 4 ct.
-        const carat = Math.round((CARAT.min + (CARAT.max - CARAT.min) * r() ** 2.3) * 100) / 100
-        const s = STOCKED[type]
-        const color = pickGrade(r, s.color)
-        const clarity = pickGrade(r, s.clarity)
-        const cut = pickGrade(r, s.cut)
-        const variation = 0.95 + r() * 0.1
-        const price = Math.max(150, roundTo(base * carat ** exp * shape.factor * quality(type, color, clarity, cut) * variation, 5))
-        out.push({ id: `${type}-${shape.id}-${i}`, type, shape: shape.id, size: carat, carat, color, clarity, cut, price, popularity: r() })
+      let n = 0
+      for (const [from, to, count, lo, hi, exact] of DIAMOND_STOCK[type][shape.id] ?? []) {
+        // Keep off the band edges (the 0.25 ct grid), so each stone sits in exactly two size windows.
+        const a = from < 0.25 ? from : from + 0.01
+        const b = to - 0.01
+        for (let i = 0; i < count; i++) {
+          const pos = r()
+          const carat = Math.round((a + (b - a) * pos) * 100) / 100
+          let color: number, clarity: number, cut: number, price: number
+          if (i < exact.length) {
+            price = exact[i]
+            // Cheaper half of the band on the lowest stocked grades, dearer half on the highest.
+            const g = price * price < lo * hi ? 0 : 1
+            ;[color, clarity, cut] = [s.color[g], s.clarity[g], s.cut[g]]
+          } else {
+            color = pickGrade(r, s.color)
+            clarity = pickGrade(r, s.clarity)
+            cut = pickGrade(r, s.cut)
+            // Mostly grades, partly weight within the band; skewed low, as most stock sits at the cheaper end.
+            const qn = (Math.log(quality(type, color, clarity, cut)) - qLo) / (qHi - qLo)
+            const t = Math.min(1, Math.max(0, (0.75 * qn + 0.25 * pos) * (0.9 + r() * 0.2))) ** 1.6
+            price = Math.min(hi, Math.max(lo, roundTo(lo * (hi / lo) ** t, 5)))
+          }
+          out.push({ id: `${type}-${shape.id}-${n++}`, type, shape: shape.id, size: carat, carat, color, clarity, cut, price, popularity: r() })
+        }
       }
     }
   }
@@ -355,14 +369,25 @@ export function previewImage(type: StoneTypeId, shape: string, size: number, gem
 }
 
 /**
- * Product image: round diamonds use our diamond photography; gemstones show Shane Co.'s render of
- * that gem, shape and size on the ring. We have no loose photography for other diamond shapes, so
- * they show their shape drawing.
+ * Real stone photography from Shane Co.'s V360 viewer (shaneco.com loose diamonds and gemstones, Nov 2026):
+ * the face-up still and the first angled frame of the 360° spin, one stone per diamond shape and per
+ * gemstone + shape. Lab diamonds use the natural diamond of the same shape. Returns null for the few
+ * gemstone shapes Shane Co. has no loose stone of.
+ */
+export function stonePhotos(type: StoneTypeId, shape: string, gem?: string): { faceUp: string; spin: string } | null {
+  const base = type === "gemstone" ? `/images/stones/gemstone/${gemById(gem).id}-${shape}` : `/images/stones/diamond/${shape}`
+  if (type === "gemstone" && !GEM_PHOTOS.has(`${gemById(gem).id}-${shape}`)) return null
+  return { faceUp: `${base}-faceup.jpg`, spin: `${base}-360.jpg` }
+}
+
+/**
+ * Product image: the face-up photo of a stone of this shape (and gem). A gemstone shape with no photo
+ * shows Shane Co.'s render of it on the ring (`render`, cropped in on the stone).
  */
 export function stoneImage(s: Pick<LooseStone, "type" | "shape" | "gem" | "size">) {
-  if (s.type === "gemstone") return { src: previewImage(s.type, s.shape, s.size, s.gem, 600), photo: true, render: true }
-  if (s.shape === "round") return { src: "/images/finishing/diamond-top.jpg", photo: true, render: false }
-  return { src: stoneShape(s.shape).icon, photo: false, render: false }
+  const photos = stonePhotos(s.type, s.shape, s.gem)
+  if (photos) return { src: photos.faceUp, photo: true, render: false }
+  return { src: previewImage(s.type, s.shape, s.size, s.gem, 600), photo: true, render: true }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -504,11 +529,18 @@ export function largestSize(scope: StoneScope) {
   return snapSize(m || scale.min, scale)
 }
 
-/** Lowest and highest whole-ring price for this scope (the ends of the budget scale). */
+let allDiamonds: LooseStone[] | undefined
+
+/**
+ * Lowest and highest whole-ring price (the ends of the budget scale). Diamonds share one fixed scale,
+ * natural and lab across every shape, so the ends don't move when the shopper switches type or shape and
+ * the two can be compared on the same line. Gemstones keep a scale per gem.
+ */
 export function ringPriceBounds(scope: StoneScope) {
+  const stock = scope.type === "gemstone" ? stockFor(scope) : (allDiamonds ??= STONES.filter((s) => s.type !== "gemstone"))
   let min = Infinity
   let max = 0
-  for (const s of stockFor(scope)) {
+  for (const s of stock) {
     min = Math.min(min, s.price)
     max = Math.max(max, s.price)
   }

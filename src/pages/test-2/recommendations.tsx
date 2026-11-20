@@ -14,12 +14,14 @@ import { StoneStepLayout } from "./stone-step-layout"
 import type { ShopBy } from "./variants"
 
 /** The line under the title that ties the picks back to the shopper's choices (Figma 8038:26505). */
-function basis(shopBy: ShopBy, sim: StoneSim) {
+function basis(shopBy: ShopBy, sim: StoneSim, count: number) {
   const size = formatSize(sim.size, sim.sizes.unit)
   const budget = `${formatPrice(sim.budgetLo)} – ${formatPrice(sim.budgetHi)}`
-  const lead = "Our three stone picks for you."
+  // Real stock can leave fewer than three stones that fit (a small size in a high budget, a rare shape).
+  const lead = count === 1 ? "Our stone pick for you." : `Our ${count === 2 ? "two" : "three"} stone picks for you.`
   if (shopBy === "size") return `${lead} Based on your preferred size of ${size}.`
   if (shopBy === "budget") return `${lead} Based on your ring budget of ${budget}.`
+  if (!sim.inBudget) return `${lead} Based on your preferred size of ${size}, outside your ring budget of ${budget}.`
   return `${lead} Based on your preferred size of ${size} and ring budget of ${budget}.`
 }
 
@@ -160,12 +162,12 @@ export function Test2Recommendations() {
         ? []
         : recommend({
             scope: sim.scope,
-            mode: shopBy,
+            mode: sim.pickMode,
             size: sim.size,
             stoneMin: sim.stoneMin,
             stoneMax: sim.stoneMax,
           }),
-    [sim, shopBy],
+    [sim],
   )
   const [selectedKind, setSelectedKind] = useState(picks[0]?.kind)
   const selected = picks.find((p) => p.kind === selectedKind) ?? picks[0]
@@ -175,7 +177,7 @@ export function Test2Recommendations() {
     <div data-variant={variant.id}>
       <StoneStepLayout prefs={prefs} size={selected?.stone.size ?? sim.size} gallery="full">
         <header className="flex flex-col gap-8 max-lg:gap-4">
-          <StepIntro eyebrow="Step 2 of 3 · Stone" title="Stone Recommendations" subtitle={basis(shopBy, sim)} />
+          <StepIntro eyebrow="Step 2 of 3 · Stone" title="Stone Recommendations" subtitle={basis(shopBy, sim, picks.length)} />
           <button
             type="button"
             onClick={() => navigate(href("preferences"))}

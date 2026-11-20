@@ -15,6 +15,7 @@ import { SETTING } from "@/data/dyo"
 import { formatSize, gemById, shapesFor, snapSize, stoneShape, stoneType } from "@/data/stones"
 import { formatPrice } from "@/lib/format"
 import { useStonePrefs, type StonePrefs, type StoneSim } from "./preferences"
+import type { ShopBy } from "./variants"
 import { StoneStepLayout } from "./stone-step-layout"
 
 /** Ranges to the nearest $5, so the exact end prices show (concept). */
@@ -29,12 +30,14 @@ function stoneName(p: StonePrefs, shapeId: string) {
 
 /**
  * Size section: carats for diamonds, millimetres for gemstones (as shaneco.com). In the budget modes the
- * green band is the sizes in stock at the budget and the handle is held inside it (the chosen size is
- * kept in the URL, so widening the budget restores it).
+ * green band is the sizes in stock at the budget. Budget first holds the handle inside it (the chosen size
+ * is kept in the URL, so widening the budget restores it); Size + Budget lets it go outside.
  */
-function SizeSection({ sim, setSize, withBand }: { sim: StoneSim; setSize: (v: number) => void; withBand: boolean }) {
+function SizeSection({ sim, setSize, shopBy }: { sim: StoneSim; setSize: (v: number) => void; shopBy: ShopBy }) {
+  const withBand = shopBy !== "size"
   const band = withBand && sim.budgetSizes.length ? { from: sim.budgetSizes[0], to: sim.budgetSizes[sim.budgetSizes.length - 1] } : null
-  const noBudgetStock = withBand && !sim.available
+  // Budget first can't show a size with nothing in the budget; Size + Budget still can.
+  const noBudgetStock = shopBy === "budget" && !sim.available
   return (
     <section className="flex flex-col gap-4">
       <ConfigHeader
@@ -81,9 +84,10 @@ export function Test2() {
   const { shopBy } = variant
   const set = SETTING.price
 
-  // Price Explained: Carat first = that size's range; Budget first = the budget; Size + Budget = the overlap.
+  // Price Explained: Carat first = that size's range; Budget first = the budget; Size + Budget = the overlap,
+  // or that size's range when the shopper has taken it outside the budget.
   const stonePrice =
-    shopBy === "both"
+    shopBy === "both" && sim.inBudget
       ? sim.overlap
         ? range(sim.overlap.lo - set, sim.overlap.hi - set)
         : "—"
@@ -91,7 +95,7 @@ export function Test2() {
         ? "—"
         : range(sim.row.min, sim.row.max)
   const total =
-    shopBy === "size"
+    sim.pickMode === "size"
       ? sim.sizeRing
         ? range(sim.sizeRing.lo, sim.sizeRing.hi)
         : "—"
@@ -101,7 +105,7 @@ export function Test2() {
           ? range(sim.overlap.lo, sim.overlap.hi)
           : "—"
 
-  const size = <SizeSection sim={sim} setSize={setSize} withBand={shopBy !== "size"} />
+  const size = <SizeSection sim={sim} setSize={setSize} shopBy={shopBy} />
   const budget = <BudgetSection sim={sim} update={update} interactive={shopBy !== "size"} withBand={shopBy === "size"} />
 
   return (
@@ -137,7 +141,7 @@ export function Test2() {
               desc: (
                 <>
                   {stoneName(prefs, sim.scope.shape)} (<span className="font-semibold">{formatSize(sim.size, sim.sizes.unit)} ±</span>
-                  {shopBy === "both" && ", in your budget"})
+                  {shopBy === "both" && (sim.inBudget ? ", in your budget" : ", outside your budget")})
                 </>
               ),
               price: stonePrice,
@@ -147,7 +151,7 @@ export function Test2() {
         />
         {sim.blocked && (
           <p className="-mb-4 text-xs leading-4 text-muted-foreground">
-            {shopBy === "size"
+            {shopBy !== "budget"
               ? "No stones are available at this size right now. Choose a different size to continue."
               : "No stones in this budget right now. Widen your budget to continue."}
           </p>
