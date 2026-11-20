@@ -74,7 +74,7 @@ export const PRESETS: Record<Preset, { label: string; hint: string; explain: str
 }
 
 
-/** Applied-filter chips (“Filter ✕”) derived from the current state. */
+/** Applied-filter chips (“Filter ✕”) derived from the current state. In-Store isn't one: its own chip in the filter bar shows it. */
 export function appliedFilters(f: DiamondFilterState): { label: string; clear: (f: DiamondFilterState) => DiamondFilterState }[] {
   const chips: ReturnType<typeof appliedFilters> = []
   if (f.price[0] !== PRICE_BOUNDS[0] || f.price[1] !== PRICE_BOUNDS[1])
@@ -87,7 +87,6 @@ export function appliedFilters(f: DiamondFilterState): { label: string; clear: (
     chips.push({ label: `Color ${COLOR_GRADES[f.color[0]]}–${COLOR_GRADES[f.color[1]]}`, clear: (s) => ({ ...s, color: NO_FILTERS.color, preset: null }) })
   if (f.clarity[0] !== NO_FILTERS.clarity[0] || f.clarity[1] !== NO_FILTERS.clarity[1])
     chips.push({ label: `${CLARITY_GRADES[f.clarity[0]]}–${CLARITY_GRADES[f.clarity[1]]}`, clear: (s) => ({ ...s, clarity: NO_FILTERS.clarity, preset: null }) })
-  if (f.instore) chips.push({ label: "In-Store", clear: (s) => ({ ...s, instore: false }) })
   return chips
 }
 

@@ -12,14 +12,15 @@ import {
   SeoIntroBlock,
 } from "@/components/diamond/glp-content-blocks"
 import { StoneTile } from "@/components/diamond/stone-tile"
-import { DyoStepper } from "@/components/dyo/dyo-stepper"
+import { DyoStepper, type DyoStart } from "@/components/dyo/dyo-stepper"
 import { Pagination } from "@/components/plp/product-grid"
 import { ProductCarousel } from "@/components/shared/product-carousel"
 import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { Button } from "@/components/ui/button"
-import type { Diamond } from "@/data/diamonds"
+import type { Diamond, Shape } from "@/data/diamonds"
+import { NO_FILTERS } from "@/lib/diamond-filters"
 import { RECENTLY_VIEWED } from "@/data/products"
 import { RESULTS_ID } from "@/lib/scroll-to-results"
 import { cn, PAGE_MAX } from "@/lib/utils"
@@ -52,18 +53,33 @@ function FourCsBanner() {
 /**
  * Natural Diamonds GLP, DYO step 2 (Figma "Diamond GLP — DYO Step 3": desktop 8032:112719, mobile 8032:112876).
  * `onOpen` decides what a tile does: the Quickview on the GLP prototype, the PDP in Test 3.1 variant A.
+ * `start` is where the shopper entered the DYO flow: from Shop by Stone the stone is step 1.
+ * `entryShape` (a Shop by Stone link) starts a fresh refinement on that shape; `onEntryApplied` then
+ * drops it from the URL so Back and reloads keep the shopper's later refinements.
  */
 export function DiamondGlp({
   onOpen,
   storageKey,
   shopInTest = true,
+  start = "setting",
+  entryShape,
+  onEntryApplied,
 }: {
   onOpen: (d: Diamond) => void
   storageKey?: string
   /** false: the mobile bar's Shop shows the "not part of this test" notice (Test 3) */
   shopInTest?: boolean
+  start?: DyoStart
+  entryShape?: Shape | null
+  onEntryApplied?: () => void
 }) {
   const listing = useDiamondListing(storageKey)
+  const { setFilters } = listing
+  useEffect(() => {
+    if (!entryShape) return
+    setFilters({ ...NO_FILTERS, shapes: [entryShape] })
+    onEntryApplied?.()
+  }, [entryShape, setFilters, onEntryApplied])
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const { pageItems, page, pageCount, results } = listing
@@ -82,7 +98,7 @@ export function DiamondGlp({
       <SiteHeader navigation contained />
       <main>
         <GlpHero listing={listing} />
-        <DyoStepper current={2} mobileTone="plp" contained />
+        <DyoStepper current={start === "stone" ? 1 : 2} start={start} showTotal={start !== "stone"} mobileTone="plp" contained />
 
         {/* Results capped at 1680px (PAGE_MAX, as the Test 2 PLP). */}
         <div id={RESULTS_ID} className={cn("scroll-mt-(--header-offset)", PAGE_MAX)}>
