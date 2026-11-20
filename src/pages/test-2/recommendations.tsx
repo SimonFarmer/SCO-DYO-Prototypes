@@ -6,7 +6,8 @@ import { useNotInTest } from "@/components/prototype/not-in-test"
 import { StoneCtas } from "@/components/stones/stone-ctas"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { SETTING } from "@/data/dyo"
-import { formatSize, recommend, stoneImage, stoneSpecs, stoneTitle, type SpecKey, type StonePick } from "@/data/stones"
+import { DiamondQuickview } from "@/components/diamond/diamond-quickview"
+import { formatSize, recommend, stoneImage, stoneSpecs, stoneTitle, toQuickviewDiamond, type SpecKey, type StonePick } from "@/data/stones"
 import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { useStonePrefs, type StoneSim } from "./preferences"
@@ -64,8 +65,7 @@ function SpecStrip({ pick }: { pick: StonePick }) {
  * Pick tile (Figma 8038:26505, the first tile sets the style for all three): badge, radio, stone, one-line
  * summary, stone price and ring total, the 4Cs strip and what it's optimized for. Selection only changes the border.
  */
-function PickTile({ pick, selected, onSelect }: { pick: StonePick; selected: boolean; onSelect: () => void }) {
-  const notInTest = useNotInTest()
+function PickTile({ pick, selected, onSelect, onDetails }: { pick: StonePick; selected: boolean; onSelect: () => void; onDetails: () => void }) {
   const img = stoneImage(pick.stone)
   const ringTotal = `Ring Total: ${formatPrice(SETTING.price + pick.stone.price)}`
   return (
@@ -107,7 +107,7 @@ function PickTile({ pick, selected, onSelect }: { pick: StonePick; selected: boo
           type="button"
           onClick={(e) => {
             e.stopPropagation()
-            notInTest("Stone details")
+            onDetails()
           }}
           className="cursor-pointer self-start type-label-xs text-primary underline"
         >
@@ -170,6 +170,7 @@ export function Test2Recommendations() {
     [sim],
   )
   const [selectedKind, setSelectedKind] = useState(picks[0]?.kind)
+  const [quickview, setQuickview] = useState<StonePick | null>(null)
   const selected = picks.find((p) => p.kind === selectedKind) ?? picks[0]
   const kind = prefs.type === "gemstone" ? "Gemstone" : "Diamond"
 
@@ -192,7 +193,7 @@ export function Test2Recommendations() {
           <>
             <RadioGroup value={selected.kind} onValueChange={(v) => setSelectedKind(v as StonePick["kind"])} aria-label="Recommended stones" className="gap-2">
               {picks.map((p) => (
-                <PickTile key={p.kind} pick={p} selected={p.kind === selected.kind} onSelect={() => setSelectedKind(p.kind)} />
+                <PickTile key={p.kind} pick={p} selected={p.kind === selected.kind} onSelect={() => setSelectedKind(p.kind)} onDetails={() => setQuickview(p)} />
               ))}
             </RadioGroup>
             <SectionDivider />
@@ -214,6 +215,21 @@ export function Test2Recommendations() {
           onViewAll={() => navigate(href("diamonds", { from: "recs" }))}
         />
       </StoneStepLayout>
+      {/* The Diamond GLP's Quickview, for diamonds and gemstones (ring total = this setting + the stone). Selecting
+          there picks the stone and moves on, as the page's Select button does; the full details page is Test 3. */}
+      <DiamondQuickview
+        diamond={quickview && toQuickviewDiamond(quickview.stone)}
+        title={quickview ? stoneTitle(quickview.stone) : undefined}
+        noun={kind}
+        certificate={prefs.type === "gemstone" ? null : undefined}
+        onOpenChange={(open) => !open && setQuickview(null)}
+        onSelect={() => {
+          if (quickview) setSelectedKind(quickview.kind)
+          setQuickview(null)
+          notInTest("Finishing touches (step 3)")
+        }}
+        onViewDetails={() => notInTest("Stone details")}
+      />
     </div>
   )
 }
