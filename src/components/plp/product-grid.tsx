@@ -2,6 +2,8 @@ import { Fragment } from "react"
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { ProductTileSkeleton, TileLoading } from "@/components/shared/tile-skeletons"
+import { useFilterLoading } from "@/lib/use-filter-loading"
 import { cn } from "@/lib/utils"
 import { PlpProductCard } from "./plp-product-card"
 import type { Listing } from "./use-listing"
@@ -73,6 +75,8 @@ export function Pagination({ page, pageCount, onPage }: { page: number; pageCoun
 /** Product grid, in-grid banner after the first row, pagination, and the no-results state. */
 export function ProductGrid({ listing, wide }: { listing: Listing; wide: boolean }) {
   const { pageItems, page, pageCount, results, mode } = listing
+  // Any filter or sort change shows skeleton tiles for a second, as if the grid were refreshing.
+  const loading = useFilterLoading(JSON.stringify([listing.filters, listing.sort]))
 
   if (results.length === 0) {
     return (
@@ -90,7 +94,7 @@ export function ProductGrid({ listing, wide }: { listing: Listing; wide: boolean
 
   return (
     <div className="flex flex-col gap-10">
-      <ul className={cn("grid grid-flow-row-dense grid-cols-2 gap-x-card-gap gap-y-6 lg:gap-y-8", wide ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
+      <ul aria-busy={loading} className={cn("grid grid-flow-row-dense grid-cols-2 gap-x-card-gap gap-y-6 lg:gap-y-8", wide ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
         {pageItems.map((p, i) => (
           <Fragment key={p.id}>
             {/* Banner after the first desktop row; on mobile, dense flow moves card 4 up beside card 3. */}
@@ -100,12 +104,14 @@ export function ProductGrid({ listing, wide }: { listing: Listing; wide: boolean
               </li>
             )}
             <li className="min-w-0">
-              <PlpProductCard
-                product={p}
-                priceLabel={mode === "dyo" ? "Setting only" : undefined}
-                pricePrefix={mode === "rts" ? "Starting at" : undefined}
-                preferredShapes={listing.filters.shape}
-              />
+              <TileLoading loading={loading} skeleton={<ProductTileSkeleton />}>
+                <PlpProductCard
+                  product={p}
+                  priceLabel={mode === "dyo" ? "Setting only" : undefined}
+                  pricePrefix={mode === "rts" ? "Starting at" : undefined}
+                  preferredShapes={listing.filters.shape}
+                />
+              </TileLoading>
             </li>
           </Fragment>
         ))}
