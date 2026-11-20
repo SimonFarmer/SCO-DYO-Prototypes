@@ -49,8 +49,8 @@ function picksHeading(type: StoneTypeId, shape: string, gem: string) {
 }
 
 /**
- * Carat (Size for gemstones) · Clarity · Color · Cut in one bordered row (Figma 8173:188141); the cells this
- * pick optimises are shaded and bold. 1px gaps over the border colour draw the dividers.
+ * Carat (Size for gemstones) · Clarity · Color · Cut in one row, a divider left of each cell (Figma 8173:188141);
+ * the cells this pick optimises are lightly shaded.
  */
 function SpecStrip({ pick }: { pick: StonePick }) {
   const specs = stoneSpecs(pick.stone)
@@ -63,17 +63,17 @@ function SpecStrip({ pick }: { pick: StonePick }) {
     { key: "cut", label: "Cut", value: specs.cut },
   ]
   return (
-    <dl className="flex w-full gap-px border border-border-subtle bg-border-subtle text-primary">
-      {cells.map((c) => {
-        const on = pick.highlight.includes(c.key)
-        return (
-          // Phones: tighter cells.
-          <div key={c.key} className={cn("flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2 md:px-4", on ? "bg-bg-input-50 font-semibold" : "bg-background")}>
-            <dt className="text-xxs leading-3 font-semibold tracking-[1px] uppercase">{c.label}</dt>
-            <dd className={cn("text-xs leading-4 tabular-nums", !on && "tracking-[0.12px]")}>{c.value}</dd>
-          </div>
-        )
-      })}
+    <dl className="flex w-full">
+      {cells.map((c) => (
+        // A divider on the left of every cell; the cells this pick optimises are lightly shaded.
+        <div
+          key={c.key}
+          className={cn("flex min-w-0 flex-1 flex-col gap-1 border-l border-border-subtle px-2.5 py-2", pick.highlight.includes(c.key) ? "bg-bg-input-50" : "bg-background")}
+        >
+          <dt className="text-xxs leading-3 font-semibold tracking-[1px] text-muted-foreground uppercase">{c.label}</dt>
+          <dd className="text-xs leading-4 tracking-[0.12px] text-primary tabular-nums">{c.value}</dd>
+        </div>
+      ))}
     </dl>
   )
 }

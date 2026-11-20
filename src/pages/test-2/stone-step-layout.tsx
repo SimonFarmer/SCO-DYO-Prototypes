@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react"
 import { useLocation } from "react-router"
 import { DyoStepper } from "@/components/dyo/dyo-stepper"
+import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
 import { SiteHeader } from "@/components/site/site-header"
 import { StoneStepGallery, type StoneGalleryMode } from "@/components/stones/stone-step-gallery"
 import { cn, PAGE_MAX } from "@/lib/utils"
@@ -78,6 +79,8 @@ export function StoneStepLayout({
           </aside>
         </div>
       </main>
+      {/* Mobile: the site's bottom navigation bar, as on every other page (Test 2's PLP has it via the GLP). */}
+      <MobileBottomNav />
     </div>
   )
 }
