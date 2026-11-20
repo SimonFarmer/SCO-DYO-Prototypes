@@ -101,7 +101,9 @@ export function chosenSize(p: StonePrefs) {
  * Everything the 2a simulator shows for one set of preferences, read from stock:
  *  - Size first: the size's window gives the stone and ring price range (green band on the budget line).
  *  - Budget first / Size + Budget: the budget (snapped to the stepped scale) gives the sizes in stock at that
- *    budget (green band on the size line); the size handle is held inside them.
+ *    budget (green band on the size line). Budget first holds the size handle inside the band; Size + Budget
+ *    lets it go outside (the test: should shoppers be able to choose a stone outside their budget?), and then
+ *    the prices, matching stones and picks follow the size alone.
  */
 export function simulate(shopBy: ShopBy, p: StonePrefs) {
   const scope = scopeOf(p)
@@ -115,15 +117,19 @@ export function simulate(shopBy: ShopBy, p: StonePrefs) {
 
   const budgetSizes = usesBudget ? sizesInBudget(rows, budgetLo, budgetHi) : []
   const available = !usesBudget || budgetSizes.length > 0
-  // The size the preview shows: the chosen size, kept inside the green band when a budget is set.
-  const size = usesBudget && budgetSizes.length ? nearest(budgetSizes, wanted) : Math.min(wanted, Math.max(largest, sizes.min))
+  // The size the preview shows: the chosen size, kept inside the green band in Budget first only.
+  const size = shopBy === "budget" && budgetSizes.length ? nearest(budgetSizes, wanted) : Math.min(wanted, Math.max(largest, sizes.min))
+  // Size + Budget: is the chosen size one the budget reaches (inside the green band)?
+  const inBudget = !usesBudget || budgetSizes.some((s) => Math.abs(s - size) < 1e-6)
+  // How the matching stones and picks are found: Size + Budget outside the budget falls back to the size alone.
+  const pickMode: ShopBy = shopBy === "both" && !inBudget ? "size" : shopBy
   const row = rowAt(rows, size)
   const sizeRing = row ? { lo: SETTING.price + row.min, hi: SETTING.price + row.max } : null
   // Size + Budget: this size's prices inside the budget.
   const overlap = sizeRing && shopBy === "both" ? { lo: Math.max(sizeRing.lo, budgetLo), hi: Math.min(sizeRing.hi, budgetHi) } : null
   const fits = !overlap || overlap.hi >= overlap.lo
-  // Nothing to show: no stones at this size (size first) or none in the budget.
-  const blocked = usesBudget ? !available : !row
+  // Nothing to show: none in the budget (budget first) or no stones at this size.
+  const blocked = shopBy === "budget" ? !available : !row
 
   return {
     scope,
@@ -139,6 +145,8 @@ export function simulate(shopBy: ShopBy, p: StonePrefs) {
     row,
     sizeRing,
     overlap: overlap && fits ? overlap : null,
+    inBudget,
+    pickMode,
     blocked,
     stoneMin: Math.max(0, budgetLo - SETTING.price),
     stoneMax: Math.max(0, budgetHi - SETTING.price),
@@ -149,14 +157,15 @@ export type StoneSim = ReturnType<typeof simulate>
 
 /**
  * The stones that match the preferences: what "View All (N)" counts and what the PLP opens with.
- * Size first: the size's window. Budget first: the stone budget. Size + Budget: both.
+ * Size first: the size's window. Budget first: the stone budget. Size + Budget: both (the size alone when
+ * the chosen size is outside the budget).
  */
-export function prefsFilters(shopBy: ShopBy, p: StonePrefs, sim: StoneSim): StoneFilters {
+export function prefsFilters(p: StonePrefs, sim: StoneSim): StoneFilters {
   const f: StoneFilters = { ...emptyStoneFilters(p.type), shapes: [sim.scope.shape], gems: p.type === "gemstone" ? [p.gem] : [] }
   const size = { minSize: Math.max(0, sim.size - sim.sizes.window), maxSize: sim.size + sim.sizes.window }
   const budget = { minPrice: sim.stoneMin, maxPrice: sim.stoneMax }
-  if (shopBy === "size") return { ...f, ...size }
-  if (shopBy === "budget") return { ...f, ...budget }
+  if (sim.pickMode === "size") return { ...f, ...size }
+  if (sim.pickMode === "budget") return { ...f, ...budget }
   return { ...f, ...size, ...budget }
 }
 
@@ -175,7 +184,7 @@ export function useStonePrefs() {
   const navigate = useNavigate()
   const prefs = useMemo(() => parse(params), [params])
   const sim = useMemo(() => simulate(variant.shopBy, prefs), [variant.shopBy, prefs])
-  const filters = useMemo(() => prefsFilters(variant.shopBy, prefs, sim), [variant.shopBy, prefs, sim])
+  const filters = useMemo(() => prefsFilters(prefs, sim), [prefs, sim])
   const matching = useMemo(() => (sim.blocked ? [] : filterStones(filters)), [filters, sim.blocked])
 
   /** Update preferences in place (replace, so dragging a slider doesn't flood history). */

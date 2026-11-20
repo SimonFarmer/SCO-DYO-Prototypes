@@ -59,7 +59,7 @@ export function ProductTileSkeleton() {
 }
 
 /**
- * Stone tile (diamond GLP StoneTile, Test 2 DiamondCard): square image, title, price, Clarity | Color | Cut.
+ * Stone tile (StoneTile on the diamond GLP, Test 3 and the Test 2 Diamonds PLP): square image, title, price, Clarity | Color | Cut.
  * Mobile titles run to two lines and the spec values wrap, so the text block is taller there.
  */
 export function StoneTileSkeleton() {

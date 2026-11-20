@@ -41,7 +41,8 @@ export const STONE_PREFERENCE_VARIANTS: Record<StonePreferenceVariant["id"], Sto
   C: {
     id: "C",
     name: "Size + Budget",
-    summary: "Budget handles set the available sizes; the carat handle picks one; the summary shows that size's prices inside the budget.",
+    summary:
+      "Budget handles show the sizes that fit (green band); the carat handle can go outside it, to test whether shoppers should be able to choose a stone outside their budget.",
     figma: `${FIGMA}7685-417428`,
     shopBy: "both",
   },

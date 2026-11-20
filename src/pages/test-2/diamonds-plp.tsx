@@ -1,408 +1,304 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router"
-import { ArrowLeftIcon, ArrowRightIcon, CaretDownIcon, CaretLeftIcon, SlidersHorizontalIcon, XIcon } from "@phosphor-icons/react"
+import { DiamondGlpView } from "@/components/diamond/diamond-glp"
+import { FilterSection } from "@/components/diamond/diamond-filters"
+import { DiamondQuickview } from "@/components/diamond/diamond-quickview"
+import {
+  DIAMOND_COLOR_BANDS,
+  DIAMOND_EXPLORE,
+  NATURAL_GLP,
+  STONE_TYPE_OPTIONS,
+  type AppliedChip,
+  type GlpCatalog,
+} from "@/components/diamond/glp-catalog"
+import { GLP_PAGE_SIZE, type DiamondListing, type GlpSort } from "@/components/diamond/use-diamond-listing"
 import { DyoStepper } from "@/components/dyo/dyo-stepper"
-import { BelowGridContent } from "@/components/plp/below-grid"
-import { Pagination } from "@/components/plp/product-grid"
 import { useNotInTest } from "@/components/prototype/not-in-test"
-import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
-import { SiteFooter } from "@/components/site/site-footer"
-import { SiteHeader } from "@/components/site/site-header"
-import { DiamondCard } from "@/components/stones/diamond-card"
-import { StoneTileSkeleton, TileLoading } from "@/components/shared/tile-skeletons"
-import { useFilterLoading } from "@/lib/use-filter-loading"
-import { DiamondFilterPanel, type PresetId } from "@/components/stones/diamond-filters"
-import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import type { CutGrade, Shape } from "@/data/diamonds"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
-import {
+  GEMS,
   STONE_SHAPES,
-  STONE_TYPES,
-  emptyStoneFilters,
   filterStones,
+  gemById,
   gradesFor,
+  stonePriceBounds,
+  stoneShape,
+  stoneTitle,
   stoneType,
+  toQuickviewDiamond,
   type LooseStone,
   type StoneFilters,
   type StoneTypeId,
 } from "@/data/stones"
-import { useIsDesktop } from "@/lib/hooks"
-import { cn, PAGE_MAX } from "@/lib/utils"
+import type { DiamondFilterState } from "@/lib/diamond-filters"
+import { formatPrice } from "@/lib/format"
 import { useStonePrefs } from "./preferences"
 
-const PAGE_SIZE = 24
-
-const SORTS = [
-  { id: "popular", label: "Popular" },
-  { id: "price-asc", label: "Price: Low to High" },
-  { id: "price-desc", label: "Price: High to Low" },
-  { id: "carat-desc", label: "Carat: High to Low" },
-]
-
-const SORTERS: Record<string, (a: LooseStone, b: LooseStone) => number> = {
-  popular: (a, b) => b.popularity - a.popularity,
-  "price-asc": (a, b) => a.price - b.price,
-  "price-desc": (a, b) => b.price - a.price,
-  "carat-desc": (a, b) => b.carat - a.carat,
-}
+/** The GLP's filter state plus the gemstone kinds (gemstones only). */
+type PlpFilters = DiamondFilterState & { gems: string[] }
 
 const INTRO: Record<StoneTypeId, string> = {
-  natural: "Hand-selected, GIA-certified loose diamonds in a wide range of shapes and sizes. Choose the one that’s right for your ring.",
+  natural: NATURAL_GLP.hero.intro,
   lab: "IGI-certified lab-grown diamonds: the same sparkle and hardness as natural diamonds, at a lower price per carat.",
   gemstone: "Hand-selected gemstones, from amethyst to sapphire, in classic and fancy shapes. Choose the one that’s right for your ring.",
 }
 
-type ExploreTab = "shape" | "cut" | "clarity" | "color"
+const GEM_EXPLORE: GlpCatalog["explore"] = [
+  {
+    key: "shape",
+    label: "Shape",
+    copy: "Shape is often the first step in choosing a gemstone. Each shape has its own character, from the timeless brilliance of Round to the distinctive elegance of Oval, Emerald and Pear.",
+    learnMore: false,
+  },
+  { key: "color", label: "Color", copy: "Colour runs from Light to Vivid. Richer, more saturated colour is rarer and costs more.", learnMore: true },
+  { key: "clarity", label: "Clarity", copy: "Clarity grades visible inclusions, from Included to Very Clean. Most coloured gemstones have some.", learnMore: true },
+]
 
-const EXPLORE_COPY: Record<ExploreTab, string> = {
-  shape: "Shape is often the first step in choosing a diamond. Each shape has its own character, from the timeless brilliance of Round to the distinctive elegance of Oval, Emerald and Pear.",
-  cut: "Cut is how well a diamond’s facets return light. The better the cut, the more it sparkles at any size.",
-  clarity: "Clarity grades the tiny natural marks inside a diamond. Most are invisible to the eye from SI1 up.",
-  color: "Color runs from D (colorless) to M (warm). Near-colorless grades G–J look white once set.",
+const SORTERS: Record<GlpSort, (a: LooseStone, b: LooseStone) => number> = {
+  popular: (a, b) => b.popularity - a.popularity,
+  "price-asc": (a, b) => a.price - b.price,
+  "price-desc": (a, b) => b.price - a.price,
+  "carat-desc": (a, b) => b.size - a.size || b.price - a.price,
+  "carat-asc": (a, b) => a.size - b.size || a.price - b.price,
 }
 
-/** "Explore by" carousel in the hero (Figma "Collection Hero Content / Shape"). Tiles apply filters. */
-function ExploreBy({ filters, onChange }: { filters: StoneFilters; onChange: (f: StoneFilters) => void }) {
-  const [tab, setTab] = useState<ExploreTab>("shape")
-  const rail = useRef<HTMLUListElement>(null)
-  const g = gradesFor(filters.type)
-  const tabs: ExploreTab[] = filters.type === "gemstone" ? ["shape", "color"] : ["shape", "cut", "clarity", "color"]
+const shapeLabel = (id: string) => stoneShape(id).label as Shape
+const shapeId = (label: string) => STONE_SHAPES.find((s) => s.label === label)?.id ?? label.toLowerCase()
 
-  const items =
-    tab === "shape"
-      ? STONE_SHAPES.map((s) => ({ key: s.id, label: s.label, icon: s.icon, on: filters.shapes.includes(s.id), apply: () => onChange({ ...filters, shapes: filters.shapes.includes(s.id) ? filters.shapes.filter((x) => x !== s.id) : [...filters.shapes, s.id] }) }))
-      : tab === "cut"
-        ? [...g.cut].map((c, i) => ({ key: c.label, label: c.label, icon: undefined, on: filters.cuts.length === 1 && filters.cuts[0] === i, apply: () => onChange({ ...filters, cuts: [i] }) })).reverse()
-        : (tab === "color" ? g.color : g.clarity)
-            .map((c, i) => {
-              const cur = tab === "color" ? filters.color : filters.clarity
-              return { key: c.label, label: c.label, icon: undefined, on: !!cur && cur[0] === i && cur[1] === i, apply: () => onChange({ ...filters, [tab]: [i, i] }) }
-            })
-            .reverse()
-
-  const scroll = (dir: 1 | -1) => rail.current?.scrollBy({ left: dir * 368, behavior: "smooth" })
-
-  return (
-    <div className="flex min-w-0 flex-col gap-2">
-      <p className="type-label-xs text-primary">Explore by</p>
-      <div className="flex flex-col gap-5">
-        <div role="tablist" className="flex gap-4">
-          {tabs.map((t) => (
-            <button
-              key={t}
-              type="button"
-              role="tab"
-              aria-selected={tab === t}
-              onClick={() => setTab(t)}
-              className={cn(
-                "h-10 cursor-pointer pb-2 type-h4 capitalize",
-                tab === t ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-primary",
-              )}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-        <p className="text-sm leading-5 text-primary">{EXPLORE_COPY[tab]}</p>
-        <ul ref={rail} className="flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {items.map((it) => (
-            <li key={it.key}>
-              <button
-                type="button"
-                aria-pressed={it.on}
-                onClick={it.apply}
-                className={cn(
-                  "flex size-22 shrink-0 cursor-pointer flex-col items-center justify-center gap-2.5 border bg-background px-1 py-3",
-                  it.on ? "border-primary" : "border-input hover:border-border",
-                )}
-              >
-                {it.icon ? <img src={it.icon} alt="" className="size-8" /> : <span className="type-h4 text-primary">{it.label.split(" ")[0]}</span>}
-                <span className="max-w-full truncate text-xxs leading-3 font-semibold tracking-[1px] text-muted-foreground uppercase">{it.label}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="hidden justify-end gap-2 lg:flex">
-          <Button variant="outline" size="icon" className="border-input" aria-label="Scroll left" onClick={() => scroll(-1)}>
-            <ArrowLeftIcon />
-          </Button>
-          <Button variant="outline" size="icon" className="border-input" aria-label="Scroll right" onClick={() => scroll(1)}>
-            <ArrowRightIcon />
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/** "Understand the 4Cs" in-grid banner (Figma In-Grid Content Banner). */
-function FourCsBanner() {
-  const notInTest = useNotInTest()
-  return (
-    <div className="relative isolate flex min-h-80 flex-col justify-end gap-6 overflow-hidden p-6 text-primary-foreground lg:min-h-34 lg:flex-row lg:items-center lg:justify-between lg:px-16 lg:py-10">
-      <img src="/images/product-details/lifestyle-hand.png" alt="" loading="lazy" className="absolute inset-0 -z-20 size-full object-cover object-[50%_45%]" />
-      <div aria-hidden className="absolute inset-0 -z-10 bg-linear-to-t from-black/60 to-transparent lg:bg-linear-to-r lg:from-black/50" />
-      <div className="flex max-w-108 flex-col gap-2">
-        <p className="font-heading text-2xl leading-[1.2] font-medium tracking-[-0.6px]">Understand the 4Cs</p>
-        <p className="text-sm leading-5">How cut, color, clarity and carat work together, and where to spend your budget.</p>
-      </div>
-      <Button variant="secondary" className="self-start bg-background px-14 text-primary hover:bg-secondary lg:self-center" onClick={() => notInTest("The diamond guide")}>
-        Diamond Guide
-      </Button>
-    </div>
-  )
-}
-
-function TypeChips({ value, onChange, compact }: { value: StoneTypeId; onChange: (t: StoneTypeId) => void; compact?: boolean }) {
-  return (
-    <div className={cn("flex gap-2", compact && "-mx-margin overflow-x-auto px-margin [scrollbar-width:none]")}>
-      {STONE_TYPES.map((t) => (
-        <button
-          key={t.id}
-          type="button"
-          aria-pressed={t.id === value}
-          onClick={() => onChange(t.id)}
-          className={cn(
-            "flex h-10 shrink-0 cursor-pointer items-center rounded-full border bg-background px-5 type-label-xs whitespace-nowrap text-primary",
-            t.id === value ? "border-primary" : "border-input hover:border-border",
-          )}
-        >
-          {t.plpLabel}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-function SortMenu({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className="flex h-10 cursor-pointer items-center gap-2 type-label-xs whitespace-nowrap text-primary">
-        Sort by: {SORTS.find((s) => s.id === value)?.label}
-        <CaretDownIcon className="size-4" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuRadioGroup value={value} onValueChange={(v) => onChange(v as string)}>
-          {SORTS.map((s) => (
-            <DropdownMenuRadioItem key={s.id} value={s.id} className="py-2 text-sm">
-              {s.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
+/** Size bounds from stock: carats to the nearest 0.1 ct, millimetres as Shane Co. offers them. */
+function sizeRange(type: StoneTypeId): [number, number] {
+  if (type === "gemstone") return [Math.min(...GEMS.map((g) => g.sizeMm.min)), Math.max(...GEMS.map((g) => g.sizeMm.max))]
+  let lo = Infinity
+  let hi = 0
+  for (const s of filterStones({ type, shapes: [], gems: [], minPrice: null, maxPrice: null, minSize: null, maxSize: null, cuts: [], color: null, clarity: null })) {
+    lo = Math.min(lo, s.size)
+    hi = Math.max(hi, s.size)
+  }
+  return [Math.floor(lo * 10) / 10, Math.ceil(hi * 10) / 10]
 }
 
 /**
- * Test 2 · Diamonds PLP (the GLP). Figma 7685:399664.
- * Opens with stone type, shape, carat (and price, for the budget variants) preset from Stone
- * Preferences, so "View All (N)" and "Showing … of N" match. Back returns to the page it came from.
+ * The GLP catalogue for one Test 2 stone type: the same hero, sidebar and wording as the Diamond GLP, over
+ * Test 2's natural, lab-grown or gemstone stock (gemstones in millimetres, with their own grades).
+ */
+function catalogFor(type: StoneTypeId, back: GlpCatalog["hero"]["back"], onType: (t: StoneTypeId) => void): GlpCatalog {
+  const gem = type === "gemstone"
+  const g = gradesFor(type)
+  const grades = { cut: g.cut.map((x) => x.label), color: g.color.map((x) => x.label), clarity: g.clarity.map((x) => x.label) }
+  const price = stonePriceBounds(type)
+  const priceBounds: [number, number] = [price.min, price.max]
+  const sizeBounds = sizeRange(type)
+  const format = gem ? (n: number) => `${n.toFixed(1)} mm` : NATURAL_GLP.size.format
+  const noFilters: PlpFilters = {
+    price: priceBounds,
+    carat: sizeBounds,
+    shapes: [],
+    cuts: [],
+    color: [0, grades.color.length - 1],
+    clarity: [0, grades.clarity.length - 1],
+    preset: null,
+    instore: false,
+    gems: [],
+  }
+  const same = (a: [number, number], b: [number, number]) => a[0] === b[0] && a[1] === b[1]
+  // Applied-filter chips, as the GLP's, plus the gemstone kinds.
+  const chips = (raw: DiamondFilterState): AppliedChip[] => {
+    const f = raw as PlpFilters
+    const out: AppliedChip[] = []
+    if (!same(f.price, priceBounds)) out.push({ label: `${formatPrice(f.price[0])}–${formatPrice(f.price[1])}`, clear: (s) => ({ ...s, price: priceBounds }) })
+    for (const shape of f.shapes) out.push({ label: shape, clear: (s) => ({ ...s, shapes: s.shapes.filter((x) => x !== shape) }) })
+    for (const id of f.gems ?? []) out.push({ label: gemById(id).label, clear: (s) => ({ ...s, gems: (s as PlpFilters).gems.filter((x) => x !== id) }) as PlpFilters })
+    if (!same(f.carat, sizeBounds))
+      out.push({
+        label: gem ? `${f.carat[0].toFixed(1)}–${f.carat[1].toFixed(1)} mm` : `${f.carat[0].toFixed(2)}–${f.carat[1].toFixed(2)} ct`,
+        clear: (s) => ({ ...s, carat: sizeBounds }),
+      })
+    for (const cut of f.cuts) out.push({ label: cut, clear: (s) => ({ ...s, cuts: s.cuts.filter((x) => x !== cut), preset: null }) })
+    if (!same(f.color, noFilters.color))
+      out.push({ label: `Color ${grades.color[f.color[0]]}–${grades.color[f.color[1]]}`, clear: (s) => ({ ...s, color: noFilters.color, preset: null }) })
+    if (!same(f.clarity, noFilters.clarity))
+      out.push({ label: `${grades.clarity[f.clarity[0]]}–${grades.clarity[f.clarity[1]]}`, clear: (s) => ({ ...s, clarity: noFilters.clarity, preset: null }) })
+    return out
+  }
+  return {
+    hero: { title: stoneType(type).plpLabel, intro: INTRO[type], back, type: { value: type, options: STONE_TYPE_OPTIONS, onChange: (t) => onType(t as StoneTypeId) } },
+    explore: gem ? GEM_EXPLORE : DIAMOND_EXPLORE,
+    priceLabel: gem ? "Gemstone Price" : "Diamond Price",
+    priceBounds,
+    size: gem
+      ? { label: "Gemstone Size", info: "Gemstones are sized in millimetres across the stone, as Shane Co. sells them.", bounds: sizeBounds, step: 0.5, format }
+      : { ...NATURAL_GLP.size, bounds: sizeBounds },
+    noFilters,
+    grades,
+    cutHint: Object.fromEntries(g.cut.map((x) => [x.label, x.detail ?? ""])),
+    info: gem
+      ? {
+          cut: "Cut decides how a gemstone shows its colour and brilliance.",
+          color: "Colour runs from Light to Vivid. Richer, more saturated colour is rarer and costs more.",
+          clarity: "Clarity grades visible inclusions, from Included to Very Clean.",
+        }
+      : NATURAL_GLP.info,
+    colorBands: gem ? undefined : DIAMOND_COLOR_BANDS,
+    presets: !gem,
+    certification:
+      type === "natural" ? NATURAL_GLP.certification : type === "lab" ? "All our lab-grown diamonds are IGI certified." : "Every gemstone is graded by Shane Co. gemologists.",
+    banner: !gem,
+    chips,
+    extraFilters: gem
+      ? (raw, onChange) => {
+          const value = raw as PlpFilters
+          return (
+            <FilterSection title="Gemstone">
+              <div className="flex flex-col gap-2">
+                {GEMS.map((gm) => {
+                  const on = value.gems.includes(gm.id)
+                  return (
+                    <label key={gm.id} htmlFor={`gem-${gm.id}`} className="flex cursor-pointer items-center gap-3 py-1">
+                      <Checkbox
+                        id={`gem-${gm.id}`}
+                        checked={on}
+                        onCheckedChange={(c) => onChange({ ...value, gems: c ? [...value.gems, gm.id] : value.gems.filter((x) => x !== gm.id) } as PlpFilters)}
+                      />
+                      <img src={gm.icon} alt="" className="size-5" />
+                      <span className="text-sm leading-none font-medium text-foreground">{gm.label}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            </FilterSection>
+          )
+        }
+      : undefined,
+  }
+}
+
+/** Test 2's filters (from the shopper's preferences) as the GLP's filter state. */
+function fromStoneFilters(f: StoneFilters, none: PlpFilters): PlpFilters {
+  const clamp = (v: number | null, [lo, hi]: [number, number], fallback: number) => (v === null ? fallback : Math.min(hi, Math.max(lo, v)))
+  const grades = gradesFor(f.type)
+  return {
+    ...none,
+    price: [clamp(f.minPrice, none.price, none.price[0]), clamp(f.maxPrice, none.price, none.price[1])],
+    carat: [clamp(f.minSize, none.carat, none.carat[0]), clamp(f.maxSize, none.carat, none.carat[1])],
+    shapes: f.shapes.map(shapeLabel),
+    gems: f.gems,
+    cuts: f.cuts.map((i) => grades.cut[i].label as CutGrade),
+    color: f.color ?? none.color,
+    clarity: f.clarity ?? none.clarity,
+  }
+}
+
+/** The GLP's filter state back to Test 2's stone filters. */
+function toStoneFilters(f: PlpFilters, type: StoneTypeId): StoneFilters {
+  const cuts = gradesFor(type).cut.map((x) => x.label)
+  return {
+    type,
+    shapes: f.shapes.map(shapeId),
+    gems: f.gems ?? [],
+    minPrice: f.price[0],
+    maxPrice: f.price[1],
+    minSize: f.carat[0],
+    maxSize: f.carat[1],
+    cuts: f.cuts.map((c) => cuts.indexOf(c)).filter((i) => i >= 0),
+    color: f.color,
+    clarity: f.clarity,
+  }
+}
+
+function matching(f: PlpFilters, type: StoneTypeId) {
+  const list = filterStones(toStoneFilters(f, type))
+  return f.instore ? list.filter((s) => toQuickviewDiamond(s).instore) : list
+}
+
+/**
+ * Test 2 · Diamonds PLP: the Diamond GLP (Figma "Diamond GLP — DYO Step 3", as /natural-diamonds) over
+ * Test 2's stock. It opens on the stone type, shape, size (and price, in the budget variants) set in Stone
+ * Preferences, so "View All (N)" and "Showing … of N" agree; the hero's type toggle switches between
+ * natural, lab-grown and gemstones. Tiles open the Quickview; Back returns to the page the shopper came from.
  */
 export function Test2DiamondsPlp() {
   const navigate = useNavigate()
-  const isDesktop = useIsDesktop()
+  const notInTest = useNotInTest()
   const [params] = useSearchParams()
   const { variant, filters: preset, href } = useStonePrefs()
   const from = params.get("from") === "recs" ? "recs" : "prefs"
+  const back = useMemo(
+    () => ({
+      label: from === "recs" ? "Back to your recommendations" : "Back to stone preferences",
+      onClick: () => navigate(href(from === "recs" ? "recommendations" : "preferences")),
+    }),
+    [from, navigate, href],
+  )
 
-  const [filters, setFiltersState] = useState<StoneFilters>(preset)
-  const [presetId, setPresetId] = useState<PresetId | null>(null)
-  const [sort, setSort] = useState("popular")
-  const [page, setPage] = useState(1)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [type, setType] = useState<StoneTypeId>(preset.type)
+  const [state, setState] = useState(() => ({
+    filters: fromStoneFilters(preset, catalogFor(preset.type, back, () => {}).noFilters as PlpFilters),
+    sort: "popular" as GlpSort,
+    page: 1,
+  }))
+  const [quickview, setQuickview] = useState<LooseStone | null>(null)
 
-  const setFilters = (f: StoneFilters) => {
-    setFiltersState(f)
-    setPage(1)
+  // A new type has its own price, size and grade scales (carats vs millimetres): keep the shapes, reset the rest.
+  const switchType = (next: StoneTypeId) => {
+    const none = catalogFor(next, back, () => {}).noFilters as PlpFilters
+    setType(next)
+    setState((s) => ({ ...s, page: 1, filters: { ...none, shapes: s.filters.shapes } }))
   }
+  const catalog = catalogFor(type, back, switchType)
 
-  // A new type has different price, size and grade scales (carats vs millimetres): keep the shapes, reset the rest.
-  const setType = (type: StoneTypeId) => {
-    if (type === filters.type) return
-    setPresetId(null)
-    setFilters({ ...emptyStoneFilters(type), shapes: filters.shapes })
+  const stones = useMemo(() => matching(state.filters, type).sort(SORTERS[state.sort]), [state.filters, state.sort, type])
+  const byId = useMemo(() => new Map(stones.map((s) => [s.id, s])), [stones])
+  const results = useMemo(() => stones.map(toQuickviewDiamond), [stones])
+  const pageCount = Math.max(1, Math.ceil(results.length / GLP_PAGE_SIZE))
+  const page = Math.min(state.page, pageCount)
+
+  const listing: DiamondListing = {
+    filters: state.filters,
+    sort: state.sort,
+    page,
+    pageCount,
+    results,
+    pageItems: results.slice((page - 1) * GLP_PAGE_SIZE, page * GLP_PAGE_SIZE),
+    activeCount: catalog.chips(state.filters).length,
+    setFilters: (filters) => setState((s) => ({ ...s, filters: filters as PlpFilters, page: 1 })),
+    setSort: (sort) => setState((s) => ({ ...s, sort, page: 1 })),
+    setPage: (p) => setState((s) => ({ ...s, page: p })),
+    clearAll: () => setState((s) => ({ ...s, filters: catalog.noFilters as PlpFilters, page: 1 })),
+    countFor: (f) => matching(f as PlpFilters, type).length,
   }
-
-  // Any filter or sort change shows skeleton tiles for a second, as if the grid were refreshing.
-  const loading = useFilterLoading(JSON.stringify([filters, sort]))
-  const results = useMemo(() => filterStones(filters).sort(SORTERS[sort]), [filters, sort])
-  const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE))
-  const current = Math.min(page, pageCount)
-  const pageItems = results.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)
-  const title = stoneType(filters.type).plpLabel
 
   // Arriving from 2a/2b starts at the top of the listing page.
   useEffect(() => {
     window.scrollTo({ top: 0 })
   }, [])
 
-  useEffect(() => {
-    const previous = document.title
-    document.title = `${title} | Shane Co.`
-    return () => {
-      document.title = previous
-    }
-  }, [title])
-
-  const back = () => navigate(href(from === "recs" ? "recommendations" : "preferences"))
-  const count = (
-    <p className="type-caption whitespace-nowrap text-muted-foreground" aria-live="polite">
-      Showing <span className="font-semibold text-primary">{pageItems.length}</span> of{" "}
-      <span className="font-semibold text-primary">{results.length.toLocaleString("en-US")} Items</span>
-    </p>
-  )
-  const panel = (
-    <DiamondFilterPanel filters={filters} onChange={setFilters} preset={presetId} onPreset={setPresetId} />
-  )
-
+  const kind = type === "gemstone" ? "Gemstone" : "Diamond"
   return (
-    <div className="min-h-svh bg-background" data-variant={variant.id}>
-      <SiteHeader navigation contained />
-      <DyoStepper current={2} mobileLabel="Stone" showTotal={false} contained />
-      <main>
-        {/* Collection hero (Figma "Collection Hero") */}
-        {/* The hero's background runs full width; its content stops at the 1680px page width. */}
-        <section className="bg-secondary">
-          <div className={cn("flex flex-col gap-5 px-margin pt-5 pb-10", PAGE_MAX)}>
-          <div className="flex flex-col gap-8 lg:flex-row lg:gap-16">
-            <div className="flex flex-col gap-5 lg:w-108 lg:shrink-0 lg:border-r lg:border-input lg:pr-16 lg:pb-7">
-              <h1 className="type-h2 text-primary max-lg:type-h3">{title}</h1>
-              <p className="text-base leading-6 text-primary">{INTRO[filters.type]}</p>
-            </div>
-            <ExploreBy filters={filters} onChange={setFilters} />
-          </div>
-          </div>
-        </section>
-
-        <div id="plp-results" className={cn("scroll-mt-(--header-offset)", PAGE_MAX)}>
-          {/* Back to step 2, as "Edit preferences" on the recommendations page: it heads the results block, just
-              above the filters, so it sits on screen once the shopper is in the results (mobile too). */}
-          <div className="px-margin pt-6">
-            <button type="button" onClick={back} className="flex h-6 cursor-pointer items-center gap-0.5 type-label-xs text-primary underline">
-              <CaretLeftIcon className="size-4" />
-              {from === "recs" ? "Back to your recommendations" : "Back to stone preferences"}
-            </button>
-          </div>
-
-          {/* Desktop filter bar (Figma "Filter.Controls") */}
-          <div className="hidden items-center gap-6 px-margin pt-4 pb-7 lg:flex">
-            <button
-              type="button"
-              onClick={() => setSidebarOpen((o) => !o)}
-              aria-expanded={sidebarOpen}
-              className="flex h-10 shrink-0 cursor-pointer items-center gap-2 type-label-xs text-primary"
-            >
-              <SlidersHorizontalIcon className="size-4" />
-              {sidebarOpen ? "Hide Filters" : "Show Filters"}
-            </button>
-            <span aria-hidden className="h-6 w-px shrink-0 bg-input" />
-            <div className="min-w-0 flex-1">
-              <TypeChips value={filters.type} onChange={setType} />
-            </div>
-            {count}
-            <span aria-hidden className="h-6 w-px shrink-0 bg-input" />
-            <SortMenu value={sort} onChange={(s) => { setSort(s); setPage(1) }} />
-          </div>
-
-          {/* Mobile filter bar */}
-          <div className="flex flex-col gap-3 px-margin pt-4 pb-8 lg:hidden">
-            <button
-              type="button"
-              onClick={() => setDrawerOpen(true)}
-              className="flex h-10 w-full cursor-pointer items-center justify-center gap-2 border border-border-subtle type-label-xs text-primary"
-            >
-              <SlidersHorizontalIcon className="size-4" />
-              Filter &amp; Sort
-            </button>
-            <TypeChips value={filters.type} onChange={setType} compact />
-            {count}
-          </div>
-
-          <div className="flex gap-16 px-margin-listing pb-14 lg:px-margin">
-            {sidebarOpen && isDesktop && (
-              <aside aria-label="Filters" className="w-66.5 shrink-0">
-                {panel}
-              </aside>
-            )}
-            <div className="min-w-0 flex-1">
-              {results.length === 0 ? (
-                <div className="flex flex-col items-center gap-4 border border-border-subtle px-6 py-12 text-center">
-                  <p className="type-h4 text-primary">No matching stones</p>
-                  <p className="max-w-md text-sm leading-5 text-muted-foreground">No stones match all of these filters. Remove a filter or clear them all to see more.</p>
-                  <Button variant="outline" onClick={() => setFilters(emptyStoneFilters(filters.type))}>
-                    Clear All Filters
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-10">
-                  <ul aria-busy={loading} className={cn("grid grid-cols-2 gap-x-card-gap gap-y-4", sidebarOpen ? "lg:grid-cols-3" : "lg:grid-cols-4")}>
-                    {pageItems.map((s, i) => (
-                      <Fragment key={s.id}>
-                        {current === 1 && i === (sidebarOpen ? 3 : 4) && pageItems.length > i && (
-                          <li className="col-span-full">
-                            <FourCsBanner />
-                          </li>
-                        )}
-                        <li className="min-w-0">
-                          <TileLoading loading={loading} skeleton={<StoneTileSkeleton />}>
-                            <DiamondCard stone={s} />
-                          </TileLoading>
-                        </li>
-                      </Fragment>
-                    ))}
-                  </ul>
-                  <div className="flex flex-col items-center gap-6 border-t border-border-subtle pt-8">
-                    <Pagination
-                      page={current}
-                      pageCount={pageCount}
-                      onPage={(p) => {
-                        setPage(p)
-                        document.getElementById("plp-results")?.scrollIntoView({ block: "start" })
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <BelowGridContent contained />
-      </main>
-      <SiteFooter contained />
-      <MobileBottomNav />
-
-      {/* Mobile filters: changes apply as they're made; the button shows the live count. */}
-      <Sheet open={drawerOpen && !isDesktop} onOpenChange={(o) => !o && setDrawerOpen(false)}>
-        <SheetContent side="right" showCloseButton={false} className="w-full max-w-none! border-l-0 lg:hidden">
-          <div className="flex shrink-0 items-center justify-between px-margin pt-8 pb-6">
-            <SheetTitle className="type-h3 font-normal text-primary">Filters</SheetTitle>
-            <button type="button" onClick={() => setDrawerOpen(false)} aria-label="Close" className="flex size-8 cursor-pointer items-center justify-center text-primary">
-              <XIcon className="size-6" weight="light" />
-            </button>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-margin pb-6">
-            <div className="flex flex-col gap-3 border-b border-muted pb-5">
-              <p className="type-label-s text-muted-foreground">Sort By</p>
-              <SortMenu value={sort} onChange={(s) => { setSort(s); setPage(1) }} />
-            </div>
-            {panel}
-          </div>
-          <div className="shrink-0 border-t border-border-subtle px-margin py-4">
-            <Button className="w-full" onClick={() => setDrawerOpen(false)}>
-              View {results.length.toLocaleString("en-US")} Items
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
+    <div data-variant={variant.id}>
+      <DiamondGlpView
+        listing={listing}
+        catalog={catalog}
+        stepper={<DyoStepper current={2} mobileLabel="Stone" showTotal={false} mobileTone="plp" contained />}
+        tileTitle={(d) => {
+          const s = byId.get(d.id)
+          return s ? stoneTitle(s) : d.id
+        }}
+        onOpen={(d) => setQuickview(byId.get(d.id) ?? null)}
+      />
+      {/* The GLP's Quickview: selecting moves on to finishing touches; the full details page is Test 3. */}
+      <DiamondQuickview
+        diamond={quickview && toQuickviewDiamond(quickview)}
+        title={quickview ? stoneTitle(quickview) : undefined}
+        noun={kind}
+        certificate={type === "gemstone" ? null : undefined}
+        onOpenChange={(open) => !open && setQuickview(null)}
+        onSelect={() => {
+          setQuickview(null)
+          notInTest("Finishing touches (step 3)")
+        }}
+        onViewDetails={() => notInTest("Stone details")}
+      />
     </div>
   )
 }

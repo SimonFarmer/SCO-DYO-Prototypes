@@ -5,7 +5,10 @@ import { Badge } from "@/components/ui/badge"
 import { FINISHING_GALLERY, REVIEW_GALLERY } from "@/data/dyo"
 import type { GalleryMedia } from "@/data/products"
 import { useIsDesktop } from "@/lib/hooks"
-import { formatSize, gemById, previewImage, sizeScale, stoneShape, stoneType, type StoneTypeId } from "@/data/stones"
+import { formatSize, gemById, previewImage, sizeScale, stonePhotos, stoneShape, stoneType, type StoneTypeId } from "@/data/stones"
+
+/** Shane Co.'s gemstone size guide (shaneco.com loose gemstone pages). */
+const GEM_SIZE_GUIDE = "/images/stones/gemstone/size-guide.jpg"
 
 /** How the stone step shows its media. */
 export type StoneGalleryMode =
@@ -16,9 +19,9 @@ export type StoneGalleryMode =
 
 /**
  * Stone step gallery. The first image is Shane Co.'s own render of this ring with the chosen stone, shape
- * and size (shaneco.com "Preview with Shape / Gemstone / Size"); diamonds then show the 360 view, close-up,
- * size guide and the two proportion diagrams (Figma 7685:412972), and gemstones the setting photos and two
- * size comparisons. In "preview" mode those extra images are kept but not shown.
+ * and size (shaneco.com "Preview with Shape / Gemstone / Size"). Then, as on Shane Co.'s loose stone pages,
+ * a 360° view and a face-up photo of a stone of that shape (and gem), and the size guide; diamonds also
+ * show the two proportion diagrams (Figma 7685:412972). In "preview" mode only the ring is shown.
  */
 export function StoneStepGallery({
   type,
@@ -49,40 +52,31 @@ export function StoneStepGallery({
       src: previewImage(type, shape, size, gem),
       alt: `Timeless Solitaire ring previewed with a ${shown} ${stoneShape(shape).label.toLowerCase()} ${what.toLowerCase()}`,
     }
+    // The chosen stone: the first frame of its 360° spin and its face-up photo, labelled with it.
+    const shapeName = stoneShape(shape).label
+    const label = `${type === "gemstone" ? `${what} · ` : ""}${shapeName} · ${shown}`
+    const noun = `${shown} ${shapeName.toLowerCase()} ${what.toLowerCase()}`
+    const photos = stonePhotos(type, shape, gem)
+    const stone: GalleryMedia[] = photos
+      ? [
+          { kind: "video", src: photos.spin, alt: `360° view of the ${noun}`, badge: label },
+          { kind: "image", src: photos.faceUp, alt: `The ${noun}, face up`, badge: label },
+        ]
+      : []
     if (type === "gemstone") {
-      // The diamond photography and diagrams don't apply, and Shane Co. renders only this one view of a gem,
-      // so gemstones get the setting photos (labelled as shown with a diamond) and the same gem one size
-      // either side, as a size comparison. A long gallery also lets the buy form stick, as it does for diamonds.
-      const [front, top] = [REVIEW_GALLERY[0], REVIEW_GALLERY[6]]
-      const below = size - 1 >= scale.min ? size - 1 : size + 2
-      const above = size + 1 <= scale.max ? size + 1 : size - 2
-      const compare = [below, above]
-        .sort((x, y) => x - y)
-        .map<GalleryMedia>((v) => ({
-          kind: "image",
-          src: previewImage(type, shape, v, gem),
-          alt: `The ring with a ${formatSize(v, scale.unit)} ${stoneShape(shape).label.toLowerCase()} ${what.toLowerCase()}, for size comparison`,
-          badge: `${formatSize(v, scale.unit)} for comparison`,
-        }))
-      return [
-        hero,
-        { kind: "image", src: front.src, alt: "Timeless Solitaire setting, front view", badge: "Shown with round diamond" },
-        { kind: "image", src: top.src, alt: "Timeless Solitaire setting, top view", badge: "Shown with round diamond" },
-        ...compare,
-      ]
+      // Shane Co. shows one gemstone size guide (sapphires, 6×4 mm to 10×8 mm) on every gemstone.
+      return [hero, ...stone, { kind: "size-guide", src: GEM_SIZE_GUIDE, alt: "Gemstone size guide on the hand, 6×4 mm to 10×8 mm" }]
     }
-    const [video, diamondTop, , sizeGuide] = FINISHING_GALLERY.tiles
+    // Diamonds: the carat size guide and the two proportion diagrams (examples for now).
+    const sizeGuide = FINISHING_GALLERY.tiles[3]
     return [
       hero,
-      // The 360 still already carries its play button.
-      // The 360 view and close-up are of the chosen diamond, so they're labelled with it ("Round · 1.25 ct").
-      { kind: "image", src: video.src, alt: `360° view of the ${shown} ${stoneShape(shape).label.toLowerCase()} diamond`, badge: `${stoneShape(shape).label} · ${shown}` },
-      { kind: "image", src: diamondTop.src, alt: `${shown} ${stoneShape(shape).label.toLowerCase()} diamond, top view`, badge: `${stoneShape(shape).label} · ${shown}` },
-      { kind: "image", src: sizeGuide.src, alt: sizeGuide.alt },
+      ...stone,
+      { kind: "size-guide", src: sizeGuide.src, alt: sizeGuide.alt },
       { kind: "image", src: REVIEW_GALLERY[4].src, alt: REVIEW_GALLERY[4].alt },
       { kind: "image", src: REVIEW_GALLERY[5].src, alt: REVIEW_GALLERY[5].alt },
     ]
-  }, [type, shape, size, gem, shown, what, scale.min, scale.max, scale.unit])
+  }, [type, shape, size, gem, shown, what])
 
   // Warm every size of the current stone and shape so dragging the size handle swaps the hero without a blank frame.
   useEffect(() => {
