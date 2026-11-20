@@ -9,6 +9,8 @@ import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { DiamondCard } from "@/components/stones/diamond-card"
+import { StoneTileSkeleton, TileLoading } from "@/components/shared/tile-skeletons"
+import { useFilterLoading } from "@/lib/use-filter-loading"
 import { DiamondFilterPanel, type PresetId } from "@/components/stones/diamond-filters"
 import { Button } from "@/components/ui/button"
 import {
@@ -229,6 +231,8 @@ export function Test2DiamondsPlp() {
     setFilters({ ...emptyStoneFilters(type), shapes: filters.shapes })
   }
 
+  // Any filter or sort change shows skeleton tiles for a second, as if the grid were refreshing.
+  const loading = useFilterLoading(JSON.stringify([filters, sort]))
   const results = useMemo(() => filterStones(filters).sort(SORTERS[sort]), [filters, sort])
   const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE))
   const current = Math.min(page, pageCount)
@@ -339,7 +343,7 @@ export function Test2DiamondsPlp() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-10">
-                  <ul className={cn("grid grid-cols-2 gap-x-card-gap gap-y-4", sidebarOpen ? "lg:grid-cols-3" : "lg:grid-cols-4")}>
+                  <ul aria-busy={loading} className={cn("grid grid-cols-2 gap-x-card-gap gap-y-4", sidebarOpen ? "lg:grid-cols-3" : "lg:grid-cols-4")}>
                     {pageItems.map((s, i) => (
                       <Fragment key={s.id}>
                         {current === 1 && i === (sidebarOpen ? 3 : 4) && pageItems.length > i && (
@@ -348,7 +352,9 @@ export function Test2DiamondsPlp() {
                           </li>
                         )}
                         <li className="min-w-0">
-                          <DiamondCard stone={s} />
+                          <TileLoading loading={loading} skeleton={<StoneTileSkeleton />}>
+                            <DiamondCard stone={s} />
+                          </TileLoading>
                         </li>
                       </Fragment>
                     ))}

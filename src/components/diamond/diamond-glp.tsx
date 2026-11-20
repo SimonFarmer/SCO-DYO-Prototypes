@@ -12,6 +12,8 @@ import {
   SeoIntroBlock,
 } from "@/components/diamond/glp-content-blocks"
 import { StoneTile } from "@/components/diamond/stone-tile"
+import { StoneTileSkeleton, TileLoading } from "@/components/shared/tile-skeletons"
+import { useFilterLoading } from "@/lib/use-filter-loading"
 import { DyoStepper, type DyoStart } from "@/components/dyo/dyo-stepper"
 import { Pagination } from "@/components/plp/product-grid"
 import { ProductCarousel } from "@/components/shared/product-carousel"
@@ -83,6 +85,8 @@ export function DiamondGlp({
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const { pageItems, page, pageCount, results } = listing
+  // Any filter or sort change shows skeleton tiles for a second, as if the grid were refreshing.
+  const loading = useFilterLoading(JSON.stringify([listing.filters, listing.sort]))
   const cols = sidebarOpen ? 3 : 4
 
   useEffect(() => {
@@ -113,7 +117,7 @@ export function DiamondGlp({
             )}
             <div className="flex min-w-0 flex-1 flex-col gap-10">
               {results.length > 0 ? (
-                <ul className={cn("grid grid-flow-row-dense grid-cols-2 gap-x-card-gap gap-y-6 lg:gap-y-8", cols === 3 ? "lg:grid-cols-3" : "lg:grid-cols-4")}>
+                <ul aria-busy={loading} className={cn("grid grid-flow-row-dense grid-cols-2 gap-x-card-gap gap-y-6 lg:gap-y-8", cols === 3 ? "lg:grid-cols-3" : "lg:grid-cols-4")}>
                   {pageItems.map((d, i) => (
                     <Fragment key={d.id}>
                       {/* Banner after the first desktop row; on mobile, dense flow pulls the next tile up beside it. */}
@@ -123,7 +127,9 @@ export function DiamondGlp({
                         </li>
                       )}
                       <li className="min-w-0">
-                        <StoneTile diamond={d} onOpen={onOpen} />
+                        <TileLoading loading={loading} skeleton={<StoneTileSkeleton />}>
+                          <StoneTile diamond={d} onOpen={onOpen} />
+                        </TileLoading>
                       </li>
                     </Fragment>
                   ))}
