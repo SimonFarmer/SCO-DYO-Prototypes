@@ -1,5 +1,6 @@
 import { Link } from "react-router"
 import { useRingBuild } from "@/state/ring-build"
+import { SETTING_PDP_VARIANTS } from "./test-1/variants"
 
 const PROTOTYPES = [
   {
@@ -17,9 +18,11 @@ const PROTOTYPES = [
   {
     test: "Test 1 · Settings PDP Gallery & Details",
     links: [
-      { label: "Variant A: long-scroll gallery, details drawer", to: "/test-1/a" },
-      { label: "Variant B: long-scroll gallery, 2-line teaser + drawer", to: "/test-1/b" },
-      { label: "Variant C: thumbnail gallery, details tabs below the CTA", to: "/test-1/c" },
+      // 2 galleries × 3 details placements, listed gallery by gallery (A, B, C keep their launch URLs).
+      ...(["A", "B", "D", "E", "F", "C"] as const).map((id) => ({
+        label: `Variant ${id}: ${SETTING_PDP_VARIANTS[id].name}`,
+        to: `/test-1/${id.toLowerCase()}`,
+      })),
     ],
   },
   {

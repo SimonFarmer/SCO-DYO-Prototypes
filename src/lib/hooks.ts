@@ -56,3 +56,19 @@ export function useScrollOverflow(ref: RefObject<HTMLElement | null>) {
   }, [ref, update])
   return state
 }
+
+/**
+ * Height of an element, kept current with a ResizeObserver. Used by sticky columns that can be taller
+ * than the screen, so they can stick by their bottom edge instead of their top.
+ */
+export function useElementHeight(ref: RefObject<HTMLElement | null>) {
+  const [height, setHeight] = useState(0)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setHeight(el.offsetHeight))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [ref])
+  return height
+}

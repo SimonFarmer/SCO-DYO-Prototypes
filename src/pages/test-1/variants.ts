@@ -2,65 +2,62 @@
  * Test 1 — Settings PDP Gallery & Details (unmoderated).
  * Test plan: https://osfdigital.atlassian.net/wiki/spaces/SCO/pages/7887650819
  *
- * Each variant is a fixed combination of the dimensions under test. Products, prices and
- * data are identical across variants; only the presentation changes.
- * Open a variant with `/test-1/a` (b, c), or `/test-1?variant=A`. Unknown or missing → A (via `useVariant`).
+ * Full factorial: 2 galleries × 3 ways to reach the product details = 6 variants.
+ *
+ *                       | Link → drawer | 2-line teaser → drawer | Link → tabs below the CTA
+ *   Long-scroll gallery |       A       |           B            |            D
+ *   Thumbnail gallery   |       E       |           F            |            C
+ *
+ * A, B and C keep the URLs they launched with; D, E and F fill the remaining cells.
+ * Products, prices and data are identical across variants; only these two dimensions change.
+ * Open a variant with `/test-1/a` … `/test-1/f`, or `/test-1?variant=A`. Unknown or missing → A (via `useVariant`).
  */
 
 export type GalleryMode = "long-scroll" | "thumbnails"
-export type DetailsMode = "drawer" | "inline-tabs"
+export type DetailsMode = "drawer" | "teaser-drawer" | "inline-tabs"
 
 export interface SettingPdpVariant {
-  id: "A" | "B" | "C"
+  id: "A" | "B" | "C" | "D" | "E" | "F"
   /** Short name used in the prototype index */
   name: string
   /** What the researcher needs to know about this variant */
   summary: string
-  /** Figma frame this variant is built from */
+  /** Figma frames this variant is built from (gallery frame, details frame) */
   figma: string
   gallery: GalleryMode
   details: DetailsMode
-  /** Two-line description teaser above the details link (B) */
-  teaser: boolean
-  /** "Complete the Look" matching-set block in the buy form (C) */
-  completeTheLook: boolean
 }
 
 const FIGMA = "https://www.figma.com/design/Q4Wp6ls6O4nBvicBjbosQI/SCO-Drop-3b---Customizer?node-id="
 
+/** Wording for each dimension, shared by the variant names and summaries. */
+export const GALLERY_LABEL: Record<GalleryMode, string> = {
+  "long-scroll": "Long-scroll gallery",
+  thumbnails: "Thumbnail gallery",
+}
+export const DETAILS_LABEL: Record<DetailsMode, string> = {
+  drawer: "details link → drawer",
+  "teaser-drawer": "2-line teaser + details link → drawer",
+  "inline-tabs": "details link → tabs below the CTA",
+}
+
+const variant = (id: SettingPdpVariant["id"], gallery: GalleryMode, details: DetailsMode, figma: string): SettingPdpVariant => ({
+  id,
+  name: `${GALLERY_LABEL[gallery]} · ${DETAILS_LABEL[details]}`,
+  summary: `${GALLERY_LABEL[gallery]}; product details via ${DETAILS_LABEL[details]}.`,
+  figma: `${FIGMA}${figma}`,
+  gallery,
+  details,
+})
+
 export const SETTING_PDP_VARIANTS: Record<SettingPdpVariant["id"], SettingPdpVariant> = {
-  A: {
-    id: "A",
-    name: "Drawer only (control)",
-    summary: "Long-scroll gallery. “View product details” opens the details drawer.",
-    figma: `${FIGMA}7342-118090`,
-    gallery: "long-scroll",
-    details: "drawer",
-    teaser: false,
-    completeTheLook: false,
-  },
-  B: {
-    id: "B",
-    name: "Teaser + drawer",
-    summary: "Long-scroll gallery. 2-line description teaser; “View full product details” opens the drawer.",
-    figma: `${FIGMA}7342-118191`,
-    gallery: "long-scroll",
-    details: "drawer",
-    teaser: true,
-    completeTheLook: false,
-  },
-  C: {
-    id: "C",
-    name: "Thumbnails + tabs below the CTA",
-    summary:
-      "Single image with thumbnails. Overview / Specifications tabs sit in the buy form; “View product details” scrolls to them.",
-    figma: `${FIGMA}7342-118091`,
-    gallery: "thumbnails",
-    details: "inline-tabs",
-    teaser: false,
-    completeTheLook: true,
-  },
+  A: variant("A", "long-scroll", "drawer", "7342-118090"),
+  B: variant("B", "long-scroll", "teaser-drawer", "7342-118191"),
+  C: variant("C", "thumbnails", "inline-tabs", "7342-118091"),
+  D: variant("D", "long-scroll", "inline-tabs", "7342-118090"),
+  E: variant("E", "thumbnails", "drawer", "7342-118091"),
+  F: variant("F", "thumbnails", "teaser-drawer", "7342-118091"),
 }
 
 /** Allowed ?variant= values, first one is the default. */
-export const VARIANT_IDS = ["A", "B", "C"] as const
+export const VARIANT_IDS = ["A", "B", "C", "D", "E", "F"] as const
