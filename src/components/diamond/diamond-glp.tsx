@@ -1,9 +1,10 @@
-import { Fragment, useEffect, useState } from "react"
+import { Fragment, useEffect, useState, type ReactNode } from "react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { DiamondFilters } from "@/components/diamond/diamond-filters"
 import { GlpDesktopBar, GlpMobileBar, GlpMobileFilterDrawer } from "@/components/diamond/glp-filter-bar"
+import { GlpCatalogProvider, NATURAL_GLP, type GlpCatalog } from "@/components/diamond/glp-catalog"
 import { GlpHero } from "@/components/diamond/glp-hero"
-import { useDiamondListing } from "@/components/diamond/use-diamond-listing"
+import { useDiamondListing, type DiamondListing } from "@/components/diamond/use-diamond-listing"
 import {
   FaqBlock,
   NeedHelpBlock,
@@ -80,25 +81,57 @@ export function DiamondGlp({
     setFilters({ ...NO_FILTERS, shapes: [entryShape] })
     onEntryApplied?.()
   }, [entryShape, setFilters, onEntryApplied])
+  return (
+    <DiamondGlpView
+      listing={listing}
+      onOpen={onOpen}
+      shopInTest={shopInTest}
+      stepper={<DyoStepper current={start === "stone" ? 1 : 2} start={start} showTotal={start !== "stone"} mobileTone="plp" contained />}
+    />
+  )
+}
+
+/**
+ * The GLP page itself, over any listing: the GLP prototype and Test 3 list Test 3's natural diamonds;
+ * Test 2's PLP passes its own listing and catalogue (natural, lab-grown or gemstones, preset from the
+ * shopper's preferences), its stepper, and tile titles.
+ */
+export function DiamondGlpView({
+  listing,
+  onOpen,
+  shopInTest = true,
+  stepper,
+  catalog = NATURAL_GLP,
+  tileTitle,
+}: {
+  listing: DiamondListing
+  onOpen: (d: Diamond) => void
+  shopInTest?: boolean
+  stepper: ReactNode
+  catalog?: GlpCatalog
+  tileTitle?: (d: Diamond) => string
+}) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const { pageItems, page, pageCount, results } = listing
   const cols = sidebarOpen ? 3 : 4
+  const title = catalog.hero.title
 
   useEffect(() => {
     const previous = document.title
-    document.title = "Natural Diamonds | Shane Co."
+    document.title = `${title} | Shane Co.`
     return () => {
       document.title = previous
     }
-  }, [])
+  }, [title])
 
   return (
+    <GlpCatalogProvider value={catalog}>
     <div className="min-h-svh bg-background">
       <SiteHeader navigation contained />
       <main>
         <GlpHero listing={listing} />
-        <DyoStepper current={start === "stone" ? 1 : 2} start={start} showTotal={start !== "stone"} mobileTone="plp" contained />
+        {stepper}
 
         {/* Results capped at 1680px (PAGE_MAX, as the Test 2 PLP). */}
         <div id={RESULTS_ID} className={cn("scroll-mt-(--header-offset)", PAGE_MAX)}>
@@ -117,22 +150,22 @@ export function DiamondGlp({
                   {pageItems.map((d, i) => (
                     <Fragment key={d.id}>
                       {/* Banner after the first desktop row; on mobile, dense flow pulls the next tile up beside it. */}
-                      {page === 1 && i === cols && (
+                      {catalog.banner && page === 1 && i === cols && (
                         <li className="col-span-full">
                           <FourCsBanner />
                         </li>
                       )}
                       <li className="min-w-0">
-                        <StoneTile diamond={d} onOpen={onOpen} />
+                        <StoneTile diamond={d} onOpen={onOpen} title={tileTitle?.(d)} />
                       </li>
                     </Fragment>
                   ))}
                 </ul>
               ) : (
                 <div className="flex flex-col items-center gap-4 border border-border-subtle px-6 py-12 text-center">
-                  <p className="type-h4 text-primary">No matching diamonds</p>
+                  <p className="type-h4 text-primary">No matching {catalog.hero.type.value === "gemstone" ? "gemstones" : "diamonds"}</p>
                   <p className="max-w-md text-sm leading-5 text-muted-foreground">
-                    No diamonds match all of these filters. Widen the price or carat range, or clear your filters to see more.
+                    No {catalog.hero.type.value === "gemstone" ? "gemstones" : "diamonds"} match all of these filters. Widen the price or {catalog.size.label.toLowerCase()} range, or clear your filters to see more.
                   </p>
                   <Button variant="outline" onClick={listing.clearAll}>
                     Clear All Filters
@@ -166,5 +199,6 @@ export function DiamondGlp({
       <MobileBottomNav shopInTest={shopInTest} />
       <GlpMobileFilterDrawer listing={listing} open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </div>
+    </GlpCatalogProvider>
   )
 }

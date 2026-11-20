@@ -1,5 +1,6 @@
 import { SETTING } from "@/data/dyo"
 import { DIAMOND_STOCK } from "@/data/diamond-stock"
+import { stonePhoto, type ClarityGrade, type ColorGrade, type CutGrade, type Diamond, type Shape } from "@/data/diamonds"
 import { GEM_PHOTOS } from "@/data/stone-photos"
 import { ringRender } from "@/data/stone-renders"
 
@@ -384,10 +385,65 @@ export function stonePhotos(type: StoneTypeId, shape: string, gem?: string): { f
  * Product image: the face-up photo of a stone of this shape (and gem). A gemstone shape with no photo
  * shows Shane Co.'s render of it on the ring (`render`, cropped in on the stone).
  */
-export function stoneImage(s: Pick<LooseStone, "type" | "shape" | "gem" | "size">) {
+export function stoneImage(s: Pick<LooseStone, "type" | "shape" | "gem" | "size"> & { id?: string }) {
+  // Diamonds: one of Shane Co.'s 12 face-up photos of that shape (as the Diamond GLP), picked by the stone.
+  if (s.type !== "gemstone" && s.id) return { src: stonePhoto(stoneShape(s.shape).label as Shape, idHash(s.id)), photo: true, render: false }
   const photos = stonePhotos(s.type, s.shape, s.gem)
   if (photos) return { src: photos.faceUp, photo: true, render: false }
   return { src: previewImage(s.type, s.shape, s.size, s.gem, 600), photo: true, render: true }
+}
+
+/** Stable non-negative hash of a stone id (photo choice, derived specs). */
+function idHash(id: string) {
+  let h = 0
+  for (const ch of id) h = (Math.imul(h, 31) + ch.charCodeAt(0)) | 0
+  return h >>> 0
+}
+
+/** Typical face-up length-to-width ratio per shape (for the Quickview's measurements). */
+const LW_RATIO: Record<string, number> = {
+  round: 1, oval: 1.4, pear: 1.6, emerald: 1.4, princess: 1, cushion: 1.05, heart: 1, asscher: 1, marquise: 2, radiant: 1.25,
+}
+
+/**
+ * A recommended stone (diamond or gemstone) in the shape the shared Diamond Quickview takes (Test 3's model),
+ * so Test 2 opens the same panel as the Diamond GLP. Gemstone grades ("Rich", "Eye Clean") are shown as they
+ * are. Proportions, measurements and the serial aren't in the catalogue, so they're derived from the stone
+ * (the same on every visit).
+ */
+export function toQuickviewDiamond(s: LooseStone): Diamond {
+  let d = asDiamond.get(s)
+  if (!d) asDiamond.set(s, (d = convert(s)))
+  return d
+}
+
+const asDiamond = new WeakMap<LooseStone, Diamond>()
+
+function convert(s: LooseStone): Diamond {
+  const specs = stoneSpecs(s)
+  const r = rng(idHash(s.id))
+  const ratio = LW_RATIO[s.shape] ?? 1
+  // Gemstones are sized in millimetres (the length); diamonds' face-up area grows with weight (≈ 6.5 mm at 1 ct).
+  const width = s.type === "gemstone" ? s.size / ratio : (6.5 * Math.cbrt(s.carat)) / Math.sqrt(ratio)
+  return {
+    id: s.id,
+    serial: String(2200000000 + Math.floor(r() * 99999999)),
+    shape: stoneShape(s.shape).label as Shape,
+    carat: s.carat,
+    cut: specs.cut as CutGrade,
+    color: specs.color as ColorGrade,
+    clarity: specs.clarity as ClarityGrade,
+    price: s.price,
+    table: Math.round(54 + r() * 8),
+    depth: Math.round((59 + r() * 5) * 10) / 10,
+    girdle: ["Thin to Medium", "Medium", "Medium to Slightly Thick"][Math.floor(r() * 3)],
+    culet: "None",
+    lengthMm: Math.round(width * ratio * 100) / 100,
+    widthMm: Math.round(width * 100) / 100,
+    lwRatio: ratio,
+    image: stoneImage(s).src,
+    instore: r() < 0.2,
+  }
 }
 
 // ---------------------------------------------------------------------------------------------

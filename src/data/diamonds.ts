@@ -47,7 +47,7 @@ const STONE_PHOTOS: Record<Shape, string[]> = {
   Radiant: ["25H12A0", "25H12A1", "25I030D", "26B0VGJ", "26D0E81", "26E12RM", "26F0879", "26F0KNB", "26F0KND", "26F0L76", "26F0L78", "26F0L7G"],
 }
 
-const stonePhoto = (shape: Shape, n: number) => {
+export const stonePhoto = (shape: Shape, n: number) => {
   const pool = STONE_PHOTOS[shape]
   return `/images/diamonds/stones/${pool[n % pool.length]}.jpg`
 }
