@@ -6,7 +6,6 @@ import { SiteHeader } from "@/components/site/site-header"
 import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { formatPrice } from "@/lib/format"
-import { CompleteTheLook } from "@/components/pdp/complete-the-look"
 import {
   FeatureBlock,
   ProductDetailsBlock,
@@ -31,16 +30,13 @@ import {
   galleryFor,
   type MetalId,
 } from "@/data/products"
-import { useVariant } from "@/lib/hooks"
+import { useElementHeight, useVariant } from "@/lib/hooks"
 import { cn, PAGE_MAX } from "@/lib/utils"
 import { SETTING_PDP_VARIANTS, VARIANT_IDS } from "./variants"
 
-/** Matching set shown in variant C — same bands as the recommender, without merchandising badges (Figma). */
-const COMPLETE_THE_LOOK = MATCHING_BANDS.slice(0, 3).map((p) => ({ ...p, badge: undefined }))
-
 /**
- * Test 1 · Settings PDP Gallery & Details (DYO step 1). Participant URLs: /test-1/a, /test-1/b, /test-1/c.
- * The variant only changes the gallery and how product details are reached; see ./variants.ts.
+ * Test 1 · Settings PDP Gallery & Details (DYO step 1). Participant URLs: /test-1/a … /test-1/f.
+ * The variant only changes the gallery and how product details are reached (2 × 3); see ./variants.ts.
  */
 export function Test1() {
   const variant = SETTING_PDP_VARIANTS[useVariant(VARIANT_IDS)]
@@ -52,6 +48,8 @@ export function Test1() {
   const inlineDetailsRef = useRef<HTMLDivElement>(null)
   const ctaRef = useRef<HTMLDivElement>(null)
   const productDetailsRef = useRef<HTMLElement>(null)
+  const buyFormRef = useRef<HTMLDivElement>(null)
+  const buyFormHeight = useElementHeight(buyFormRef)
   const notInTest = useNotInTest()
   const price = (setting.variants.find((v) => v.metal === metal) ?? setting.variants[0]).price
   const { carat } = setting.previewStone
@@ -72,8 +70,25 @@ export function Test1() {
 
   const viewDetails = () => {
     setDetailsTab("overview")
-    if (variant.details === "drawer") setDetailsOpen(true)
-    else inlineDetailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    if (variant.details !== "inline-tabs") setDetailsOpen(true)
+    else scrollToInlineDetails()
+  }
+
+  // Glide to the tabs below the CTA. Measured in normal flow: when the long-scroll buy form is stuck,
+  // the browser's scrollIntoView reads its shifted position and stops short. The form then sticks with
+  // the tabs in view. Leaves room for the sticky header and mobile stepper bar: the header ignores
+  // scrolling right after a click, so it may still be showing when the scroll ends.
+  const scrollToInlineDetails = () => {
+    const tabs = inlineDetailsRef.current
+    const form = buyFormRef.current
+    const aside = form?.parentElement
+    if (!tabs || !form || !aside) return
+    const formTop = aside.getBoundingClientRect().top + window.scrollY + parseFloat(getComputedStyle(aside).paddingTop)
+    const offsetInForm = tabs.getBoundingClientRect().top - form.getBoundingClientRect().top
+    const bar = document.querySelector<HTMLElement>('[data-slot="stepper-bar"]')
+    const gap = parseFloat(getComputedStyle(tabs).scrollMarginTop) || 0
+    const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-offset")) || 0
+    window.scrollTo({ top: formTop + offsetInForm - header - (bar?.offsetHeight ?? 0) - gap, behavior: "smooth" })
   }
 
   return (
@@ -117,15 +132,27 @@ export function Test1() {
             />
           )}
           <aside className="px-margin pt-8 pb-8 lg:px-14 lg:pt-5">
-            <div className={cn(!isThumbnails && "transition-[top] duration-300 ease-out lg:sticky lg:top-[calc(var(--header-offset)+var(--sticky-bar-offset,0px)+--spacing(5))]")}>
+            {/* Long-scroll: the buy form is sticky beside the gallery. When it's taller than the screen (always
+                with the tabs below the CTA), it scrolls with the page until its bottom is in view and then
+                sticks there, so every part of it stays reachable. */}
+            <div
+              ref={buyFormRef}
+              className={cn(!isThumbnails && "transition-[top] duration-300 ease-out lg:sticky")}
+              style={
+                isThumbnails
+                  ? undefined
+                  : {
+                      top: `min(calc(var(--header-offset) + var(--sticky-bar-offset, 0px) + var(--spacing) * 5), calc(100vh - ${buyFormHeight}px - var(--spacing) * 8))`,
+                    }
+              }
+            >
               <SettingBuyForm
                 setting={setting}
                 metal={metal}
                 onMetalChange={setMetal}
                 onViewDetails={viewDetails}
                 ctaRef={ctaRef}
-                teaser={variant.teaser}
-                afterActions={variant.completeTheLook ? <CompleteTheLook products={COMPLETE_THE_LOOK} /> : null}
+                teaser={variant.details === "teaser-drawer"}
                 beforeDelivery={
                   variant.details === "inline-tabs" ? (
                     <InlineProductDetails
@@ -171,7 +198,7 @@ export function Test1() {
         }}
       />
 
-      {variant.details === "drawer" && (
+      {variant.details !== "inline-tabs" && (
         <ProductInfoDrawer
           setting={setting}
           metal={metal}
