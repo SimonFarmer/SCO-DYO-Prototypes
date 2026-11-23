@@ -165,7 +165,7 @@ export function RingSummary({
             price={setting.price}
             actions={!readOnly && (
               <>
-                <SummaryLink onClick={() => (flow ? flow.goToStep(1, "edit") : notInTest("Editing the setting"))}>Edit Setting</SummaryLink>
+                <SummaryLink onClick={() => (flow ? flow.goToStep("setting", "edit") : notInTest("Editing the setting"))}>Edit Setting</SummaryLink>
                 {onEditRingSize && <SummaryLink onClick={onEditRingSize}>Edit Ring Size</SummaryLink>}
               </>
             )}
@@ -179,7 +179,7 @@ export function RingSummary({
             eyebrow="Stone"
             title={stone.title}
             price={stone.price}
-            actions={!readOnly && <SummaryLink onClick={() => (flow ? flow.goToStep(2, "edit") : notInTest("Editing the stone"))}>Edit Stone</SummaryLink>}
+            actions={!readOnly && <SummaryLink onClick={() => (flow ? flow.goToStep("stone", "edit") : notInTest("Editing the stone"))}>Edit Stone</SummaryLink>}
           >
             <SpecRows
               rows={[

@@ -4,33 +4,19 @@ import { useNotInTest } from "@/components/prototype/not-in-test"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
-import { CLARITY_GRADES, COLOR_GRADES, CUT_GRADES, shapeIcon, type CutGrade, type Shape } from "@/data/diamonds"
-import {
-  CARAT_BOUNDS,
-  NO_FILTERS,
-  PRESETS,
-  PRICE_BOUNDS,
-  appliedFilters,
-  type DiamondFilterState,
-  type Preset,
-} from "@/lib/diamond-filters"
+import { useGlpCatalog } from "@/components/diamond/glp-catalog"
+import { shapeIcon, type CutGrade, type Shape } from "@/data/diamonds"
+import { PRESETS, type DiamondFilterState, type Preset } from "@/lib/diamond-filters"
 import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 const SIDEBAR_SHAPES: Shape[] = ["Round", "Oval", "Marquise", "Heart", "Princess", "Pear", "Asscher", "Cushion", "Emerald", "Radiant"]
 
-export const CUT_HINT: Record<CutGrade, string> = {
-  "Shane Classic": "Maximum sparkle and brilliance",
-  Excellent: "Magnificent sparkle and light return",
-  "Very Good": "Exceptional sparkle at a great value",
-  Good: "Balanced sparkle and value",
-  Fair: "Some sparkle with visible dark areas",
-  Poor: "Limited sparkle and brilliance",
-}
+export { CUT_HINT } from "@/components/diamond/glp-catalog"
 
 /* ───────────────────────── Building blocks ───────────────────────── */
 
-function FilterSection({
+export function FilterSection({
   title,
   defaultOpen = true,
   children,
@@ -246,10 +232,14 @@ export function GradeSlider({
 
 /* ───────────────────────── Sidebar ───────────────────────── */
 
-/** “Diamond Filters” sidebar (Figma 7218:221364). Every control filters the grid. */
+/**
+ * “Diamond Filters” sidebar (Figma 7218:221364). Every control filters the grid. Bounds, grades and wording
+ * come from the GLP catalogue (natural diamonds unless a page, such as Test 2's PLP, supplies its own).
+ */
 export function DiamondFilters({ value, onChange }: { value: DiamondFilterState; onChange: (f: DiamondFilterState) => void }) {
+  const catalog = useGlpCatalog()
   const set = (patch: Partial<DiamondFilterState>) => onChange({ ...value, ...patch })
-  const chips = appliedFilters(value)
+  const chips = catalog.chips(value)
   return (
     <div className="flex flex-col">
       {chips.length > 0 && (
@@ -265,17 +255,17 @@ export function DiamondFilters({ value, onChange }: { value: DiamondFilterState;
               <XIcon className="size-4" />
             </button>
           ))}
-          <Button variant="link" className="h-6 px-3" onClick={() => onChange(NO_FILTERS)}>
+          <Button variant="link" className="h-6 px-3" onClick={() => onChange({ ...catalog.noFilters, instore: value.instore })}>
             Clear Filter(s)
           </Button>
         </div>
       )}
 
-      <FilterSection title="Diamond Price">
+      <FilterSection title={catalog.priceLabel}>
         <RangeFields
-          label="Diamond price"
+          label={catalog.priceLabel}
           value={value.price}
-          bounds={PRICE_BOUNDS}
+          bounds={catalog.priceBounds}
           step={50}
           curve={2.6}
           format={formatPrice}
@@ -305,21 +295,21 @@ export function DiamondFilters({ value, onChange }: { value: DiamondFilterState;
         </div>
       </FilterSection>
 
-      <FilterSection
-        title="Carat"
-        info="Carat measures a diamond’s weight. While larger carat sizes often appear more impressive, a diamond’s cut and proportions also influence how large it looks."
-      >
+      {catalog.extraFilters?.(value, onChange)}
+
+      <FilterSection title={catalog.size.label} info={catalog.size.info}>
         <RangeFields
-          label="Carat"
+          label={catalog.size.label}
           value={value.carat}
-          bounds={CARAT_BOUNDS}
-          step={0.01}
-          format={(n) => `${n.toFixed(2)} ct`}
+          bounds={catalog.size.bounds}
+          step={catalog.size.step}
+          format={catalog.size.format}
           parse={(s) => Number(s.replace(/[^\d.]/g, ""))}
           onChange={(carat) => set({ carat })}
         />
       </FilterSection>
 
+      {catalog.presets && (
       <div className="flex flex-col gap-3 border-b border-muted pt-3 pb-5">
         <p className="pt-2 type-label-s font-semibold text-muted-foreground">What matters most?</p>
         <p className="text-xs tracking-[0.12px] text-muted-foreground">Pick a priority and we’ll set Cut, Color and Clarity below for you.</p>
@@ -349,10 +339,11 @@ export function DiamondFilters({ value, onChange }: { value: DiamondFilterState;
         </div>
         {value.preset && <p className="bg-bg-input-50 p-3 text-xs text-muted-foreground">{PRESETS[value.preset].explain}</p>}
       </div>
+      )}
 
-      <FilterSection title="Cut" info="Cut determines how brilliantly a diamond reflects light, creating its sparkle and fire.">
+      <FilterSection title="Cut" info={catalog.info.cut}>
         <div className="flex flex-col gap-2">
-          {[...CUT_GRADES].reverse().map((cut) => {
+          {([...catalog.grades.cut].reverse() as CutGrade[]).map((cut) => {
             const id = `cut-${cut.replace(" ", "-").toLowerCase()}`
             return (
               <label key={cut} htmlFor={id} className="flex cursor-pointer items-start gap-3 py-1">
@@ -363,7 +354,7 @@ export function DiamondFilters({ value, onChange }: { value: DiamondFilterState;
                 />
                 <span className="flex flex-col gap-1">
                   <span className="text-sm leading-none font-medium text-foreground">{cut}</span>
-                  <span className="text-xs tracking-[0.12px] text-muted-foreground">{CUT_HINT[cut]}</span>
+                  <span className="text-xs tracking-[0.12px] text-muted-foreground">{catalog.cutHint[cut]}</span>
                 </span>
               </label>
             )
@@ -371,16 +362,16 @@ export function DiamondFilters({ value, onChange }: { value: DiamondFilterState;
         </div>
       </FilterSection>
 
-      <FilterSection title="Color" info="Colour Grade helps compare diamonds from D (brightest white) to M (warmest tone).">
-        <GradeSlider label="Color" grades={COLOR_GRADES} value={value.color} onChange={(color) => set({ color, preset: null })} />
+      <FilterSection title="Color" info={catalog.info.color}>
+        <GradeSlider label="Color" grades={catalog.grades.color} value={value.color} onChange={(color) => set({ color, preset: null })} />
       </FilterSection>
 
-      <FilterSection title="Clarity" info="Clarity measures visible inclusions on a scale from IF (highest) to I3 (lowest).">
-        <GradeSlider label="Clarity" grades={CLARITY_GRADES} value={value.clarity} onChange={(clarity) => set({ clarity, preset: null })} />
+      <FilterSection title="Clarity" info={catalog.info.clarity}>
+        <GradeSlider label="Clarity" grades={catalog.grades.clarity} value={value.clarity} onChange={(clarity) => set({ clarity, preset: null })} />
       </FilterSection>
 
       <FilterSection title="Certification" defaultOpen={false}>
-        <p className="text-xs text-muted-foreground">All our natural diamonds are GIA certified.</p>
+        <p className="text-xs text-muted-foreground">{catalog.certification}</p>
       </FilterSection>
       <FilterSection title="L/W Ratio" defaultOpen={false}>
         <p className="text-xs text-muted-foreground">Length-to-width ratio applies to fancy shapes. Every round diamond is 1.00–1.01.</p>

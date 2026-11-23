@@ -2,49 +2,25 @@ import { useRef, useState, type ReactNode } from "react"
 import { ArrowLeftIcon, ArrowRightIcon, CaretLeftIcon, CaretRightIcon, InfoIcon, XIcon } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { useFlow } from "@/flow/flow-context"
-import { CUT_HINT, GradeSlider } from "@/components/diamond/diamond-filters"
+import { GradeSlider } from "@/components/diamond/diamond-filters"
+import { useGlpCatalog, type ExploreKey, type ExploreTab } from "@/components/diamond/glp-catalog"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
-import { CLARITY_GRADES, COLOR_GRADES, CUT_GRADES, SHAPES, shapeIcon, type CutGrade, type Shape } from "@/data/diamonds"
-import { NO_FILTERS, type DiamondFilterState } from "@/lib/diamond-filters"
+import { CUT_GRADES, SHAPES, shapeIcon, type CutGrade, type Shape } from "@/data/diamonds"
+import type { DiamondFilterState } from "@/lib/diamond-filters"
 import { useScrollOverflow } from "@/lib/hooks"
 import { scrollAfterUnlock, scrollToResults } from "@/lib/scroll-to-results"
 import { cn } from "@/lib/utils"
 import type { DiamondListing } from "./use-diamond-listing"
 
-type ExploreKey = "shape" | "cut" | "clarity" | "color"
-
-/** Explore by tabs (Figma "Explore by filters", 8032:117460): copy, and whether it has a Learn More link. */
-const EXPLORE: { key: ExploreKey; label: string; copy: string; learnMore: boolean }[] = [
-  {
-    key: "shape",
-    label: "Shape",
-    copy: "Shape is often the first step in choosing a diamond. Each shape has its own character, from the timeless brilliance of Round to the distinctive elegance of Oval, Emerald and Pear.",
-    learnMore: false,
-  },
-  { key: "cut", label: "Cut", copy: "Cut determines how brilliantly a diamond reflects light, creating its sparkle and fire.", learnMore: true },
-  { key: "clarity", label: "Clarity", copy: "Clarity measures visible inclusions on a scale from IF (highest) to I3 (lowest).", learnMore: true },
-  { key: "color", label: "Color", copy: "Colour Grade helps compare diamonds from D (brightest white) to M (warmest tone).", learnMore: true },
-]
-
-/** Color bands under the hero color scale (Figma: Faint Yellow | Near Colorless | Colorless). */
-const COLOR_BANDS: [string, number, number][] = [
-  ["Faint Yellow", 0, 2],
-  ["Near Colorless", 3, 6],
-  ["Colorless", 7, 9],
-]
-
 const CUT_ORDER = [...CUT_GRADES].reverse() as CutGrade[]
 const cutImage = (cut: CutGrade) => `/images/diamonds/cut/${cut.toLowerCase().replace(" ", "-")}.png`
 
-const INTRO =
-  "Hand-selected, GIA-certified loose diamonds in a wide range of shapes and sizes. Choose the one that’s right for your ring."
-
 /** Is the Explore facet narrowed? (drives the mobile pill's selected state and count) */
-function facetCount(f: DiamondFilterState, key: ExploreKey) {
+function facetCount(f: DiamondFilterState, key: ExploreKey, none: DiamondFilterState) {
   if (key === "shape") return f.shapes.length
   if (key === "cut") return f.cuts.length
-  const full = NO_FILTERS[key]
+  const full = none[key]
   return f[key][0] !== full[0] || f[key][1] !== full[1] ? 1 : 0
 }
 
@@ -73,7 +49,7 @@ function ShapeTile({ shape, selected, onClick, className }: { shape: Shape; sele
 }
 
 /** Cut tile: sparkle illustration, grade and one-line hint (Figma "Hero.Cut", 155×254). */
-function CutTile({ cut, selected, onClick, className }: { cut: CutGrade; selected: boolean; onClick: () => void; className?: string }) {
+function CutTile({ cut, hint, selected, onClick, className }: { cut: CutGrade; hint: string; selected: boolean; onClick: () => void; className?: string }) {
   return (
     <button
       type="button"
@@ -88,7 +64,7 @@ function CutTile({ cut, selected, onClick, className }: { cut: CutGrade; selecte
       <img src={cutImage(cut)} alt="" className="aspect-[131/170] w-full object-cover" />
       <span className="flex flex-col gap-1">
         <span className="text-xxs leading-3 font-semibold tracking-[1px] text-primary uppercase">{cut}</span>
-        <span className="text-xs leading-4 text-muted-foreground">{CUT_HINT[cut]}</span>
+        <span className="text-xs leading-4 text-muted-foreground">{hint}</span>
       </span>
     </button>
   )
@@ -138,6 +114,7 @@ function ExplorePanel({
   onPick?: () => void
   layout: "rail" | "grid"
 }) {
+  const catalog = useGlpCatalog()
   const pick = (next: DiamondFilterState) => {
     onChange(next)
     onPick?.()
@@ -159,6 +136,7 @@ function ExplorePanel({
       <CutTile
         key={c}
         cut={c}
+        hint={catalog.cutHint[c]}
         selected={filters.cuts.includes(c)}
         onClick={() => pick({ ...filters, preset: null, cuts: toggle(filters.cuts, c) })}
         className={layout === "rail" ? "w-39" : "w-full min-w-0"}
@@ -169,8 +147,8 @@ function ExplorePanel({
   return (
     <GradeSlider
       label={tab === "clarity" ? "Clarity" : "Color"}
-      grades={tab === "clarity" ? CLARITY_GRADES : COLOR_GRADES}
-      groups={tab === "color" ? COLOR_BANDS : undefined}
+      grades={tab === "clarity" ? catalog.grades.clarity : catalog.grades.color}
+      groups={tab === "color" ? catalog.colorBands : undefined}
       value={filters[tab]}
       onChange={(range) => onChange({ ...filters, preset: null, [tab]: range })}
       className="pt-2"
@@ -180,7 +158,7 @@ function ExplorePanel({
 
 function ExploreCopy({ tab }: { tab: ExploreKey }) {
   const notInTest = useNotInTest()
-  const e = EXPLORE.find((x) => x.key === tab)!
+  const e = useGlpCatalog().explore.find((x) => x.key === tab) as ExploreTab
   return (
     <div className="flex flex-col items-start gap-1">
       <p className="text-sm leading-5 text-primary">{e.copy}</p>
@@ -198,6 +176,7 @@ function ExploreCopy({ tab }: { tab: ExploreKey }) {
 
 /** Desktop "Explore by": Shape | Cut | Clarity | Color tabs over the matching control. */
 function ExploreTabs({ listing }: { listing: DiamondListing }) {
+  const EXPLORE = useGlpCatalog().explore
   const [tab, setTab] = useState<ExploreKey>("shape")
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -233,10 +212,11 @@ function ExploreTabs({ listing }: { listing: DiamondListing }) {
 
 /** Mobile pills: Shape | Cut | Clarity | Color, each opening its drawer (Figma mobile hero, 8032:112878). */
 function ExplorePills({ filters, onOpen }: { filters: DiamondFilterState; onOpen: (key: ExploreKey) => void }) {
+  const { explore: EXPLORE, noFilters } = useGlpCatalog()
   return (
     <div className="-mx-margin flex gap-2 overflow-x-auto px-margin [scrollbar-width:none] lg:hidden">
       {EXPLORE.map((e) => {
-        const n = facetCount(filters, e.key)
+        const n = facetCount(filters, e.key, noFilters)
         return (
           <button
             key={e.key}
@@ -265,6 +245,7 @@ function ExploreDrawer({ listing, open, onClose }: { listing: DiamondListing; op
     setWasOpen(open)
     if (open) setPending(listing.filters)
   }
+  const EXPLORE = useGlpCatalog().explore
   const tab = open ?? wasOpen ?? "shape"
   const count = listing.countFor(pending)
   // Set by "View N Items"; the scroll waits until the drawer has closed and released its scroll lock.
@@ -311,26 +292,26 @@ function ExploreDrawer({ listing, open, onClose }: { listing: DiamondListing; op
 
 /* ───────────────────────── Hero ───────────────────────── */
 
-/** Natural | Lab-Grown | Gemstones (Figma hero toggle). Only Natural is in this prototype. */
+/** Natural | Lab-Grown | Gemstones (Figma hero toggle). On the GLP prototype only Natural is live. */
 function StoneTypeToggle() {
   const notInTest = useNotInTest()
-  const types = ["Natural", "Lab-Grown", "Gemstones"]
+  const { value, options, onChange } = useGlpCatalog().hero.type
   return (
     <div className="flex w-full lg:w-fit" role="group" aria-label="Stone type">
-      {types.map((t, i) => {
-        const active = i === 0
+      {options.map((t, i) => {
+        const active = t.id === value
         return (
           <button
-            key={t}
+            key={t.id}
             type="button"
             aria-pressed={active}
-            onClick={() => !active && notInTest(`${t} stones`)}
+            onClick={() => !active && (onChange ? onChange(t.id) : notInTest(`${t.label} stones`))}
             className={cn(
               "flex h-11 flex-1 cursor-pointer items-center justify-center bg-background px-2 type-label-xs text-primary lg:w-29 lg:flex-none",
-              active ? "border-2 border-primary" : "border border-l-0 border-border-subtle hover:border-border",
+              active ? "border-2 border-primary" : cn("border border-border-subtle hover:border-border", i > 0 && "border-l-0"),
             )}
           >
-            {t}
+            {t.label}
           </button>
         )
       })}
@@ -346,6 +327,7 @@ function StoneTypeToggle() {
 export function GlpHero({ listing }: { listing: DiamondListing }) {
   const notInTest = useNotInTest()
   const flow = useFlow()
+  const { hero } = useGlpCatalog()
   const [readMore, setReadMore] = useState(false)
   const [drawer, setDrawer] = useState<ExploreKey | null>(null)
 
@@ -353,12 +335,12 @@ export function GlpHero({ listing }: { listing: DiamondListing }) {
     <section className="flex flex-col gap-8 bg-linear-to-b from-secondary from-32% to-secondary/0 px-page pt-5 pb-8 lg:gap-5 lg:bg-secondary lg:bg-none lg:pb-10">
       <button
         type="button"
-        // Full flow: back to the shopper's stone preferences. Elsewhere it isn't part of the test.
-        onClick={() => (flow ? flow.goToStep(2, "edit") : notInTest("Stone preferences"))}
+        // Full flow: back to the shopper's stone preferences. Otherwise the GLP's own back target, if any.
+        onClick={() => (flow ? flow.goToStep("stone", "edit") : hero.back.onClick ? hero.back.onClick() : notInTest("Stone preferences"))}
         className="flex cursor-pointer items-center gap-1 self-start type-caption text-muted-foreground hover:text-primary"
       >
         <CaretLeftIcon className="size-4" />
-        Back to stone preferences
+        {hero.back.label}
       </button>
 
       <div className="flex flex-col lg:flex-row lg:gap-16">
@@ -368,11 +350,11 @@ export function GlpHero({ listing }: { listing: DiamondListing }) {
               <p className="type-label-xs text-muted-foreground">
                 Design Your Own <span className="font-normal">∙</span> <span className="font-medium">Select Your Stone</span>
               </p>
-              <h1 className="type-h2 text-primary">Natural Diamonds</h1>
+              <h1 className="type-h2 text-primary">{hero.title}</h1>
             </div>
             <ExplorePills filters={listing.filters} onOpen={setDrawer} />
             <div className="flex flex-col items-start gap-1">
-              <p className={cn("text-sm leading-5 text-primary lg:text-base lg:leading-6", !readMore && "max-lg:line-clamp-2")}>{INTRO}</p>
+              <p className={cn("text-sm leading-5 text-primary lg:text-base lg:leading-6", !readMore && "max-lg:line-clamp-2")}>{hero.intro}</p>
               <button
                 type="button"
                 onClick={() => setReadMore((r) => !r)}

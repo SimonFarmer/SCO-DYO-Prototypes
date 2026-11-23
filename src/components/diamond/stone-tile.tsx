@@ -8,9 +8,9 @@ import { formatPrice } from "@/lib/format"
  * GLP stone tile (Figma “Product Card · Type=Diamond”). The whole tile opens the stone;
  * what “open” means (full PDP or Quickview) is up to the page.
  */
-export function StoneTile({ diamond, onOpen }: { diamond: Diamond; onOpen: (d: Diamond) => void }) {
+export function StoneTile({ diamond, onOpen, title: titleOverride }: { diamond: Diamond; onOpen: (d: Diamond) => void; /** Test 2 names lab-grown and gemstones */ title?: string }) {
   const notInTest = useNotInTest()
-  const title = diamondTitle(diamond)
+  const title = titleOverride ?? diamondTitle(diamond)
   return (
     <article className="group relative flex flex-col bg-bg-input-30">
       <div className="relative aspect-square overflow-clip">

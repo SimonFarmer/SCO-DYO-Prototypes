@@ -2,7 +2,7 @@ import { useRef } from "react"
 import { DiamondBuyForm } from "@/components/diamond/diamond-buy-form"
 import { AboutDiamondBlock, DiamondGallery, FourCsReportCard } from "@/components/diamond/diamond-pdp-sections"
 import type { SpecLayout } from "@/components/diamond/diamond-specs"
-import { DyoStepper } from "@/components/dyo/dyo-stepper"
+import { DyoStepper, type DyoStart } from "@/components/dyo/dyo-stepper"
 import { PdpStickyBar } from "@/components/pdp/pdp-sticky-bar"
 import { FeatureBlock, UgcBlock, ValuePropsBlock } from "@/components/pdp/content-blocks"
 import { ReviewsBlock } from "@/components/pdp/reviews-block"
@@ -23,20 +23,22 @@ interface DiamondPdpProps {
   onSelect: () => void
   /** Desktop sticky product bar from “About this diamond” down (Tests 3.1 and 3.2). */
   stickyBar?: boolean
+  /** DYO entry point; stone-first journeys show the stone as step 1. */
+  start?: DyoStart
 }
 
 /**
  * Diamond PDP — DYO step 2 (Figma “Diamond PDP — DYO Step 9”, 7375:129294 / 7375:134699).
  * Shared by Test 3.1 (full-details destination) and Test 3.2 (spec layouts).
  */
-export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false }: DiamondPdpProps) {
+export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false, start = "setting" }: DiamondPdpProps) {
   const flow = useFlow()
   const aboutRef = useRef<HTMLElement>(null)
   return (
     <div className="min-h-screen bg-background">
       {/* Full flow: live header navigation and the flow breadcrumb; Test 3 keeps them inert. */}
       <SiteHeader contained navigation={!!flow} />
-      <DyoStepper current={2} contained />
+      <DyoStepper current={start === "stone" ? 1 : 2} start={start} showTotal={start !== "stone"} contained />
       {stickyBar && (
         <PdpStickyBar
           image={diamond.image}

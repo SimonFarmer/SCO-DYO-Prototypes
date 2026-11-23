@@ -2,6 +2,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { HeartStraightIcon, PlayIcon, XIcon } from "@phosphor-icons/react"
 import { EllipsisVertical } from "lucide-react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { PriceExplained } from "@/components/diamond/diamond-buy-form"
 import { SpecList } from "@/components/diamond/diamond-specs"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
@@ -9,17 +10,27 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { diamondTitle, type Diamond } from "@/data/diamonds"
 import { DELIVERY } from "@/data/dyo"
 import { formatPrice } from "@/lib/format"
+import { useRingBuild } from "@/state/ring-build"
 
 interface DiamondQuickviewProps {
   diamond: Diamond | null
   onOpenChange: (open: boolean) => void
   onSelect: (d: Diamond) => void
   onViewDetails: (d: Diamond) => void
+  /** Show the ring total (selected setting + this diamond). Off when the journey started at the stone, with no setting chosen yet. */
+  showRingTotal?: boolean
+  /** Heading override (Test 2 names lab-grown stones too); defaults to the natural diamond title */
+  title?: string
+  /** Opt-in wording for other stones (Test 2 gemstones): "Gemstone only", "Select this Gemstone" */
+  noun?: string
+  /** Certificate link label; null hides it (gemstones are Shane Co. graded) */
+  certificate?: string | null
 }
 
 /** Stone Quickview modal (Figma “Diamond Overlay”, 7375:133345) — Test 3.1 variant B. */
-export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetails }: DiamondQuickviewProps) {
+export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetails, showRingTotal = true, title, noun = "Diamond", certificate = "GIA certificate" }: DiamondQuickviewProps) {
   const notInTest = useNotInTest()
+  const { setting } = useRingBuild()
   return (
     <Dialog open={diamond !== null} onOpenChange={onOpenChange}>
       {/* Figma: 920px wide dialog, 32px padding and gap. */}
@@ -35,7 +46,7 @@ export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetail
             </DialogPrimitive.Close>
             <div className="flex flex-col gap-2">
               <div className="relative aspect-[412/400] overflow-clip">
-                <img src={diamond.image} alt={`${diamondTitle(diamond)}, 360° view`} className="size-full object-cover" />
+                <img src={diamond.image} alt={`${title ?? diamondTitle(diamond)}, 360° view`} className="size-full object-cover" />
                 {diamond.topSeller && (
                   <span className="absolute top-3 left-3 flex h-5 items-center bg-primary px-2 text-xxs leading-3 font-semibold tracking-[1px] text-primary-foreground uppercase">
                     Top seller
@@ -62,29 +73,49 @@ export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetail
 
             <div className="flex flex-col gap-4">
               <div className="flex items-start gap-4">
-                <DialogPrimitive.Title className="flex-1 type-h4 font-medium text-primary">{diamondTitle(diamond)}</DialogPrimitive.Title>
+                <DialogPrimitive.Title className="flex-1 type-h4 font-medium text-primary">{title ?? diamondTitle(diamond)}</DialogPrimitive.Title>
                 <DialogPrimitive.Close render={<Button variant="ghost" size="icon" aria-label="Close" className="max-md:hidden" />}>
                   <XIcon />
                 </DialogPrimitive.Close>
               </div>
-              <p className="flex items-baseline gap-2 font-semibold text-muted-foreground">
-                <span className="text-lg leading-none">{formatPrice(diamond.price)}</span>
-                <span className="type-label-xs">Diamond only</span>
-              </p>
+              <div className="flex flex-col gap-2">
+                <p className="flex items-baseline gap-2 font-semibold text-muted-foreground">
+                  <span className="text-lg leading-none">{formatPrice(diamond.price)}</span>
+                  <span className="type-label-xs">{noun} only</span>
+                </p>
+                {showRingTotal && (
+                  // Ring total: the selected setting plus this diamond, with the PDP's "Price explained" breakdown.
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="flex items-baseline gap-2">
+                      <span className="text-lg leading-none font-semibold text-primary">{formatPrice(setting.price + diamond.price)}</span>
+                      <span className="type-label-xs font-semibold text-muted-foreground">Ring total</span>
+                    </span>
+                    {/* Mobile: no room on one line, so "Price explained" drops below without the dot. */}
+                    <span className="text-sm leading-none font-medium text-muted-foreground max-md:hidden" aria-hidden>
+                      ∙
+                    </span>
+                    <span className="max-md:w-full">
+                      <PriceExplained diamond={diamond} stoneName={title} />
+                    </span>
+                  </div>
+                )}
+              </div>
               <SpecList diamond={diamond} order={["carat", "clarity", "color", "cut"]} />
               <Button variant="link" className="h-auto px-0 w-fit" onClick={() => onViewDetails(diamond)}>
                 View more specifications
               </Button>
-              <Button variant="link" className="h-auto px-0 w-fit" onClick={() => notInTest("The GIA certificate")}>
-                View GIA certificate
-              </Button>
+              {certificate && (
+                <Button variant="link" className="h-auto px-0 w-fit" onClick={() => notInTest(`The ${certificate}`)}>
+                  View {certificate}
+                </Button>
+              )}
               <p className="text-xs leading-none text-muted-foreground">
                 Order now and it ships {DELIVERY.shipBy.replace("By", "by")}.
               </p>
               <div className="flex flex-col items-center gap-4">
                 <div className="flex w-full gap-2">
                   <Button className="flex-1" onClick={() => onSelect(diamond)}>
-                    Select this Diamond
+                    Select this {noun}
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger render={<Button variant="outline" size="icon" aria-label="More options" />}>

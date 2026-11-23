@@ -18,8 +18,8 @@ export const FLOW_BASE = "/flow"
  * /flow?t1=c&t2=a&crumbs=off. Choices stick for the session, so they survive navigation.
  */
 export interface FlowConfig {
-  /** Test 1 · Settings PDP gallery & details */
-  t1: "A" | "B" | "C"
+  /** Test 1 · Settings PDP gallery & details (2 galleries × 3 details placements, A–F) */
+  t1: "A" | "B" | "C" | "D" | "E" | "F"
   /** Test 2 · Stone preferences: size, budget or both */
   t2: "A" | "B" | "C"
   /** Test 3.1 · GLP tile opens the PDP (A) or a Quickview (B) */
@@ -35,7 +35,7 @@ export interface FlowConfig {
 export const FLOW_DEFAULTS: FlowConfig = { t1: "B", t2: "B", t31: "B", t32: "A", t4: "B", crumbs: true }
 
 const ALLOWED: Record<Exclude<keyof FlowConfig, "crumbs">, readonly string[]> = {
-  t1: ["A", "B", "C"],
+  t1: ["A", "B", "C", "D", "E", "F"],
   t2: ["A", "B", "C"],
   t31: ["A", "B"],
   t32: ["A", "B"],
@@ -76,7 +76,7 @@ interface FlowState {
    */
   leave: (to: string) => void
   /** Stepper View/Edit and the summary's Edit links: back to a step with the build kept. */
-  goToStep: (step: 1 | 2, mode: "view" | "edit") => void
+  goToStep: (step: "setting" | "stone", mode: "view" | "edit") => void
 }
 
 /** Pages past step 1, where leaving would lose the build (stone step, GLP, diamond, finishing, review). */
@@ -133,7 +133,7 @@ export function FlowLayout() {
 
   const goToStep = useCallback<FlowState["goToStep"]>(
     (step, mode) => {
-      if (step === 1) return go("/setting")
+      if (step === "setting") return go("/setting")
       if (mode === "view") return go(`/diamond/${stone.id}`)
       let query = ""
       try {
