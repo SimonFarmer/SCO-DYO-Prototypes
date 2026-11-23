@@ -303,7 +303,7 @@ export function CollectionHero({ listing }: { listing: Listing }) {
   const copy = mode === "rts" ? RTS_COPY : (collection?.description ?? DYO_COPY)
 
   return (
-    <section className="flex flex-col gap-8 bg-linear-to-b from-secondary from-32% to-secondary/0 px-margin pt-5 pb-8 lg:bg-secondary lg:bg-none lg:pb-10">
+    <section className="flex flex-col gap-8 bg-linear-to-b from-secondary from-32% to-secondary/0 px-page pt-5 pb-8 lg:bg-secondary lg:bg-none lg:pb-10">
       {showCrumbs && <Breadcrumb items={crumbs} className="p-0" />}
 
       <div className="flex flex-col lg:flex-row lg:gap-16">

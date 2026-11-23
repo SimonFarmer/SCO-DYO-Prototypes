@@ -75,7 +75,7 @@ export function DyoStepper({
   mobileLabel,
   showTotal = true,
   mobileTone = "secondary",
-  contained = false,
+  contained = true,
 }: {
   /** Position of the current step (1–3) in this journey's order. */
   current: StepNumber

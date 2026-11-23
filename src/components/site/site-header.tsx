@@ -47,7 +47,7 @@ function UtilityLink({ icon: IconCmp, label }: { icon: Icon; label: string }) {
 export function SiteHeader({
   navigation = false,
   mobileHidden = false,
-  contained = false,
+  contained = true,
 }: {
   navigation?: boolean
   /** Cap the header's contents at the page max width (1680px); the bar itself stays full width. */

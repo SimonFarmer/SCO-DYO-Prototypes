@@ -25,6 +25,7 @@ import { CLASSIC_CROWN, type GalleryImage } from "@/data/dyo"
 import { useFlow } from "@/flow/flow-context"
 import { FLOW_CRUMBS, FLOW_ROUTES } from "@/flow/flow-paths"
 import { useFlowRingGallery } from "@/flow/ring-images"
+import { PAGE_MAX } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
 
 /*
@@ -48,8 +49,11 @@ function FlowStep3Frame({ mobileLabel, children }: { mobileLabel: string; childr
       <SiteHeader navigation />
       <DyoStepper current={3} mobileLabel={mobileLabel} />
       {flow?.config.crumbs && (
-        <div className="bg-secondary lg:w-7/12">
-          <Breadcrumb items={FLOW_CRUMBS} className="px-margin lg:px-4" />
+        // Sits over the gallery column, inside the 1680px page cap (PAGE_MAX) as the columns below.
+        <div className={PAGE_MAX}>
+          <div className="bg-secondary lg:w-7/12">
+            <Breadcrumb items={FLOW_CRUMBS} className="px-margin lg:px-4" />
+          </div>
         </div>
       )}
       {children}

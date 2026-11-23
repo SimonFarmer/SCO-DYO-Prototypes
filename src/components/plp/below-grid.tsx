@@ -93,10 +93,10 @@ function NaturalDiamonds({ contained }: { contained: boolean }) {
 }
 
 /**
- * Content below the PLP grid. `contained` (Test 2 PLP) caps the full-width sections at the 1680px page
- * width while their backgrounds still run edge to edge; without it they're unchanged.
+ * Content below the PLP grid. `contained` (the default, as every page) caps the full-width sections at
+ * the 1680px page width while their backgrounds still run edge to edge.
  */
-export function BelowGridContent({ contained = false }: { contained?: boolean } = {}) {
+export function BelowGridContent({ contained = true }: { contained?: boolean } = {}) {
   const notInTest = useNotInTest()
   const navigate = useNavigate()
   const flowPath = useFlowPath()

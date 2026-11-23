@@ -44,7 +44,7 @@ const LEGAL = ["Privacy Policy", "Terms & Conditions", "Site Map", "Accessibilit
 
 
 /** Global site footer (Pattern Library "Footer", desktop 1440). */
-export function SiteFooter({ contained = false }: { /** Cap the contents at the page max width (1680px) */ contained?: boolean } = {}) {
+export function SiteFooter({ contained = true }: { /** Cap the contents at the page max width (1680px, as every page); the bars stay full width */ contained?: boolean } = {}) {
   const notInTest = useNotInTest()
   const inert = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -91,7 +91,7 @@ export function SiteFooter({ contained = false }: { /** Cap the contents at the 
           </div>
         </div>
       </div>
-      <div className="bg-accent px-margin py-6">
+      <div className={cn("bg-accent py-6", contained ? "px-page" : "px-margin")}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <img src="/images/footer/tagline-your-friend-and-jeweler.svg" alt="Your friend & jeweler" className="h-4 w-fit" />
           <div className="flex flex-col gap-4 lg:items-end">

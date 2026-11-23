@@ -11,6 +11,7 @@ import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { filterCount } from "@/data/plp"
+import { cn, PAGE_MAX } from "@/lib/utils"
 
 /**
  * Engagement Ring PLP: DYO step 1 (choose a setting), or Ready to Ship preset rings.
@@ -38,7 +39,8 @@ export function EngagementRingPlp() {
         {/* Ready to Ship is outside Design Your Own, so it has no progress stepper. */}
         {mode === "dyo" && <DyoStepper current={1} showTotal={false} mobileTone="plp" />}
 
-        <div id="plp-results" className="scroll-mt-(--header-offset)">
+        {/* Results capped at 1680px (PAGE_MAX), as the Settings PDP and the GLPs. */}
+        <div id="plp-results" className={cn("scroll-mt-(--header-offset)", PAGE_MAX)}>
           <DesktopFilterBar listing={listing} sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen((o) => !o)} />
           <MobileFilterBar listing={listing} activeCount={filterCount(listing.filters)} onOpenFilters={() => setDrawerOpen(true)} />
 
