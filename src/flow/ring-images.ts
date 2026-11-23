@@ -2,7 +2,7 @@ import { useMemo } from "react"
 import { FINISHING_GALLERY, type GalleryImage } from "@/data/dyo"
 import { ELLA_CATHEDRAL, galleryFor, type MetalId } from "@/data/products"
 import { previewImage } from "@/data/stones"
-import { findFlowDiamond } from "@/flow/stone/stone-bridge"
+import { findFlowDiamond } from "@/flow/stone/find-diamond"
 import { useRingBuild } from "@/state/ring-build"
 
 /** Shane Co.'s preview renders are per setting item; data/stones.ts builds them for Test 2's setting. */

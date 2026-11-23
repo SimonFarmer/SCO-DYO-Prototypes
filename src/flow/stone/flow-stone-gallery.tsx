@@ -5,7 +5,7 @@ import type { StoneGalleryMode } from "@/components/stones/stone-step-gallery"
 import { Badge } from "@/components/ui/badge"
 import { FINISHING_GALLERY, REVIEW_GALLERY } from "@/data/dyo"
 import type { GalleryMedia } from "@/data/products"
-import { formatSize, sizeScale, stoneShape } from "@/data/stones"
+import { formatSize, sizeScale, stonePhotos, stoneShape } from "@/data/stones"
 import { ellaPreview } from "@/flow/ring-images"
 import { useIsDesktop } from "@/lib/hooks"
 import { useRingBuild } from "@/state/ring-build"
@@ -14,7 +14,8 @@ import { useRingBuild } from "@/state/ring-build"
 /**
  * Full DYO flow · stone step gallery. A copy of the shared StoneStepGallery (components/stones), which renders
  * Test 2's Timeless Solitaire, so the flow previews the ring actually being built: Ella Cathedral in the chosen
- * metal (shaneco.com serves the same "Preview with" render for any setting item). Natural diamonds only.
+ * metal (shaneco.com serves the same "Preview with" render for any setting item), then the stone photos as in
+ * Test 2 (keep in sync). Natural diamonds only.
  */
 export function FlowStoneGallery({ shape, size, previewNote, mode = "preview" }: { shape: string; size: number; previewNote?: string; mode?: StoneGalleryMode }) {
   const { setting } = useRingBuild()
@@ -29,12 +30,21 @@ export function FlowStoneGallery({ shape, size, previewNote, mode = "preview" }:
       src: ellaPreview(setting.article, shape, size),
       alt: `${setting.name} in ${setting.metal.toLowerCase()}, previewed with a ${shown} ${label.toLowerCase()} diamond`,
     }
-    const [video, diamondTop, , sizeGuide] = FINISHING_GALLERY.tiles
+    // As Test 2 (synced with Lewis's real-stock gallery): the chosen stone's 360° spin frame and face-up photo,
+    // labelled with it, then the carat size guide and the two proportion diagrams (examples for now).
+    const noun = `${shown} ${label.toLowerCase()} diamond`
+    const photos = stonePhotos("natural", shape)
+    const stone: GalleryMedia[] = photos
+      ? [
+          { kind: "video", src: photos.spin, alt: `360° view of the ${noun}`, badge: `${label} · ${shown}` },
+          { kind: "image", src: photos.faceUp, alt: `The ${noun}, face up`, badge: `${label} · ${shown}` },
+        ]
+      : []
+    const sizeGuide = FINISHING_GALLERY.tiles[3]
     return [
       hero,
-      { kind: "image", src: video.src, alt: `360° view of the ${shown} ${label.toLowerCase()} diamond`, badge: `${label} · ${shown}` },
-      { kind: "image", src: diamondTop.src, alt: `${shown} ${label.toLowerCase()} diamond, top view`, badge: `${label} · ${shown}` },
-      { kind: "image", src: sizeGuide.src, alt: sizeGuide.alt },
+      ...stone,
+      { kind: "size-guide", src: sizeGuide.src, alt: sizeGuide.alt },
       { kind: "image", src: REVIEW_GALLERY[4].src, alt: REVIEW_GALLERY[4].alt },
       { kind: "image", src: REVIEW_GALLERY[5].src, alt: REVIEW_GALLERY[5].alt },
     ]

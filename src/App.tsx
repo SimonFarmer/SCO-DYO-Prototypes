@@ -4,8 +4,10 @@ import { NaturalDiamondPdp, NaturalDiamondsGlp } from "@/pages/diamonds"
 import { FlowLayout } from "@/flow/flow-context"
 import { FlowSettingPdp } from "@/flow/pages/flow-setting"
 import { FlowAddedToBag, FlowRingReviewB, FlowStep3 } from "@/flow/finish/finish-pages"
-import { FlowDiamondPdp, FlowGlp } from "@/flow/stone/diamond-pages"
-import { FlowStonePreferences, FlowStoneRecommendations } from "@/flow/stone/stone-pages"
+import { FlowDiamondPdp } from "@/flow/stone/diamond-pages"
+import { FlowDiamondsPlp } from "@/flow/stone/diamonds-plp"
+import { FlowStonePreferences } from "@/flow/stone/preferences-page"
+import { FlowStoneRecommendations } from "@/flow/stone/recommendations-page"
 import { Blank, Home } from "@/pages/home"
 import { EngagementRingPlp } from "@/pages/plp"
 import { StoreHome } from "@/pages/plp/store-home"
@@ -51,7 +53,7 @@ export default function App() {
               <Route path="setting" element={<FlowSettingPdp />} />
               <Route path="stone" element={<FlowStonePreferences />} />
               <Route path="stone/recommendations" element={<FlowStoneRecommendations />} />
-              <Route path="diamonds" element={<FlowGlp />} />
+              <Route path="diamonds" element={<FlowDiamondsPlp />} />
               <Route path="diamond/:id" element={<FlowDiamondPdp />} />
               <Route path="finish" element={<FlowStep3 />} />
               <Route path="review" element={<FlowRingReviewB />} />

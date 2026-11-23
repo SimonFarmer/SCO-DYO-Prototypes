@@ -335,8 +335,9 @@ export function GlpHero({ listing }: { listing: DiamondListing }) {
     <section className="flex flex-col gap-8 bg-linear-to-b from-secondary from-32% to-secondary/0 px-page pt-5 pb-8 lg:gap-5 lg:bg-secondary lg:bg-none lg:pb-10">
       <button
         type="button"
-        // Full flow: back to the shopper's stone preferences. Otherwise the GLP's own back target, if any.
-        onClick={() => (flow ? flow.goToStep("stone", "edit") : hero.back.onClick ? hero.back.onClick() : notInTest("Stone preferences"))}
+        // The page's own back target first (Test 2's PLP, and the flow's copy of it); then, in the full flow,
+        // the shopper's stone preferences; elsewhere it isn't part of the test.
+        onClick={() => (hero.back.onClick ? hero.back.onClick() : flow ? flow.goToStep("stone", "edit") : notInTest("Stone preferences"))}
         className="flex cursor-pointer items-center gap-1 self-start type-caption text-muted-foreground hover:text-primary"
       >
         <CaretLeftIcon className="size-4" />

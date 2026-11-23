@@ -15,6 +15,3 @@ export const FLOW_ROUTES = {
   review: "/review",
   added: "/added",
 } as const
-
-/** Session key for the flow's GLP state (filters carried in from the stone preferences). */
-export const FLOW_GLP_KEY = "flow-glp"
