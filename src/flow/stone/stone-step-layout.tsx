@@ -50,7 +50,10 @@ export function FlowStoneStepLayout({
         <div className={COLUMNS}>
           <div
             className={cn(
-              "px-2 pt-2",
+              // With the breadcrumb, the gallery starts right under it (as on the Settings PDP); without it,
+              // 8px below the stepper, matching the side gutter (Test 2).
+              "px-2",
+              !flow?.config.crumbs && "pt-2",
               gallery === "full" && "lg:px-0",
               gallery === "preview" && "transition-[top] duration-300 ease-out lg:sticky lg:top-(--header-offset) lg:self-start lg:pb-8",
             )}
