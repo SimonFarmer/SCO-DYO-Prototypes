@@ -1,13 +1,17 @@
 import { useMemo, useState } from "react"
 import { useNavigate } from "react-router"
-import { CaretLeftIcon } from "@phosphor-icons/react"
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
+import { CaretLeftIcon, XIcon } from "@phosphor-icons/react"
+import { EllipsisVertical } from "lucide-react"
 import { SectionDivider, StepIntro } from "@/components/dyo/finishing-sections"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { StoneCtas } from "@/components/stones/stone-ctas"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { SETTING } from "@/data/dyo"
-import { DiamondQuickview } from "@/components/diamond/diamond-quickview"
-import { formatSize, gemById, recommend, stoneImage, stoneShape, stoneSpecs, stoneTitle, stoneType, toQuickviewDiamond, type SpecKey, type StonePick, type StoneTypeId } from "@/data/stones"
+import { DELIVERY, SETTING } from "@/data/dyo"
+import { formatSize, gemById, recommend, stoneImage, stoneShape, stoneSpecs, stoneTitle, stoneType, type SpecKey, type StonePick, type StoneTypeId } from "@/data/stones"
 import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { effectiveShape, useStonePrefs, type StoneSim } from "./preferences"
@@ -50,9 +54,9 @@ function picksHeading(type: StoneTypeId, shape: string, gem: string) {
 
 /**
  * Carat (Size for gemstones) · Clarity · Color · Cut in one row, a divider left of each cell (Figma 8173:188141);
- * the cells this pick optimises are lightly shaded.
+ * the cells this pick optimises are picked out in green.
  */
-function SpecStrip({ pick }: { pick: StonePick }) {
+function SpecStrip({ pick, highlight = true }: { pick: StonePick; /** false: every cell plain (the details overlay) */ highlight?: boolean }) {
   const specs = stoneSpecs(pick.stone)
   const cells: { key: SpecKey; label: string; value: string }[] = [
     pick.stone.type === "gemstone"
@@ -64,23 +68,29 @@ function SpecStrip({ pick }: { pick: StonePick }) {
   ]
   return (
     <dl className="flex w-full">
-      {cells.map((c) => (
-        // A divider on the left of every cell; the cells this pick optimises are lightly shaded.
-        <div
-          key={c.key}
-          className={cn("flex min-w-0 flex-1 flex-col gap-1 border-l border-border-subtle px-2.5 py-2", pick.highlight.includes(c.key) ? "bg-bg-input-50" : "bg-background")}
-        >
-          <dt className="text-xxs leading-3 font-semibold tracking-[1px] text-muted-foreground uppercase">{c.label}</dt>
-          <dd className="text-xs leading-4 tracking-[0.12px] text-primary tabular-nums">{c.value}</dd>
-        </div>
-      ))}
+      {cells.map((c) => {
+        const on = highlight && pick.highlight.includes(c.key)
+        return (
+          // A divider on the left of every cell; the cells this pick optimises are green (success tokens).
+          <div
+            key={c.key}
+            className={cn(
+              "flex min-w-0 flex-1 flex-col gap-1 border-l px-2.5 py-2",
+              on ? "border-success/50 bg-success-foreground/50 font-semibold text-success" : "border-border-subtle bg-background",
+            )}
+          >
+            <dt className={cn("text-xxs leading-3 font-semibold tracking-[1px] uppercase", !on && "text-muted-foreground")}>{c.label}</dt>
+            <dd className={cn("text-xs leading-4 tabular-nums", !on && "tracking-[0.12px] text-primary")}>{c.value}</dd>
+          </div>
+        )
+      })}
     </dl>
   )
 }
 
 /**
- * Pick tile (Figma 8173:187709): photo; the pick and what it's optimized for, with the radio; the 4Cs pill;
- * then the stone price, ring total and View details. Selection only changes the border.
+ * Pick tile (Figma 8173:188141): photo; the pick and what it's optimized for, with the radio; the 4Cs row;
+ * then View details and the stone price. Selection only changes the border.
  */
 function PickTile({ pick, selected, onSelect, onDetails }: { pick: StonePick; selected: boolean; onSelect: () => void; onDetails: () => void }) {
   const img = stoneImage(pick.stone)
@@ -111,23 +121,117 @@ function PickTile({ pick, selected, onSelect, onDetails }: { pick: StonePick; se
       <div className="col-span-2 md:col-span-1 md:col-start-2">
         <SpecStrip pick={pick} />
       </div>
-      <div className="col-span-2 flex flex-col gap-0.5 text-primary md:col-span-1 md:col-start-2">
-        <p className="text-sm leading-5 font-semibold">{formatPrice(pick.stone.price)}</p>
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="text-xs leading-4 tracking-[0.12px]">Ring Total: {formatPrice(SETTING.price + pick.stone.price)}</p>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onDetails()
-            }}
-            className="shrink-0 cursor-pointer type-label-xs underline"
-          >
-            View details
-          </button>
-        </div>
+      {/* View details, then the stone price (the ring total is in the Ring Summary below). */}
+      <div className="col-span-2 flex items-baseline justify-between gap-3 text-primary md:col-span-1 md:col-start-2">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onDetails()
+          }}
+          className="shrink-0 cursor-pointer type-label-xs underline"
+        >
+          View details
+        </button>
+        <p className="text-sm leading-5 font-semibold whitespace-nowrap">{formatPrice(pick.stone.price)}</p>
       </div>
     </div>
+  )
+}
+
+/** "Round Natural Diamond", "Oval Ruby": the stone without its size (the 4Cs row carries that). */
+function pickName(stone: StonePick["stone"]) {
+  const shape = stoneShape(stone.shape).label
+  return stone.type === "gemstone" ? `${shape} ${gemById(stone.gem).label}` : `${shape} ${stoneType(stone.type).noun}`
+}
+
+/**
+ * Pick details overlay (Figma 8197:189137): one image of the stone on the left; on the right the stone, what it's
+ * optimized for, the 4Cs, View Full Details · certificate, then the price with the ship date, Select and the
+ * "more" menu. The page behind dims to 50% black. Phones stack the image over the details.
+ */
+function PickDetails({
+  pick,
+  kind,
+  onOpenChange,
+  onSelect,
+}: {
+  pick: StonePick | null
+  kind: "Diamond" | "Gemstone"
+  onOpenChange: (open: boolean) => void
+  onSelect: () => void
+}) {
+  const notInTest = useNotInTest()
+  const img = pick ? stoneImage(pick.stone) : null
+  return (
+    <Dialog open={pick !== null} onOpenChange={onOpenChange}>
+      <DialogPortal>
+        <DialogOverlay className="bg-black/50 supports-backdrop-filter:backdrop-blur-none" />
+        <DialogPrimitive.Popup className="fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100svh-2rem)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto bg-background text-primary outline-none duration-100 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 md:w-230 md:grid-cols-2">
+          {pick && img && (
+            <>
+              {/* A single image of the stone, whatever else it has (the face-up photo, or the ring render). */}
+              <div className="relative aspect-square bg-secondary">
+                <img
+                  src={img.src}
+                  alt={`${stoneTitle(pick.stone)}, face up`}
+                  className={cn("absolute inset-0 size-full", img.render ? "object-contain mix-blend-multiply" : "object-cover")}
+                />
+              </div>
+              <div className="flex flex-col justify-between gap-8 border-b border-border-subtle p-5 md:p-10">
+                <div className="flex flex-col gap-8">
+                  <div className="flex items-start gap-6">
+                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                      <DialogPrimitive.Title className="type-h4 text-primary">{pickName(pick.stone)}</DialogPrimitive.Title>
+                      <p className="text-xs leading-4 tracking-[0.12px]">Optimized for {pick.optimizedFor}</p>
+                    </div>
+                    <DialogPrimitive.Close aria-label="Close" className="flex size-8 shrink-0 cursor-pointer items-center justify-center text-primary">
+                      <XIcon className="size-5" />
+                    </DialogPrimitive.Close>
+                  </div>
+                  <SpecStrip pick={pick} highlight={false} />
+                  <div className="flex items-start gap-2 type-label-xs">
+                    <button type="button" onClick={() => notInTest("Stone details")} className="cursor-pointer type-label-xs underline">
+                      View Full Details
+                    </button>
+                    {pick.stone.type !== "gemstone" && (
+                      <>
+                        <span aria-hidden>∙</span>
+                        <button type="button" onClick={() => notInTest("The GIA certificate")} className="cursor-pointer type-label-xs underline">
+                          GIA Certificate
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-6">
+                  <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="text-base leading-6 font-semibold">{formatPrice(pick.stone.price)}</span>
+                    <span className="text-xs leading-4 tracking-[0.12px]">Order now and it ships {DELIVERY.shipBy.replace("By", "by")}.</span>
+                  </p>
+                  <div className="h-px bg-border-subtle" />
+                  <div className="flex gap-2">
+                    <Button className="flex-1" onClick={onSelect}>
+                      Select this {kind}
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger render={<Button variant="outline" size="icon" aria-label="More options" className="border-border-subtle" />}>
+                        <EllipsisVertical />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={() => notInTest("Adding to a ring")}>Add to a ring</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => notInTest("Adding to a pendant")}>Add to a pendant</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => notInTest("Adding a loose stone to bag")}>Add loose stone to bag</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogPrimitive.Popup>
+      </DialogPortal>
+    </Dialog>
   )
 }
 
@@ -232,20 +336,17 @@ export function Test2Recommendations() {
           onViewAll={() => navigate(href("diamonds", { from: "recs" }))}
         />
       </StoneStepLayout>
-      {/* The Diamond GLP's Quickview, for diamonds and gemstones (ring total = this setting + the stone). Selecting
-          there picks the stone and moves on, as the page's Select button does; the full details page is Test 3. */}
-      <DiamondQuickview
-        diamond={quickview && toQuickviewDiamond(quickview.stone)}
-        title={quickview ? stoneTitle(quickview.stone) : undefined}
-        noun={kind}
-        certificate={prefs.type === "gemstone" ? null : undefined}
+      {/* Pick details (Figma 8197:189137). Selecting there picks the stone and moves on, as the page's Select button
+          does; the full details page is Test 3. */}
+      <PickDetails
+        pick={quickview}
+        kind={kind}
         onOpenChange={(open) => !open && setQuickview(null)}
         onSelect={() => {
           if (quickview) setSelectedKind(quickview.kind)
           setQuickview(null)
           notInTest("Finishing touches (step 3)")
         }}
-        onViewDetails={() => notInTest("Stone details")}
       />
     </div>
   )

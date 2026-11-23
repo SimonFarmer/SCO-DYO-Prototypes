@@ -47,7 +47,14 @@ function SizeSection({ sim, setSize, shopBy }: { sim: StoneSim; setSize: (v: num
       {noBudgetStock ? (
         <StockNote>No stones at this budget. Try widening it.</StockNote>
       ) : (
-        <SizeLine scale={sim.sizes} value={sim.size} onChange={(v) => setSize(snapSize(v, sim.sizes))} largest={sim.largest} band={band} />
+        <SizeLine
+          scale={sim.sizes}
+          value={sim.size}
+          onChange={(v) => setSize(snapSize(v, sim.sizes))}
+          largest={sim.largest}
+          band={band}
+          over={sim.overBy !== null}
+        />
       )}
     </section>
   )
@@ -67,6 +74,7 @@ function BudgetSection({ sim, update, interactive, withBand }: { sim: StoneSim; 
           hi={sim.budgetHi}
           onChange={interactive ? (budgetLo, budgetHi) => update({ budgetLo, budgetHi }) : undefined}
           band={withBand ? sim.sizeRing : null}
+          projection={sim.overBy ? sim.sizeRing?.lo : null}
         />
       )}
     </section>
@@ -141,10 +149,13 @@ export function Test2() {
               desc: (
                 <>
                   {stoneName(prefs, sim.scope.shape)} (<span className="font-semibold">{formatSize(sim.size, sim.sizes.unit)} ±</span>
-                  {shopBy === "both" && (sim.inBudget ? ", in your budget" : ", outside your budget")})
+                  {/* Over budget, the red line under the row says so (canvas option C). */}
+                  {shopBy === "both" && !sim.overBy && (sim.inBudget ? ", in your budget" : ", outside your budget")})
                 </>
               ),
               price: stonePrice,
+              over: sim.overBy !== null,
+              note: sim.overBy ? `Selection is +${formatPrice(sim.overBy)} above your budget` : undefined,
             },
           ]}
           total={total}

@@ -194,7 +194,22 @@ const tagWidth = (text: string) => text.length * 7.5
  * Two price tags under a line at x1/x2 (0–100 of the track). Centred under handles, or flush with a
  * band's ends; merged into one "a – b" tag when they would collide (concept).
  */
-function PriceTags({ a, b, x1, x2, align }: { a: string; b: string; x1: number; x2: number; align: "center" | "ends" }) {
+function PriceTags({
+  a,
+  b,
+  x1,
+  x2,
+  align,
+  extra,
+}: {
+  a: string
+  b: string
+  x1: number
+  x2: number
+  align: "center" | "ends"
+  /** A third tag (the over-budget projection), shown only where it clears the others */
+  extra?: { text: string; x: number; className: string } | null
+}) {
   const [ref, w] = useWidth<HTMLDivElement>()
   const px1 = (x1 / 100) * w
   const px2 = (x2 / 100) * w
@@ -205,6 +220,9 @@ function PriceTags({ a, b, x1, x2, align }: { a: string; b: string; x1: number; 
   const right = align === "center" ? clamp(px2 - wb / 2, wb) : clamp(px2 - wb, wb)
   const merged = left + wa + 12 > right
   const both = `${a} – ${b}`
+  const we = extra ? tagWidth(extra.text) : 0
+  const extraLeft = extra ? clamp((extra.x / 100) * w - we / 2, we) : 0
+  const showExtra = !!extra && extraLeft > (merged ? clamp((px1 + px2) / 2 - tagWidth(both) / 2, tagWidth(both)) + tagWidth(both) : right + wb) + 12
   return (
     <div ref={ref} className="relative mt-1.5 h-3" aria-hidden>
       {w > 0 &&
@@ -222,6 +240,11 @@ function PriceTags({ a, b, x1, x2, align }: { a: string; b: string; x1: number; 
             </span>
           </>
         ))}
+      {w > 0 && showExtra && extra && (
+        <span className={cn(TAG, extra.className)} style={{ left: extraLeft }}>
+          {extra.text}
+        </span>
+      )}
     </div>
   )
 }
@@ -248,6 +271,7 @@ export function BudgetLine({
   hi,
   onChange,
   band,
+  projection,
 }: {
   scale: number[]
   lo: number
@@ -255,6 +279,8 @@ export function BudgetLine({
   onChange?: (lo: number, hi: number) => void
   /** Ring price range shown in green (a size's lowest → highest quality) */
   band?: { lo: number; hi: number } | null
+  /** Size + Budget over budget: the cheapest ring at the chosen size, projected past the top handle */
+  projection?: number | null
 }) {
   const last = scale.length - 1
   const clampToScale = (v: number) => Math.min(scale[last], Math.max(scale[0], v))
@@ -276,6 +302,10 @@ export function BudgetLine({
   }
 
   const gap = Math.min(BUDGET_GAP, last)
+  // Over budget (canvas option C): a pink run from the top handle to where the selection's price lands, a red
+  // tick there and its price under it (when it clears the handle's tag). Prices past the scale pin to its end.
+  const hiPct = scalePct(scale, hi)
+  const projPct = projection ? scalePct(scale, clampToScale(projection)) : null
   return (
     <div className="flex flex-col">
       <Slider
@@ -293,9 +323,26 @@ export function BudgetLine({
         thumbClassName="shadow-md"
       >
         {bandPct && <GreenBand {...bandPct} />}
+        {projPct !== null && (
+          <>
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 bg-destructive-foreground transition-[width] duration-200"
+              style={{ left: `${hiPct}%`, width: `${Math.max(projPct - hiPct, 0)}%` }}
+            />
+            <span aria-hidden className="pointer-events-none absolute -top-1.25 h-4 w-0.5 -translate-x-1/2 bg-destructive transition-[left] duration-200" style={{ left: `${projPct}%` }} />
+          </>
+        )}
       </Slider>
       <div className="px-2">
-        <PriceTags a={formatPrice(lo)} b={formatPrice(hi)} x1={scalePct(scale, lo)} x2={scalePct(scale, hi)} align="center" />
+        <PriceTags
+          a={formatPrice(lo)}
+          b={formatPrice(hi)}
+          x1={scalePct(scale, lo)}
+          x2={hiPct}
+          align="center"
+          extra={projection && projPct !== null ? { text: formatPrice(projection), x: projPct, className: "text-tertiary" } : null}
+        />
       </div>
     </div>
   )
@@ -313,12 +360,15 @@ export function SizeLine({
   onChange,
   largest,
   band,
+  over,
 }: {
   scale: SizeScale
   value: number
   onChange: (v: number) => void
   largest: number
   band?: { from: number; to: number } | null
+  /** Size + Budget over budget: sizes past the band (up to the largest in stock) are tinted pink */
+  over?: boolean
 }) {
   const pct = (v: number) => (scale.max === scale.min ? 0 : ((Math.max(scale.min, Math.min(scale.max, v)) - scale.min) / (scale.max - scale.min)) * 100)
   const capped = largest < scale.max - 1e-9
@@ -348,6 +398,13 @@ export function SizeLine({
             <span aria-hidden className="absolute -top-1.25 h-4 w-px -translate-x-1/2 bg-primary" style={{ left: `${at}%` }} />
           </>
         )}
+        {over && band && (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 bg-destructive-foreground"
+            style={{ left: `${pct(band.to)}%`, width: `${Math.max(at - pct(band.to), 0)}%` }}
+          />
+        )}
         {band && <GreenBand from={pct(band.from)} to={pct(band.to)} />}
       </Slider>
       <div className="relative mx-5 mt-1.5 h-3 type-label-xs normal-case text-muted-foreground" aria-hidden>
@@ -364,7 +421,8 @@ export function PriceExplained({
   rows,
   total,
 }: {
-  rows: { label: string; desc: ReactNode; price: string }[]
+  /** `over`: the price in red with `note` (red) under the row (Size + Budget over budget) */
+  rows: { label: string; desc: ReactNode; price: string; over?: boolean; note?: ReactNode }[]
   total: string
 }) {
   return (
@@ -374,8 +432,9 @@ export function PriceExplained({
           <p className="type-label-xs">{r.label}</p>
           <div className="flex items-start gap-2 text-xs leading-4">
             <p className="min-w-0 flex-1 tracking-[0.12px]">{r.desc}</p>
-            <p className="text-right font-semibold whitespace-nowrap">{r.price}</p>
+            <p className={cn("text-right font-semibold whitespace-nowrap", r.over && "text-tertiary")}>{r.price}</p>
           </div>
+          {r.note && <p className="text-xs leading-4 text-tertiary">{r.note}</p>}
         </div>
       ))}
       <div className="h-px bg-input" />
