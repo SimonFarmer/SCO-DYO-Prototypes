@@ -8,7 +8,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react"
 import { useEffect, useRef, useState } from "react"
-import { useNavigate } from "react-router"
+import { useSiteNavigate } from "@/flow/flow-context"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { MegaMenu } from "@/components/site/mega-menu"
 import { useStickyOnIntent } from "@/components/site/use-sticky-on-intent"
@@ -47,7 +47,7 @@ function UtilityLink({ icon: IconCmp, label }: { icon: Icon; label: string }) {
 export function SiteHeader({
   navigation = false,
   mobileHidden = false,
-  contained = false,
+  contained = true,
 }: {
   navigation?: boolean
   /** Cap the header's contents at the page max width (1680px); the bar itself stays full width. */
@@ -56,15 +56,12 @@ export function SiteHeader({
   mobileHidden?: boolean
 }) {
   const notInTest = useNotInTest()
-  const navigate = useNavigate()
+  const siteNavigate = useSiteNavigate()
   const ref = useRef<HTMLElement>(null)
   const visible = useStickyOnIntent(ref)
   const [menuOpen, setMenuOpen] = useState(false)
   // Prototype-only: the logo returns to the index of prototypes (not the storefront homepage).
-  const toIndex = () => {
-    navigate("/")
-    window.scrollTo({ top: 0 })
-  }
+  const toIndex = () => siteNavigate("/")
   const closeTimer = useRef<number | undefined>(undefined)
 
   const openMenu = () => {
@@ -140,8 +137,7 @@ export function SiteHeader({
                   onClick={() => {
                     if (!live) return notInTest(navigation ? item : "Site navigation")
                     setMenuOpen(false)
-                    navigate(PLP_PATH)
-                    window.scrollTo({ top: 0 })
+                    siteNavigate(PLP_PATH)
                   }}
                   className={cn(
                     "relative h-full cursor-pointer type-label-s text-primary",

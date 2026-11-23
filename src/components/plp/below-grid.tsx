@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { CalendarBlankIcon, ChatTextIcon, PhoneIcon } from "@phosphor-icons/react"
 import { useNavigate } from "react-router"
+import { useFlowPath } from "@/flow/flow-context"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { useNotInTest } from "@/components/prototype/not-in-test"
@@ -92,12 +93,13 @@ function NaturalDiamonds({ contained }: { contained: boolean }) {
 }
 
 /**
- * Content below the PLP grid. `contained` (Test 2 PLP) caps the full-width sections at the 1680px page
- * width while their backgrounds still run edge to edge; without it they're unchanged.
+ * Content below the PLP grid. `contained` (the default, as every page) caps the full-width sections at
+ * the 1680px page width while their backgrounds still run edge to edge.
  */
-export function BelowGridContent({ contained = false }: { contained?: boolean } = {}) {
+export function BelowGridContent({ contained = true }: { contained?: boolean } = {}) {
   const notInTest = useNotInTest()
   const navigate = useNavigate()
+  const flowPath = useFlowPath()
 
   return (
     <div className="flex flex-col bg-secondary">
@@ -172,7 +174,7 @@ export function BelowGridContent({ contained = false }: { contained?: boolean } 
                         type="button"
                         onClick={() => {
                           if (l === "Ready to Ship Diamond Engagement Rings") {
-                            navigate(RTS_PATH)
+                            navigate(flowPath(RTS_PATH))
                             window.scrollTo({ top: 0 })
                           } else notInTest(l)
                         }}

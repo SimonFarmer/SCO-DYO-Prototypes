@@ -15,6 +15,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { useFlow, useFlowPath } from "@/flow/flow-context"
 import { Button } from "@/components/ui/button"
 import { NAV_LEVEL_1, NAV_SECTIONS, NAV_TOP_LINKS, STORE } from "@/data/plp"
 import { cn } from "@/lib/utils"
@@ -31,6 +32,8 @@ const TABS: { label: string; icon: Icon }[] = [
 
 /** Header row of a menu screen: back (Level 2+), centred logo or title, close. */
 function ScreenHeader({ title, onBack, onClose }: { title?: string; onBack?: () => void; onClose: () => void }) {
+  const flow = useFlow()
+  const flowPath = useFlowPath()
   return (
     <div className="grid h-22 shrink-0 grid-cols-[2.5rem_1fr_2.5rem] items-center px-4">
       {onBack ? (
@@ -43,7 +46,13 @@ function ScreenHeader({ title, onBack, onClose }: { title?: string; onBack?: () 
       {title ? (
         <h2 className="text-center type-h4 font-medium text-primary">{title}</h2>
       ) : (
-        <Link to="/" aria-label="Shane Co. (back to the prototype list)" className="mx-auto">
+        <Link
+          to={flowPath("/")}
+          // In the flow the logo is site navigation too, so it goes through the exit guard.
+          onClick={flow ? (e) => (e.preventDefault(), onClose(), flow.leave("/")) : undefined}
+          aria-label="Shane Co. (back to the prototype list)"
+          className="mx-auto"
+        >
           <img src="/images/logo.svg" alt="" className="h-10 w-auto" />
         </Link>
       )}

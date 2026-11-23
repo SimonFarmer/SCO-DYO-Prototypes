@@ -1,9 +1,13 @@
 import { Fragment } from "react"
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
+import { useNavigate } from "react-router"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { ProductTileSkeleton, TileLoading } from "@/components/shared/tile-skeletons"
+import { ELLA_CATHEDRAL, type MetalId } from "@/data/products"
+import { useFlow } from "@/flow/flow-context"
 import { useFilterLoading } from "@/lib/use-filter-loading"
+import { useRingBuild } from "@/state/ring-build"
 import { cn } from "@/lib/utils"
 import { PlpProductCard } from "./plp-product-card"
 import type { Listing } from "./use-listing"
@@ -77,6 +81,25 @@ export function ProductGrid({ listing, wide }: { listing: Listing; wide: boolean
   const { pageItems, page, pageCount, results, mode } = listing
   // Any filter or sort change shows skeleton tiles for a second, as if the grid were refreshing.
   const loading = useFilterLoading(JSON.stringify([listing.filters, listing.sort]))
+  const flow = useFlow()
+  const navigate = useNavigate()
+  const { setSettingMetal, setShape } = useRingBuild()
+
+  /**
+   * Full flow: every setting opens the Ella Cathedral PDP (the only setting with full PDP data), in the
+   * card's metal when Ella comes in it, previewing the first shape the listing is filtered by.
+   */
+  const openSetting =
+    flow && mode === "dyo"
+      ? (metalId: string) => {
+          const ella = ELLA_CATHEDRAL.variants.find((v) => v.metal === metalId)
+          setSettingMetal((ella?.metal ?? ELLA_CATHEDRAL.defaultMetal) as MetalId)
+          const shape = listing.filters.shape.find((s) => ELLA_CATHEDRAL.shapes.includes(s))
+          setShape(shape ?? null)
+          navigate(flow.path("/setting"))
+          window.scrollTo({ top: 0 })
+        }
+      : undefined
 
   if (results.length === 0) {
     return (
@@ -110,6 +133,7 @@ export function ProductGrid({ listing, wide }: { listing: Listing; wide: boolean
                   priceLabel={mode === "dyo" ? "Setting only" : undefined}
                   pricePrefix={mode === "rts" ? "Starting at" : undefined}
                   preferredShapes={listing.filters.shape}
+                  onOpen={openSetting}
                 />
               </TileLoading>
             </li>

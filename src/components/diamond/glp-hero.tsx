@@ -1,6 +1,7 @@
 import { useRef, useState, type ReactNode } from "react"
 import { ArrowLeftIcon, ArrowRightIcon, CaretLeftIcon, CaretRightIcon, InfoIcon, XIcon } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { useFlow } from "@/flow/flow-context"
 import { GradeSlider } from "@/components/diamond/diamond-filters"
 import { useGlpCatalog, type ExploreKey, type ExploreTab } from "@/components/diamond/glp-catalog"
 import { Button } from "@/components/ui/button"
@@ -325,6 +326,7 @@ function StoneTypeToggle() {
  */
 export function GlpHero({ listing }: { listing: DiamondListing }) {
   const notInTest = useNotInTest()
+  const flow = useFlow()
   const { hero } = useGlpCatalog()
   const [readMore, setReadMore] = useState(false)
   const [drawer, setDrawer] = useState<ExploreKey | null>(null)
@@ -333,7 +335,9 @@ export function GlpHero({ listing }: { listing: DiamondListing }) {
     <section className="flex flex-col gap-8 bg-linear-to-b from-secondary from-32% to-secondary/0 px-page pt-5 pb-8 lg:gap-5 lg:bg-secondary lg:bg-none lg:pb-10">
       <button
         type="button"
-        onClick={() => (hero.back.onClick ? hero.back.onClick() : notInTest("Stone preferences"))}
+        // The page's own back target first (Test 2's PLP, and the flow's copy of it); then, in the full flow,
+        // the shopper's stone preferences; elsewhere it isn't part of the test.
+        onClick={() => (hero.back.onClick ? hero.back.onClick() : flow ? flow.goToStep("stone", "edit") : notInTest("Stone preferences"))}
         className="flex cursor-pointer items-center gap-1 self-start type-caption text-muted-foreground hover:text-primary"
       >
         <CaretLeftIcon className="size-4" />

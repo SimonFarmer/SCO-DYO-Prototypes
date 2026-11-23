@@ -12,6 +12,7 @@ import {
   type Stone,
   type WeddingBand,
 } from "@/data/dyo"
+import { ELLA_CATHEDRAL, METALS, galleryFor, type MetalId } from "@/data/products"
 
 export interface Engraving {
   text: string
@@ -27,6 +28,10 @@ interface BuildState {
   bandEngraving: Engraving | null
   /** Stone chosen in the Stone step (Test 3). Falls back to the pre-chosen STONE. */
   stone: Stone | null
+  /** Full flow only: metal picked on the Setting PDP (the setting is always Ella Cathedral there). */
+  settingMetal?: MetalId | null
+  /** Full flow only: center-stone shape the shopper came in with (Engagement Rings › Shop by Shape). */
+  shape?: string | null
 }
 
 export interface LineItem {
@@ -50,13 +55,20 @@ interface RingBuild extends BuildState {
   setBandId: (id: string | null) => void
   setBandEngraving: (engraving: Engraving | null) => void
   setStone: (stone: Stone) => void
+  /** Full flow: the Setting PDP's metal (changes the setting price in the stepper and totals). */
+  setSettingMetal: (metal: MetalId) => void
+  /** Full flow: preferred center-stone shape, carried from the entry point to the PDP preview and stone step. */
+  setShape: (shape: string | null) => void
   reset: () => void
   /** Clears every build (used when launching a prototype from the index). */
   resetAll: () => void
 }
 
-/** A and B are Test 4's variants; T3 is Test 3's own build, so a stone picked there never shows up in Test 4. */
-type BuildKey = "A" | "B" | "T3"
+/**
+ * A and B are Test 4's variants; T3 is Test 3's own build, so a stone picked there never shows up in Test 4.
+ * FLOW is the full DYO flow (/flow), kept apart from every unmoderated test.
+ */
+type BuildKey = "A" | "B" | "T3" | "FLOW" | "FLOWA"
 
 /**
  * Starting state per build, following the Figma frames:
@@ -66,6 +78,24 @@ const INITIAL: Record<BuildKey, BuildState> = {
   A: { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
   B: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
   T3: { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
+  FLOW: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingMetal: null, shape: null },
+  /** The accordion steps flow (/flow-accordion): its own build, apart from /flow. */
+  FLOWA: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingMetal: null, shape: null },
+}
+
+const BUILD_KEYS = Object.keys(INITIAL) as BuildKey[]
+
+/** The flow's setting: Ella Cathedral in the chosen metal, in the shape the stepper and review expect. */
+function flowSetting(metal: MetalId | null | undefined): typeof SETTING {
+  const variant = ELLA_CATHEDRAL.variants.find((v) => v.metal === metal) ?? ELLA_CATHEDRAL.variants[0]
+  return {
+    id: ELLA_CATHEDRAL.id,
+    name: ELLA_CATHEDRAL.name,
+    article: variant.articleNo,
+    price: variant.price,
+    metal: METALS[variant.metal].label,
+    image: galleryFor(ELLA_CATHEDRAL, variant.metal)[0]?.src ?? SETTING.image,
+  }
 }
 
 /**
@@ -73,6 +103,8 @@ const INITIAL: Record<BuildKey, BuildState> = {
  * older ?variant=B links still resolve to B.
  */
 function buildKeyFor(pathname: string, search: string): BuildKey {
+  if (/^\/flow-accordion(\/|$)/.test(pathname)) return "FLOWA"
+  if (/^\/flow(\/|$)/.test(pathname)) return "FLOW"
   if (/^\/test-3/.test(pathname)) return "T3"
   const fromPath = pathname.match(/^\/test-4\/([ab])(?:\/|$)/i)?.[1]
   const variant = (fromPath ?? new URLSearchParams(search).get("variant"))?.toUpperCase()
@@ -99,7 +131,9 @@ const RingBuildContext = createContext<RingBuild | null>(null)
 export function RingBuildProvider({ children }: { children: ReactNode }) {
   const { pathname, search } = useLocation()
   const key = buildKeyFor(pathname, search)
-  const [builds, setBuilds] = useState<Record<BuildKey, BuildState>>(() => ({ A: load("A"), B: load("B"), T3: load("T3") }))
+  const [builds, setBuilds] = useState<Record<BuildKey, BuildState>>(
+    () => Object.fromEntries(BUILD_KEYS.map((k) => [k, load(k)])) as Record<BuildKey, BuildState>,
+  )
   const state = builds[key]
 
   useEffect(() => {
@@ -118,8 +152,9 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
     const engravingStyle = styleOf(state.engraving)
     const band = WEDDING_BANDS.find((b) => b.id === state.bandId) ?? null
     const bandEngraving = band ? state.bandEngraving : null
+    const setting = key === "FLOW" || key === "FLOWA" ? flowSetting(state.settingMetal) : SETTING
     const lineItems: LineItem[] = [
-      { kind: "setting", price: SETTING.price },
+      { kind: "setting", price: setting.price },
       { kind: "stone", price: stone.price },
       ...(crown ? [{ kind: "crown" as const, price: crown.price }] : []),
       ...(state.engraving ? [{ kind: "engraving" as const, price: ENGRAVING.price }] : []),
@@ -128,7 +163,7 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
     ]
     return {
       ...state,
-      setting: SETTING,
+      setting,
       stone,
       crown,
       engravingStyle,
@@ -143,6 +178,8 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
       setBandId: (bandId) => update(bandId ? { bandId } : { bandId: null, bandEngraving: null }),
       setBandEngraving: (bandEngraving) => update({ bandEngraving }),
       setStone: (stone) => update({ stone }),
+      setSettingMetal: (settingMetal) => update({ settingMetal }),
+      setShape: (shape) => update({ shape }),
       reset: () => update(INITIAL[key]),
       resetAll: () => setBuilds(INITIAL),
     }

@@ -1,6 +1,7 @@
 import { Fragment, useState } from "react"
 import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { useFlow } from "@/flow/flow-context"
 import { formatPrice } from "@/lib/format"
 import { cn, PAGE_MAX } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
@@ -74,7 +75,7 @@ export function DyoStepper({
   mobileLabel,
   showTotal = true,
   mobileTone = "secondary",
-  contained = false,
+  contained = true,
 }: {
   /** Position of the current step (1–3) in this journey's order. */
   current: StepNumber
@@ -91,6 +92,8 @@ export function DyoStepper({
 }) {
   const { setting, stone, total } = useRingBuild()
   const notInTest = useNotInTest()
+  // Full flow: View/Edit go back to that step with the build kept. In the tests they stay inert.
+  const flow = useFlow()
   const [open, setOpen] = useState(false)
 
   const stateOf = (n: StepNumber) => (n < current ? "done" : n === current ? "current" : "upcoming")
@@ -125,10 +128,10 @@ export function DyoStepper({
                           <span>{step.label}:</span>
                           <span>{formatPrice(step.price)}</span>
                         </span>
-                        <button type="button" className="cursor-pointer underline" onClick={() => notInTest("Viewing a previous step")}>
+                        <button type="button" className="cursor-pointer underline" onClick={() => (flow ? flow.goToStep(kind as "setting" | "stone", "view") : notInTest("Viewing a previous step"))}>
                           View
                         </button>
-                        <button type="button" className="cursor-pointer underline" onClick={() => notInTest("Editing a previous step")}>
+                        <button type="button" className="cursor-pointer underline" onClick={() => (flow ? flow.goToStep(kind as "setting" | "stone", "edit") : notInTest("Editing a previous step"))}>
                           Edit
                         </button>
                       </div>
@@ -184,10 +187,10 @@ export function DyoStepper({
           <ol className="absolute inset-x-0 top-full border-b border-border-subtle bg-background px-margin shadow-lg animate-in fade-in slide-in-from-top-1">
             {numbered.map(({ kind, n }) =>
               kind === "finishing"
-                ? { n, label: STEP_LABEL[kind], lines: [STEP_DESCRIPTION[kind]], price: showTotal ? `Total: ${formatPrice(total)}` : "" }
+                ? { n, kind, label: STEP_LABEL[kind], lines: [STEP_DESCRIPTION[kind]], price: showTotal ? `Total: ${formatPrice(total)}` : "" }
                 : stateOf(n) === "done"
-                  ? { n, label: STEP_LABEL[kind], lines: chosen[kind].lines, price: formatPrice(chosen[kind].price) }
-                  : { n, label: STEP_LABEL[kind], lines: [STEP_DESCRIPTION[kind]], price: "" },
+                  ? { n, kind, label: STEP_LABEL[kind], lines: chosen[kind].lines, price: formatPrice(chosen[kind].price) }
+                  : { n, kind, label: STEP_LABEL[kind], lines: [STEP_DESCRIPTION[kind]], price: "" },
             ).map((step, i, all) => (
               <li
                 key={step.n}
@@ -207,7 +210,11 @@ export function DyoStepper({
                 {step.n < current && (
                   <button
                     type="button"
-                    onClick={() => notInTest("Editing a previous step")}
+                    onClick={() => {
+                      if (!flow) return notInTest("Editing a previous step")
+                      setOpen(false)
+                      flow.goToStep(step.kind as "setting" | "stone", "edit")
+                    }}
                     className="cursor-pointer self-start type-label-xs text-primary underline"
                   >
                     Edit
