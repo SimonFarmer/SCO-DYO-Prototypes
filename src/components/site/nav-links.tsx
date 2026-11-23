@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { useNavigate } from "react-router"
+import { useSiteNavigate } from "@/flow/flow-context"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { NAV_PROMO, type NavGroup, type NavLink } from "@/data/plp"
 import { cn } from "@/lib/utils"
@@ -9,16 +9,15 @@ import { cn } from "@/lib/utils"
  * anything else shows the "not part of this test" notice.
  */
 export function useOpenNavLink(onNavigate?: () => void) {
-  const navigate = useNavigate()
   const notInTest = useNotInTest()
+  const siteNavigate = useSiteNavigate()
   return (link: NavLink) => {
     if (!link.to) {
       notInTest(link.label)
       return
     }
     onNavigate?.()
-    navigate(link.to)
-    window.scrollTo({ top: 0 })
+    siteNavigate(link.to)
   }
 }
 

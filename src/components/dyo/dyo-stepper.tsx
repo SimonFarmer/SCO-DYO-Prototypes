@@ -1,6 +1,7 @@
 import { Fragment, useState } from "react"
 import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { useFlow } from "@/flow/flow-context"
 import { formatPrice } from "@/lib/format"
 import { cn, PAGE_MAX } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
@@ -74,6 +75,8 @@ export function DyoStepper({
 }) {
   const { setting, stone, total } = useRingBuild()
   const notInTest = useNotInTest()
+  // Full flow: View/Edit go back to that step with the build kept. In the tests they stay inert.
+  const flow = useFlow()
   const [open, setOpen] = useState(false)
 
   const stateOf = (n: StepNumber) => (n < current ? "done" : n === current ? "current" : "upcoming")
@@ -106,10 +109,10 @@ export function DyoStepper({
                           <span>{step.label}:</span>
                           <span>{formatPrice(step.price)}</span>
                         </span>
-                        <button type="button" className="cursor-pointer underline" onClick={() => notInTest("Viewing a previous step")}>
+                        <button type="button" className="cursor-pointer underline" onClick={() => (flow ? flow.goToStep(step.n as 1 | 2, "view") : notInTest("Viewing a previous step"))}>
                           View
                         </button>
-                        <button type="button" className="cursor-pointer underline" onClick={() => notInTest("Editing a previous step")}>
+                        <button type="button" className="cursor-pointer underline" onClick={() => (flow ? flow.goToStep(step.n as 1 | 2, "edit") : notInTest("Editing a previous step"))}>
                           Edit
                         </button>
                       </div>
@@ -190,7 +193,11 @@ export function DyoStepper({
                 {step.n < current && (
                   <button
                     type="button"
-                    onClick={() => notInTest("Editing a previous step")}
+                    onClick={() => {
+                      if (!flow) return notInTest("Editing a previous step")
+                      setOpen(false)
+                      flow.goToStep(step.n as 1 | 2, "edit")
+                    }}
                     className="cursor-pointer self-start type-label-xs text-primary underline"
                   >
                     Edit

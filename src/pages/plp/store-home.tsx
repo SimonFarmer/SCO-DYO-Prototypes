@@ -5,6 +5,7 @@ import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { PLP_PATH } from "@/data/plp"
+import { useFlowPath } from "@/flow/flow-context"
 
 /**
  * Storefront homepage: the entry point to the Engagement Ring PLP prototype.
@@ -13,6 +14,7 @@ import { PLP_PATH } from "@/data/plp"
 export function StoreHome() {
   const navigate = useNavigate()
   const notInTest = useNotInTest()
+  const flowPath = useFlowPath()
 
   return (
     <div className="min-h-svh bg-background">
@@ -29,7 +31,7 @@ export function StoreHome() {
           {/* Mobile: the logo sits on the hero */}
           <div className="absolute inset-x-0 top-6 flex flex-col items-center gap-2 lg:hidden">
             {/* Prototype-only: the logo returns to the list of prototypes. */}
-            <Link to="/" aria-label="Shane Co. (back to the prototype list)">
+            <Link to={flowPath("/")} aria-label="Shane Co. (back to the prototype list)">
               <img src="/images/logo.svg" alt="" className="h-10 w-auto brightness-0 invert" />
             </Link>
             <img src="/images/tagline.svg" alt="Your friend & jeweler" className="h-2 w-auto brightness-0 invert" />
@@ -44,7 +46,7 @@ export function StoreHome() {
               variant="secondary"
               className="w-full bg-background text-primary hover:bg-secondary"
               onClick={() => {
-                navigate(PLP_PATH)
+                navigate(flowPath(PLP_PATH))
                 window.scrollTo({ top: 0 })
               }}
             >

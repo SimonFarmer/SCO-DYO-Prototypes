@@ -19,6 +19,7 @@ export function PlpProductCard({
   priceLabel,
   pricePrefix,
   preferredShapes,
+  onOpen,
 }: {
   product: PlpProduct
   /** Label after the price, e.g. "Setting only". */
@@ -27,8 +28,11 @@ export function PlpProductCard({
   pricePrefix?: string
   /** Stone shapes the listing is filtered by, in the order chosen. */
   preferredShapes?: string[]
+  /** Opens the product page with the metal shown on the card (full flow); without it, "not part of this test". */
+  onOpen?: (metalId: string) => void
 }) {
   const notInTest = useNotInTest()
+  const openProduct = () => (onOpen ? onOpen(metalId) : notInTest("The product page"))
   const [metalId, setMetalId] = useState(product.metal.id)
   const [wished, setWished] = useState(false)
   // Settings have one card per metal; swatches show the sibling variants.
@@ -45,7 +49,7 @@ export function PlpProductCard({
       <div className="group relative aspect-square w-full overflow-hidden bg-secondary">
         <button
           type="button"
-          onClick={() => notInTest("The product page")}
+          onClick={openProduct}
           className="block size-full cursor-pointer"
           aria-label={`${shown.name}, ${metal.label}`}
         >
@@ -88,7 +92,7 @@ export function PlpProductCard({
 
       <div className="flex flex-col gap-3 py-3 pr-2">
         <h3 className="line-clamp-2 font-sans text-sm leading-5 font-medium text-primary lg:text-base lg:leading-6">
-          <button type="button" onClick={() => notInTest("The product page")} className="cursor-pointer text-left hover:underline">
+          <button type="button" onClick={openProduct} className="cursor-pointer text-left hover:underline">
             {shown.name}
           </button>
         </h3>

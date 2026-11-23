@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router"
+import { useFlow, useFlowPath } from "@/flow/flow-context"
 import { ArrowLeftIcon, ArrowRightIcon, CaretRightIcon, HandbagIcon, MagicWandIcon, XIcon } from "@phosphor-icons/react"
 import { Breadcrumb, type Crumb } from "@/components/site/breadcrumb"
 import { Button } from "@/components/ui/button"
@@ -45,8 +46,9 @@ const RTS_COPY =
  */
 function ModeToggle({ mode }: { mode: Listing["mode"] }) {
   const navigate = useNavigate()
+  const flowPath = useFlowPath()
   const go = (to: string) => {
-    navigate(to)
+    navigate(flowPath(to))
     window.scrollTo({ top: 0 })
   }
   const item = (active: boolean, side: "left" | "right", label: string, Icon: typeof MagicWandIcon, to: string) => (
@@ -287,14 +289,22 @@ export function CollectionHero({ listing }: { listing: Listing }) {
   const [drawer, setDrawer] = useState<ExploreKey | null>(null)
 
   const title = mode === "rts" ? "Ready to Ship Engagement Rings" : (collection?.title ?? "Engagement Rings")
+  const flow = useFlow()
   const crumbs: Crumb[] = [{ label: "Home", to: "/shop" }]
   if (mode === "rts" || collection) crumbs.push({ label: "Engagement Rings", to: PLP_PATH })
   crumbs.push(title)
+  // Full flow: DYO pages end the trail on "Design Your Own" (benchmarks); the moderator can hide it.
+  const inFlowDyo = !!flow && mode === "dyo"
+  if (inFlowDyo) {
+    crumbs[crumbs.length - 1] = collection ? { label: title, to: `${PLP_PATH}/${collection.slug}` } : { label: "Engagement Rings", to: PLP_PATH }
+    crumbs.push("Design Your Own")
+  }
+  const showCrumbs = !inFlowDyo || flow.config.crumbs
   const copy = mode === "rts" ? RTS_COPY : (collection?.description ?? DYO_COPY)
 
   return (
     <section className="flex flex-col gap-8 bg-linear-to-b from-secondary from-32% to-secondary/0 px-margin pt-5 pb-8 lg:bg-secondary lg:bg-none lg:pb-10">
-      <Breadcrumb items={crumbs} className="p-0" />
+      {showCrumbs && <Breadcrumb items={crumbs} className="p-0" />}
 
       <div className="flex flex-col lg:flex-row lg:gap-16">
         <div className="flex flex-col gap-6 lg:w-guided-intent lg:shrink-0 lg:gap-8 lg:border-r lg:border-border-subtle lg:pr-16 lg:pb-7">

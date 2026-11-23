@@ -1,6 +1,11 @@
 import { BrowserRouter, Route, Routes } from "react-router"
 import { NotInTestProvider } from "@/components/prototype/not-in-test"
 import { NaturalDiamondPdp, NaturalDiamondsGlp } from "@/pages/diamonds"
+import { FlowLayout } from "@/flow/flow-context"
+import { FlowSettingPdp } from "@/flow/pages/flow-setting"
+import { FlowAddedToBag, FlowRingReviewB, FlowStep3 } from "@/flow/finish/finish-pages"
+import { FlowDiamondPdp, FlowGlp } from "@/flow/stone/diamond-pages"
+import { FlowStonePreferences, FlowStoneRecommendations } from "@/flow/stone/stone-pages"
 import { Blank, Home } from "@/pages/home"
 import { EngagementRingPlp } from "@/pages/plp"
 import { StoreHome } from "@/pages/plp/store-home"
@@ -37,6 +42,21 @@ export default function App() {
             <Route path="/test-3-quickview/:variant/review" element={<Test3Done />} />
             <Route path="/test-3-specs/:variant?" element={<Test3Specs />} />
             <Route path="/test-3-specs/:variant/review" element={<Test3Done />} />
+            {/* Full DYO flow (Test 5, moderated): its own routes and build, so the tests above stay untouched. */}
+            <Route path="/flow" element={<FlowLayout />}>
+              <Route index element={<StoreHome />} />
+              <Route path="shop" element={<StoreHome />} />
+              <Route path="engagement-rings" element={<EngagementRingPlp />} />
+              <Route path="engagement-rings/:slug" element={<EngagementRingPlp />} />
+              <Route path="setting" element={<FlowSettingPdp />} />
+              <Route path="stone" element={<FlowStonePreferences />} />
+              <Route path="stone/recommendations" element={<FlowStoneRecommendations />} />
+              <Route path="diamonds" element={<FlowGlp />} />
+              <Route path="diamond/:id" element={<FlowDiamondPdp />} />
+              <Route path="finish" element={<FlowStep3 />} />
+              <Route path="review" element={<FlowRingReviewB />} />
+              <Route path="added" element={<FlowAddedToBag />} />
+            </Route>
             <Route path="/test-4/:variant?" element={<Test4 />} />
             <Route path="/test-4/:variant/review" element={<RingReviewB />} />
             <Route path="/test-4/:variant/added" element={<AddedToBag />} />

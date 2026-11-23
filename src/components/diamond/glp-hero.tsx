@@ -1,6 +1,7 @@
 import { useRef, useState, type ReactNode } from "react"
 import { ArrowLeftIcon, ArrowRightIcon, CaretLeftIcon, CaretRightIcon, InfoIcon, XIcon } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { useFlow } from "@/flow/flow-context"
 import { CUT_HINT, GradeSlider } from "@/components/diamond/diamond-filters"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
@@ -344,6 +345,7 @@ function StoneTypeToggle() {
  */
 export function GlpHero({ listing }: { listing: DiamondListing }) {
   const notInTest = useNotInTest()
+  const flow = useFlow()
   const [readMore, setReadMore] = useState(false)
   const [drawer, setDrawer] = useState<ExploreKey | null>(null)
 
@@ -351,7 +353,8 @@ export function GlpHero({ listing }: { listing: DiamondListing }) {
     <section className="flex flex-col gap-8 bg-linear-to-b from-secondary from-32% to-secondary/0 px-page pt-5 pb-8 lg:gap-5 lg:bg-secondary lg:bg-none lg:pb-10">
       <button
         type="button"
-        onClick={() => notInTest("Stone preferences")}
+        // Full flow: back to the shopper's stone preferences. Elsewhere it isn't part of the test.
+        onClick={() => (flow ? flow.goToStep(2, "edit") : notInTest("Stone preferences"))}
         className="flex cursor-pointer items-center gap-1 self-start type-caption text-muted-foreground hover:text-primary"
       >
         <CaretLeftIcon className="size-4" />

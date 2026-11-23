@@ -1,5 +1,5 @@
 import { Fragment } from "react"
-import { useNavigate } from "react-router"
+import { useSiteNavigate } from "@/flow/flow-context"
 import { CaretRightIcon } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { cn } from "@/lib/utils"
@@ -9,7 +9,7 @@ export type Crumb = string | { label: string; to: string }
 /** Breadcrumb trail. Links without a route are inert in the prototypes ("not part of this test"). */
 export function Breadcrumb({ items, className }: { items: Crumb[]; className?: string }) {
   const notInTest = useNotInTest()
-  const navigate = useNavigate()
+  const siteNavigate = useSiteNavigate()
   return (
     <nav aria-label="Breadcrumb" className={cn("flex min-w-0 items-center gap-2 overflow-hidden p-4", className)}>
       {items.map((crumb, i) => {
@@ -27,8 +27,7 @@ export function Breadcrumb({ items, className }: { items: Crumb[]; className?: s
                 type="button"
                 onClick={() => {
                   if (typeof crumb === "string") return notInTest(crumb)
-                  navigate(crumb.to)
-                  window.scrollTo({ top: 0 })
+                  siteNavigate(crumb.to)
                 }}
                 className="shrink-0 cursor-pointer type-caption text-muted-foreground hover:text-foreground"
               >

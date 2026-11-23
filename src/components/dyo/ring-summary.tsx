@@ -3,6 +3,7 @@ import { InfoIcon } from "@phosphor-icons/react"
 import { ENGRAVING } from "@/data/dyo"
 import { formatPrice } from "@/lib/format"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { useFlow } from "@/flow/flow-context"
 import { useRingBuild } from "@/state/ring-build"
 
 function SpecRows({ rows }: { rows: [string, ReactNode][] }) {
@@ -114,6 +115,8 @@ export function RingSummary({
     setBandEngraving,
   } = useRingBuild()
   const notInTest = useNotInTest()
+  // Full flow: Edit Setting / Edit Stone go back to those steps. In the tests they stay inert.
+  const flow = useFlow()
 
   const crownActions = !readOnly && (
     <>
@@ -162,7 +165,7 @@ export function RingSummary({
             price={setting.price}
             actions={!readOnly && (
               <>
-                <SummaryLink onClick={() => notInTest("Editing the setting")}>Edit Setting</SummaryLink>
+                <SummaryLink onClick={() => (flow ? flow.goToStep(1, "edit") : notInTest("Editing the setting"))}>Edit Setting</SummaryLink>
                 {onEditRingSize && <SummaryLink onClick={onEditRingSize}>Edit Ring Size</SummaryLink>}
               </>
             )}
@@ -176,7 +179,7 @@ export function RingSummary({
             eyebrow="Stone"
             title={stone.title}
             price={stone.price}
-            actions={!readOnly && <SummaryLink onClick={() => notInTest("Editing the stone")}>Edit Stone</SummaryLink>}
+            actions={!readOnly && <SummaryLink onClick={() => (flow ? flow.goToStep(2, "edit") : notInTest("Editing the stone"))}>Edit Stone</SummaryLink>}
           >
             <SpecRows
               rows={[

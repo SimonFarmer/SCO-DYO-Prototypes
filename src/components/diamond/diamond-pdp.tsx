@@ -11,6 +11,8 @@ import { Breadcrumb } from "@/components/site/breadcrumb"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { diamondName, type Diamond } from "@/data/diamonds"
+import { useFlow } from "@/flow/flow-context"
+import { FLOW_CRUMBS } from "@/flow/flow-paths"
 import { RECENTLY_VIEWED } from "@/data/products"
 import { formatPrice } from "@/lib/format"
 import { PAGE_MAX } from "@/lib/utils"
@@ -28,10 +30,12 @@ interface DiamondPdpProps {
  * Shared by Test 3.1 (full-details destination) and Test 3.2 (spec layouts).
  */
 export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false }: DiamondPdpProps) {
+  const flow = useFlow()
   const aboutRef = useRef<HTMLElement>(null)
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader contained />
+      {/* Full flow: live header navigation and the flow breadcrumb; Test 3 keeps them inert. */}
+      <SiteHeader contained navigation={!!flow} />
       <DyoStepper current={2} contained />
       {stickyBar && (
         <PdpStickyBar
@@ -47,7 +51,11 @@ export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false }:
         {/* Gallery + buy form capped at 1680px (PAGE_MAX, as Test 2); the bands below use px-page. */}
         <div className={PAGE_MAX}>
         <div className="grid lg:grid-cols-[826fr_606fr] lg:gap-2">
-          <Breadcrumb items={["Home", "Diamonds", diamondName(diamond)]} className="mx-2 bg-secondary" />
+          {flow ? (
+            flow.config.crumbs && <Breadcrumb items={FLOW_CRUMBS} className="mx-2 bg-secondary" />
+          ) : (
+            <Breadcrumb items={["Home", "Diamonds", diamondName(diamond)]} className="mx-2 bg-secondary" />
+          )}
         </div>
         <div className="grid lg:grid-cols-[826fr_606fr] lg:gap-2">
           <div className="px-2">

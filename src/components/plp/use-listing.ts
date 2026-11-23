@@ -1,5 +1,6 @@
 import { useMemo } from "react"
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router"
+import { stripFlowBase, useFlowPath } from "@/flow/flow-context"
 import {
   DEFAULT_SORT,
   EMPTY_FILTERS,
@@ -92,11 +93,12 @@ export function useListing() {
   const { pathname } = useLocation()
   const [params] = useSearchParams()
   const navigate = useNavigate()
+  const flowPath = useFlowPath()
 
   const variant = usePlpVariant(params)
-  const mode: ListingMode = pathname.startsWith(RTS_PATH) ? "rts" : "dyo"
+  const mode: ListingMode = stripFlowBase(pathname).startsWith(RTS_PATH) ? "rts" : "dyo"
   const collection = mode === "dyo" ? collectionBySlug(slug) : undefined
-  const basePath = mode === "rts" ? RTS_PATH : PLP_PATH
+  const basePath = flowPath(mode === "rts" ? RTS_PATH : PLP_PATH)
   const sort = params.get("sort") ?? DEFAULT_SORT
   const page = Math.max(1, Number(params.get("page")) || 1)
 
