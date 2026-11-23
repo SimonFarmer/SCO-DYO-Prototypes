@@ -23,7 +23,7 @@ import {
   type StoneScope,
   type StoneTypeId,
 } from "@/data/stones"
-import { FLOW_STONE_QUERY_KEY, useFlow } from "@/flow/flow-context"
+import { FLOW_BASE, stoneQueryKey, useFlow } from "@/flow/flow-context"
 import { STONE_PREFERENCE_VARIANTS, type ShopBy, type StonePreferenceVariant } from "@/pages/test-2/variants"
 import { useRingBuild } from "@/state/ring-build"
 
@@ -215,9 +215,9 @@ export function prefsFilters(p: StonePrefs, sim: StoneSim): StoneFilters {
 
 export type FlowStoneStep = "preferences" | "recommendations" | "diamonds"
 
-/** /flow/stone (2a), /flow/stone/recommendations (2b) and /flow/diamonds (the PLP), carrying the preferences. */
+/** /stone (2a), /stone/recommendations (2b) and /diamonds (the PLP) inside a flow, carrying the preferences. */
 export function flowStonePath(step: FlowStoneStep, query = "") {
-  const path = step === "preferences" ? "/flow/stone" : step === "recommendations" ? "/flow/stone/recommendations" : "/flow/diamonds"
+  const path = step === "preferences" ? "/stone" : step === "recommendations" ? "/stone/recommendations" : "/diamonds"
   return `${path}${query}`
 }
 
@@ -244,23 +244,24 @@ export function useFlowStonePrefs() {
   const query = prefsQuery(variantId, prefs)
   useEffect(() => {
     try {
-      sessionStorage.setItem(FLOW_STONE_QUERY_KEY, query)
+      sessionStorage.setItem(stoneQueryKey(flow?.base ?? FLOW_BASE), query)
     } catch {
       /* storage unavailable: Edit starts from the stone's shape */
     }
-  }, [query])
+  }, [query, flow?.base])
+  const inFlow = (to: string) => (flow ? flow.path(to) : to)
 
   /** Update preferences in place (replace, so dragging a slider doesn't flood history). */
   const update = (patch: Partial<StonePrefs>) => {
     const next = { ...prefs, ...patch }
-    navigate(flowStonePath("preferences", prefsQuery(variantId, next)), { replace: true, preventScrollReset: true })
+    navigate(inFlow(flowStonePath("preferences", prefsQuery(variantId, next))), { replace: true, preventScrollReset: true })
   }
 
   /** Set the size on the current scale (carats for diamonds, millimetres for gemstones). */
   const setSize = (v: number) => update(prefs.type === "gemstone" ? { mm: v } : { carat: v })
 
   /** Link to a flow stone step, carrying the current preferences. */
-  const href = (step: FlowStoneStep, extra?: Record<string, string>) => flowStonePath(step, prefsQuery(variantId, prefs, extra))
+  const href = (step: FlowStoneStep, extra?: Record<string, string>) => inFlow(flowStonePath(step, prefsQuery(variantId, prefs, extra)))
 
   return { variant, prefs, sim, update, setSize, filters, matching, href, setting }
 }

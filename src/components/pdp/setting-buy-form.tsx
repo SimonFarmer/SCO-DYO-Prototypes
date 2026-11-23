@@ -46,7 +46,7 @@ interface SettingBuyFormProps {
  * default = 1px border-subtle, hover = 1px border, selected = 2px primary.
  * On hover the label row shows the hovered metal with its price.
  */
-function MetalSelector({
+export function MetalSelector({
   options,
   value,
   onChange,
@@ -101,7 +101,7 @@ function MetalSelector({
 }
 
 /** “Price explained” popover on the Settings PDP — opens on hover, click/tap still works (Figma 7342:118262). */
-function PriceExplained({ price }: { price: number }) {
+export function PriceExplained({ price }: { price: number }) {
   const rows = [
     { label: "Setting, incl. accent stones", value: formatPrice(price) },
     { label: "Center stone", value: "Chosen in step 2" },

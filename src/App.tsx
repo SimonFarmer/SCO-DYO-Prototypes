@@ -1,7 +1,8 @@
 import { BrowserRouter, Route, Routes } from "react-router"
 import { NotInTestProvider } from "@/components/prototype/not-in-test"
 import { NaturalDiamondPdp, NaturalDiamondsGlp } from "@/pages/diamonds"
-import { FlowLayout } from "@/flow/flow-context"
+import { AccordionFinish, AccordionRecommendations, AccordionReview, AccordionSetting, AccordionStone } from "@/flow/accordion/accordion-pages"
+import { ACCORDION_BASE, FlowLayout } from "@/flow/flow-context"
 import { FlowSettingPdp } from "@/flow/pages/flow-setting"
 import { FlowAddedToBag, FlowRingReviewB, FlowStep3 } from "@/flow/finish/finish-pages"
 import { FlowDiamondPdp } from "@/flow/stone/diamond-pages"
@@ -57,6 +58,22 @@ export default function App() {
               <Route path="diamond/:id" element={<FlowDiamondPdp />} />
               <Route path="finish" element={<FlowStep3 />} />
               <Route path="review" element={<FlowRingReviewB />} />
+              <Route path="added" element={<FlowAddedToBag />} />
+            </Route>
+            {/* Accordion steps flow (a separate moderated flow test): same entry, detours and end screen as /flow,
+                its own step pages, config and build. */}
+            <Route path={ACCORDION_BASE} element={<FlowLayout base={ACCORDION_BASE} />}>
+              <Route index element={<StoreHome />} />
+              <Route path="shop" element={<StoreHome />} />
+              <Route path="engagement-rings" element={<EngagementRingPlp />} />
+              <Route path="engagement-rings/:slug" element={<EngagementRingPlp />} />
+              <Route path="setting" element={<AccordionSetting />} />
+              <Route path="stone" element={<AccordionStone />} />
+              <Route path="stone/recommendations" element={<AccordionRecommendations />} />
+              <Route path="diamonds" element={<FlowDiamondsPlp />} />
+              <Route path="diamond/:id" element={<FlowDiamondPdp />} />
+              <Route path="finish" element={<AccordionFinish />} />
+              <Route path="review" element={<AccordionReview />} />
               <Route path="added" element={<FlowAddedToBag />} />
             </Route>
             <Route path="/test-4/:variant?" element={<Test4 />} />

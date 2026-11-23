@@ -27,7 +27,7 @@ export function FlowSettingPdp() {
         breadcrumb: flow.config.crumbs ? FLOW_CRUMBS : null,
         // On to step 2, stone preferences, in the shape the shopper came in with.
         onSelect: () => {
-          navigate(flowStonePath("preferences", firstStoneQuery(flow.config.t2, shape)))
+          navigate(flow.path(flowStonePath("preferences", firstStoneQuery(flow.config.t2, shape))))
           window.scrollTo({ top: 0 })
         },
       }}

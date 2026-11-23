@@ -23,7 +23,7 @@ const r5 = (n: number) => Math.round(n / 5) * 5
 const range = (a: number, b: number) => `${formatPrice(r5(a))} - ${formatPrice(r5(b))}`
 
 /** "Round Natural Diamond", "Oval Ruby" */
-function stoneName(p: StonePrefs, shapeId: string) {
+export function stoneName(p: StonePrefs, shapeId: string) {
   const shape = stoneShape(shapeId).label
   return p.type === "gemstone" ? `${shape} ${gemById(p.gem).label}` : `${shape} ${stoneType(p.type).noun}`
 }
@@ -33,7 +33,7 @@ function stoneName(p: StonePrefs, shapeId: string) {
  * green band is the sizes in stock at the budget. Budget first holds the handle inside it (the chosen size
  * is kept in the URL, so widening the budget restores it); Size + Budget lets it go outside.
  */
-function SizeSection({ sim, setSize, shopBy }: { sim: StoneSim; setSize: (v: number) => void; shopBy: ShopBy }) {
+export function SizeSection({ sim, setSize, shopBy }: { sim: StoneSim; setSize: (v: number) => void; shopBy: ShopBy }) {
   const withBand = shopBy !== "size"
   const band = withBand && sim.budgetSizes.length ? { from: sim.budgetSizes[0], to: sim.budgetSizes[sim.budgetSizes.length - 1] } : null
   // Budget first can't show a size with nothing in the budget; Size + Budget still can.
@@ -54,7 +54,7 @@ function SizeSection({ sim, setSize, shopBy }: { sim: StoneSim; setSize: (v: num
 }
 
 /** Total ring budget section. Handles in the budget modes; in Carat first, only the size's price band. */
-function BudgetSection({ sim, update, interactive, withBand }: { sim: StoneSim; update: (p: Partial<StonePrefs>) => void; interactive: boolean; withBand: boolean }) {
+export function BudgetSection({ sim, update, interactive, withBand }: { sim: StoneSim; update: (p: Partial<StonePrefs>) => void; interactive: boolean; withBand: boolean }) {
   return (
     <section className="flex flex-col gap-6">
       <ConfigHeader title={interactive ? "Set your Total Ring Budget" : "Total Ring Budget"} />

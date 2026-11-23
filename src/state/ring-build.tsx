@@ -68,7 +68,7 @@ interface RingBuild extends BuildState {
  * A and B are Test 4's variants; T3 is Test 3's own build, so a stone picked there never shows up in Test 4.
  * FLOW is the full DYO flow (/flow), kept apart from every unmoderated test.
  */
-type BuildKey = "A" | "B" | "T3" | "FLOW"
+type BuildKey = "A" | "B" | "T3" | "FLOW" | "FLOWA"
 
 /**
  * Starting state per build, following the Figma frames:
@@ -79,6 +79,8 @@ const INITIAL: Record<BuildKey, BuildState> = {
   B: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
   T3: { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
   FLOW: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingMetal: null, shape: null },
+  /** The accordion steps flow (/flow-accordion): its own build, apart from /flow. */
+  FLOWA: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingMetal: null, shape: null },
 }
 
 const BUILD_KEYS = Object.keys(INITIAL) as BuildKey[]
@@ -101,6 +103,7 @@ function flowSetting(metal: MetalId | null | undefined): typeof SETTING {
  * older ?variant=B links still resolve to B.
  */
 function buildKeyFor(pathname: string, search: string): BuildKey {
+  if (/^\/flow-accordion(\/|$)/.test(pathname)) return "FLOWA"
   if (/^\/flow(\/|$)/.test(pathname)) return "FLOW"
   if (/^\/test-3/.test(pathname)) return "T3"
   const fromPath = pathname.match(/^\/test-4\/([ab])(?:\/|$)/i)?.[1]
@@ -149,7 +152,7 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
     const engravingStyle = styleOf(state.engraving)
     const band = WEDDING_BANDS.find((b) => b.id === state.bandId) ?? null
     const bandEngraving = band ? state.bandEngraving : null
-    const setting = key === "FLOW" ? flowSetting(state.settingMetal) : SETTING
+    const setting = key === "FLOW" || key === "FLOWA" ? flowSetting(state.settingMetal) : SETTING
     const lineItems: LineItem[] = [
       { kind: "setting", price: setting.price },
       { kind: "stone", price: stone.price },

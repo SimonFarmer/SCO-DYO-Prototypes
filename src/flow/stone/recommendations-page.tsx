@@ -20,7 +20,7 @@ import { FlowStoneStepLayout as StoneStepLayout } from "./stone-step-layout"
  * The line under the picks heading that ties them back to the shopper's choices, with the values in bold
  * (Figma 8173:188141): "Based on your preferred size of **2.25 ct** and ring budget of **$3,500 – $7,000**."
  */
-function Basis({ shopBy, sim }: { shopBy: ShopBy; sim: StoneSim }) {
+export function Basis({ shopBy, sim }: { shopBy: ShopBy; sim: StoneSim }) {
   const size = <span className="font-semibold">{formatSize(sim.size, sim.sizes.unit)}</span>
   const budget = <span className="font-semibold">{`${formatPrice(sim.budgetLo)} – ${formatPrice(sim.budgetHi)}`}</span>
   return (
@@ -43,7 +43,7 @@ function Basis({ shopBy, sim }: { shopBy: ShopBy; sim: StoneSim }) {
 }
 
 /** "Round Natural Diamonds", "Round Lab-Grown Diamonds", "Oval Rubies" */
-function picksHeading(type: StoneTypeId, shape: string, gem: string) {
+export function picksHeading(type: StoneTypeId, shape: string, gem: string) {
   const shapeName = stoneShape(shape).label
   if (type !== "gemstone") return `${shapeName} ${stoneType(type).plpLabel}`
   const name = gemById(gem).label
@@ -84,7 +84,7 @@ function SpecStrip({ pick }: { pick: StonePick }) {
  * Pick tile (Figma 8173:187709): photo; the pick and what it's optimized for, with the radio; the 4Cs pill;
  * then the stone price, ring total and View details. Selection only changes the border.
  */
-function PickTile({ pick, selected, onSelect, onDetails }: { pick: StonePick; selected: boolean; onSelect: () => void; onDetails: () => void }) {
+export function PickTile({ pick, selected, onSelect, onDetails }: { pick: StonePick; selected: boolean; onSelect: () => void; onDetails: () => void }) {
   const { setting: SETTING } = useRingBuild()
   const img = stoneImage(pick.stone)
   return (

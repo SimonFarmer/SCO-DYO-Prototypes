@@ -13,6 +13,15 @@ import { FlowExitModal } from "./exit-modal"
 export const FLOW_BASE = "/flow"
 
 /**
+ * The accordion steps flow (Lucid "Alternate UX – Accordion steps", a separate moderated flow test): same
+ * machinery under its own base, with its own config and build, so it never touches /flow or the tests.
+ */
+export const ACCORDION_BASE = "/flow-accordion"
+
+const BASES = [ACCORDION_BASE, FLOW_BASE] as const
+export type FlowBase = (typeof BASES)[number]
+
+/**
  * Which variant of each unmoderated test the flow uses. The defaults follow each test's hypothesis
  * until the results are in; the moderator can swap any of them with a URL parameter, e.g.
  * /flow?t1=c&t2=a&crumbs=off. Choices stick for the session, so they survive navigation.
@@ -42,11 +51,12 @@ const ALLOWED: Record<Exclude<keyof FlowConfig, "crumbs">, readonly string[]> = 
   t4: ["A", "B"],
 }
 
-const STORAGE_KEY = "dyo-flow-config"
+/** Session key for a flow's config (/flow keeps its original key). */
+const storageKey = (base: FlowBase) => (base === FLOW_BASE ? "dyo-flow-config" : `dyo-flow-config${base}`)
 
-function load(): FlowConfig {
+function load(base: FlowBase): FlowConfig {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY)
+    const raw = sessionStorage.getItem(storageKey(base))
     return raw ? { ...FLOW_DEFAULTS, ...JSON.parse(raw) } : FLOW_DEFAULTS
   } catch {
     return FLOW_DEFAULTS
@@ -67,6 +77,8 @@ function fromSearch(config: FlowConfig, search: string): FlowConfig {
 }
 
 interface FlowState {
+  /** Which flow: /flow (1/2/3 top bar) or /flow-accordion (accordion steps) */
+  base: FlowBase
   config: FlowConfig
   /** Prefixes an in-prototype path with /flow ("/" → the flow's homepage). */
   path: (to: string) => string
@@ -83,24 +95,29 @@ interface FlowState {
 const BUILD_PAGES = /^\/(stone|diamonds|diamond|finish|review)(\/|$)/
 
 /** Last stone preferences URL query, so "Edit" on the stone returns to the shopper's own preferences. */
-export const FLOW_STONE_QUERY_KEY = "flow-stone-query"
+export const stoneQueryKey = (base: FlowBase) => (base === FLOW_BASE ? "flow-stone-query" : `flow-stone-query${base}`)
 
 /** Rings saved with "Save & Navigate Away" (the prototype's Wish List). */
 const WISHLIST_KEY = "flow-wishlist"
 
 const FlowContext = createContext<FlowState | null>(null)
 
-const toFlowPath = (to: string) => {
-  if (!to.startsWith("/") || to === FLOW_BASE || to.startsWith(`${FLOW_BASE}/`) || to.startsWith(`${FLOW_BASE}?`)) return to
-  return to === "/" ? FLOW_BASE : `${FLOW_BASE}${to}`
+/** The flow base a path is in, if any. */
+const baseOf = (path: string) => BASES.find((b) => path === b || path.startsWith(`${b}/`) || path.startsWith(`${b}?`))
+
+/** Prefixes an in-prototype path with this flow's base ("/" → the flow's homepage); already-prefixed paths pass through. */
+const toFlowPathIn = (base: FlowBase) => (to: string) => {
+  if (!to.startsWith("/") || baseOf(to)) return to
+  return to === "/" ? base : `${base}${to}`
 }
 
-/** Route layout for /flow/*: provides the flow context to every flow page. */
-export function FlowLayout() {
+/** Route layout for /flow/* (and /flow-accordion/*): provides the flow context to every page of that flow. */
+export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
+  const toFlowPath = useMemo(() => toFlowPathIn(base), [base])
   const { pathname, search } = useLocation()
   const navigate = useNavigate()
   const { setting, stone, total, reset, shape } = useRingBuild()
-  const [config, setConfig] = useState<FlowConfig>(() => fromSearch(load(), search))
+  const [config, setConfig] = useState<FlowConfig>(() => fromSearch(load(base), search))
   const [pending, setPending] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const savedTimer = useRef<number | undefined>(undefined)
@@ -114,22 +131,22 @@ export function FlowLayout() {
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+      sessionStorage.setItem(storageKey(base), JSON.stringify(config))
     } catch {
       /* storage unavailable: the config still works for this page view */
     }
-  }, [config])
+  }, [config, base])
 
   const go = useCallback(
     (to: string) => {
       navigate(toFlowPath(to))
       window.scrollTo({ top: 0 })
     },
-    [navigate],
+    [navigate, toFlowPath],
   )
 
   const inBuild = BUILD_PAGES.test(stripFlowBase(pathname))
-  const leave = useCallback((to: string) => (inBuild ? setPending(toFlowPath(to)) : go(to)), [inBuild, go])
+  const leave = useCallback((to: string) => (inBuild ? setPending(toFlowPath(to)) : go(to)), [inBuild, go, toFlowPath])
 
   const goToStep = useCallback<FlowState["goToStep"]>(
     (step, mode) => {
@@ -137,14 +154,14 @@ export function FlowLayout() {
       if (mode === "view") return go(`/diamond/${stone.id}`)
       let query = ""
       try {
-        query = sessionStorage.getItem(FLOW_STONE_QUERY_KEY) ?? ""
+        query = sessionStorage.getItem(stoneQueryKey(base)) ?? ""
       } catch {
         /* no stored preferences: start from the shape */
       }
       // No stored preferences yet (e.g. a stone picked straight from the GLP): start from the stone's shape.
       go(`/stone${query || `?type=natural&shape=${stone.shape.toLowerCase() || shape || "round"}`}`)
     },
-    [go, stone.id, stone.shape, shape],
+    [go, stone.id, stone.shape, shape, base],
   )
 
   // Exit modal actions. OK drops the build; Save keeps it and stores the ring in the Wish List.
@@ -170,7 +187,7 @@ export function FlowLayout() {
     savedTimer.current = window.setTimeout(() => setSaved(false), 3200)
   }
 
-  const value = useMemo<FlowState>(() => ({ config, path: toFlowPath, leave, goToStep }), [config, leave, goToStep])
+  const value = useMemo<FlowState>(() => ({ base, config, path: toFlowPath, leave, goToStep }), [base, config, toFlowPath, leave, goToStep])
   return (
     <FlowContext.Provider value={value}>
       <Outlet />
@@ -214,7 +231,10 @@ export function useFlowPath() {
   return flow ? flow.path : (to: string) => to
 }
 
-/** Removes the /flow prefix, so route logic written for the standalone pages still matches. */
+/** Removes the flow prefix (/flow or /flow-accordion), so route logic written for the standalone pages still matches. */
 // eslint-disable-next-line react-refresh/only-export-components
-export const stripFlowBase = (pathname: string) =>
-  pathname === FLOW_BASE ? "/" : pathname.startsWith(`${FLOW_BASE}/`) ? pathname.slice(FLOW_BASE.length) : pathname
+export const stripFlowBase = (pathname: string) => {
+  const base = baseOf(pathname)
+  if (!base) return pathname
+  return pathname === base ? "/" : pathname.slice(base.length)
+}
