@@ -8,8 +8,9 @@ import { SETTING_PDPS } from "./setting-pdps"
  * setting-pdps.ts by scripts/shaneco/build-settings.mjs; metals, item IDs, prices and accepted shapes come
  * from the PLP catalogue. Ella Cathedral (Test 1's setting, not on the PLP) stays the fallback.
  *
- * Per metal the gallery is Shane Co.'s render of that metal holding the default shape, its side profile, then
- * the styled photos, which exist in one metal only and say so in a badge (as on Ella Cathedral).
+ * Gallery per metal, as on shaneco.com: Shane Co.'s render of that metal holding the default shape, then that
+ * metal's own product views (front, side, extra angles), then its own styled photos. Styled photos exist in some
+ * metals only: a metal without them borrows one other metal's set, badged "Shown in …" (as on Ella Cathedral).
  */
 function settingFromDesign(designId: string): Setting | undefined {
   const design = DESIGNS.find((d) => d.id === designId)
@@ -19,13 +20,20 @@ function settingFromDesign(designId: string): Setting | undefined {
   const variants = design.metals.map(([metal, articleNo, price]) => ({ metal: metal as MetalId, articleNo, price }))
   const [defaultShape] = design.shapes
   const shapeLabel = (id: string) => SHAPES.find((s) => s.id === id)?.label ?? id
-  const shownIn = METALS[pdp.shownIn].label.toLowerCase()
-  const styled: GalleryMedia[] = pdp.styled.map((src) => ({
-    kind: "image",
-    src,
-    alt: `${design.name} in ${shownIn}, styled`,
-    badge: `Shown in ${shownIn.replace(/^14k /, "")}`,
-  }))
+  const metalName = (m: MetalId) => METALS[m].label.toLowerCase()
+  // Shots A1–A4 are product views (side, front, extra angles); higher numbers are styled and on-hand photos.
+  const isView = (src: string) => Number(src.match(/-A(\d+)\.jpg$/)?.[1]) <= 4
+  const viewName = (src: string) => ({ "1": "side view", "2": "front view" })[src.match(/-A(\d+)\.jpg$/)?.[1] ?? ""] ?? "angled view"
+  const styledOf = (m: MetalId) => (pdp.gallery[m] ?? []).filter((src) => !isView(src))
+  /** This metal's styled photos; without any, the first other metal's set (in the PLP's metal order), badged. */
+  const styledFor = (m: MetalId): GalleryMedia[] => {
+    const own = styledOf(m)
+    if (own.length) return own.map((src) => ({ kind: "image", src, alt: `${design.name} in ${metalName(m)}, styled` }))
+    const donor = variants.find((o) => styledOf(o.metal).length)?.metal
+    if (!donor) return []
+    const shown = metalName(donor).replace(/^14k /, "")
+    return styledOf(donor).map((src) => ({ kind: "image", src, alt: `${design.name} in ${shown}, styled`, badge: `Shown in ${shown}` }))
+  }
 
   return {
     id: design.id,
@@ -40,13 +48,14 @@ function settingFromDesign(designId: string): Setting | undefined {
     ),
     gallery: Object.fromEntries(
       variants.map((v) => {
-        const metal = METALS[v.metal].label.toLowerCase()
+        const metal = metalName(v.metal)
         return [
           v.metal,
           [
             { kind: "image", src: settingImage(v.articleNo, defaultShape), alt: `${design.name} in ${metal} with a 1 ct ${shapeLabel(defaultShape).toLowerCase()} diamond` },
-            { kind: "image", src: `/images/plp/settings/${v.articleNo}/side.webp`, alt: `${design.name} in ${metal}, side profile` },
-            ...styled,
+            // Shane Co.'s order: front view (A2), side view (A1), extra angles.
+            ...(pdp.gallery[v.metal] ?? []).filter(isView).map((src): GalleryMedia => ({ kind: "image", src, alt: `${design.name} in ${metal}, ${viewName(src)}` })),
+            ...styledFor(v.metal),
             SIZE_GUIDE,
           ] satisfies GalleryMedia[],
         ]
