@@ -8,7 +8,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react"
 import { useEffect, useRef, useState } from "react"
-import { useSiteNavigate } from "@/flow/flow-context"
+import { useFlow, useSiteNavigate } from "@/flow/flow-context"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { MegaMenu } from "@/components/site/mega-menu"
 import { useStickyOnIntent } from "@/components/site/use-sticky-on-intent"
@@ -60,8 +60,10 @@ export function SiteHeader({
   const ref = useRef<HTMLElement>(null)
   const visible = useStickyOnIntent(ref)
   const [menuOpen, setMenuOpen] = useState(false)
-  // Prototype-only: the logo returns to the index of prototypes (not the storefront homepage).
-  const toIndex = () => siteNavigate("/")
+  // Prototype-only: in the full flows the logo returns to the index of prototypes (through the exit guard).
+  // In the standalone tests it is inert, so participants can't reach the list of every test.
+  const flow = useFlow()
+  const toIndex = flow ? () => siteNavigate("/") : undefined
   const closeTimer = useRef<number | undefined>(undefined)
 
   const openMenu = () => {
@@ -95,9 +97,13 @@ export function SiteHeader({
     >
       {/* Mobile: logo + tagline, as on the non-DYO mobile PDP */}
       <div className="flex h-22 items-center justify-center lg:hidden">
-        <button type="button" onClick={toIndex} aria-label="Shane Co. (back to the prototype list)" className="cursor-pointer">
+        {toIndex ? (
+          <button type="button" onClick={toIndex} aria-label="Shane Co. (back to the prototype list)" className="cursor-pointer">
+            <Logo withTagline />
+          </button>
+        ) : (
           <Logo withTagline />
-        </button>
+        )}
       </div>
 
       {/* Desktop */}
@@ -108,14 +114,20 @@ export function SiteHeader({
             <UtilityLink icon={DiamondIcon} label="Care" />
             <UtilityLink icon={MapPinIcon} label={STORE.name} />
           </div>
-          <button
-            type="button"
-            onClick={toIndex}
-            aria-label="Shane Co. (back to the prototype list)"
-            className="absolute left-1/2 -translate-x-1/2 cursor-pointer"
-          >
-            <Logo />
-          </button>
+          {toIndex ? (
+            <button
+              type="button"
+              onClick={toIndex}
+              aria-label="Shane Co. (back to the prototype list)"
+              className="absolute left-1/2 -translate-x-1/2 cursor-pointer"
+            >
+              <Logo />
+            </button>
+          ) : (
+            <span className="absolute left-1/2 -translate-x-1/2">
+              <Logo />
+            </span>
+          )}
           <div className="flex items-center gap-6">
             <UtilityLink icon={UserCircleIcon} label="Sign In" />
             <UtilityLink icon={HeartIcon} label="Wishlist" />

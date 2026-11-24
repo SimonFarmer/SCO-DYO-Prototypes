@@ -102,7 +102,7 @@ export function ProductGrid({ listing, wide }: { listing: Listing; wide: boolean
         }
       : undefined
 
-  // Standalone PLP prototypes have no product page: a click asks if this is the ring, ending the task.
+  // Standalone PLP prototypes have no product page: a click on a ring ends the task.
   const [picked, setPicked] = useState<PickedRing | null>(null)
   const priceLabel = mode === "dyo" ? "Setting only" : undefined
   const pricePrefix = mode === "rts" ? "Starting at" : undefined
@@ -128,7 +128,6 @@ export function ProductGrid({ listing, wide }: { listing: Listing; wide: boolean
         preferredShapes={listing.filters.shape}
         priceLabel={priceLabel}
         pricePrefix={pricePrefix}
-        onClose={() => setPicked(null)}
       />
       <ul aria-busy={loading} className={cn("grid grid-flow-row-dense grid-cols-2 gap-x-card-gap gap-y-6 lg:gap-y-8", wide ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
         {pageItems.map((p, i) => (

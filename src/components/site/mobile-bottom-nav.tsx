@@ -45,16 +45,19 @@ function ScreenHeader({ title, onBack, onClose }: { title?: string; onBack?: () 
       )}
       {title ? (
         <h2 className="text-center type-h4 font-medium text-primary">{title}</h2>
-      ) : (
+      ) : flow ? (
         <Link
           to={flowPath("/")}
           // In the flow the logo is site navigation too, so it goes through the exit guard.
-          onClick={flow ? (e) => (e.preventDefault(), onClose(), flow.leave("/")) : undefined}
+          onClick={(e) => (e.preventDefault(), onClose(), flow.leave("/"))}
           aria-label="Shane Co. (back to the prototype list)"
           className="mx-auto"
         >
           <img src="/images/logo.svg" alt="" className="h-10 w-auto" />
         </Link>
+      ) : (
+        // Standalone tests: inert, so participants can't reach the list of every test.
+        <img src="/images/logo.svg" alt="Shane Co." className="mx-auto h-10 w-auto" />
       )}
       <button type="button" onClick={onClose} aria-label="Close menu" className="flex size-10 cursor-pointer items-center justify-center text-primary">
         <XIcon className="size-6" weight="light" />
