@@ -249,6 +249,15 @@ export function SettingBuyForm({
   ctaRef,
 }: SettingBuyFormProps) {
   const variant = setting.variants.find((v) => v.metal === metal) ?? setting.variants[0]
+  // Below lg the gallery is stacked above this form, so a metal change would happen out of sight:
+  // glide back to the top so the new metal's images are in view (both mobile gallery navs).
+  const changeMetal = (next: MetalId) => {
+    if (next === metal) return
+    onMetalChange(next)
+    if (window.matchMedia("(min-width: 80rem)").matches) return
+    // After the new metal has rendered: the gallery swapping its images would otherwise cancel the glide.
+    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" })))
+  }
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-8">
@@ -284,7 +293,7 @@ export function SettingBuyForm({
           )}
         </div>
         <Separator className="my-3 bg-muted" />
-        <MetalSelector options={setting.variants.map((v) => ({ metal: v.metal, price: v.price }))} value={metal} onChange={onMetalChange} />
+        <MetalSelector options={setting.variants.map((v) => ({ metal: v.metal, price: v.price }))} value={metal} onChange={changeMetal} />
         <Separator className="my-3 bg-muted" />
       </div>
       {/* Financing is hidden until the ring is complete (fixes sheet, Settings PDP #12). */}
