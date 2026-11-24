@@ -34,6 +34,7 @@ const TABS: { label: string; icon: Icon }[] = [
 function ScreenHeader({ title, onBack, onClose }: { title?: string; onBack?: () => void; onClose: () => void }) {
   const flow = useFlow()
   const flowPath = useFlowPath()
+  const notInTest = useNotInTest()
   return (
     <div className="grid h-22 shrink-0 grid-cols-[2.5rem_1fr_2.5rem] items-center px-4">
       {onBack ? (
@@ -56,8 +57,10 @@ function ScreenHeader({ title, onBack, onClose }: { title?: string; onBack?: () 
           <img src="/images/logo.svg" alt="" className="h-10 w-auto" />
         </Link>
       ) : (
-        // Standalone tests: inert, so participants can't reach the list of every test.
-        <img src="/images/logo.svg" alt="Shane Co." className="mx-auto h-10 w-auto" />
+        // Standalone tests: the not-in-test notice, so participants can't reach the list of every test.
+        <button type="button" onClick={() => notInTest("The homepage")} aria-label="Shane Co." className="mx-auto cursor-pointer">
+          <img src="/images/logo.svg" alt="" className="h-10 w-auto" />
+        </button>
       )}
       <button type="button" onClick={onClose} aria-label="Close menu" className="flex size-10 cursor-pointer items-center justify-center text-primary">
         <XIcon className="size-6" weight="light" />
