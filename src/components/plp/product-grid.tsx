@@ -128,6 +128,7 @@ export function ProductGrid({ listing, wide }: { listing: Listing; wide: boolean
         preferredShapes={listing.filters.shape}
         priceLabel={priceLabel}
         pricePrefix={pricePrefix}
+        onClose={() => setPicked(null)}
       />
       <ul aria-busy={loading} className={cn("grid grid-flow-row-dense grid-cols-2 gap-x-card-gap gap-y-6 lg:gap-y-8", wide ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
         {pageItems.map((p, i) => (
