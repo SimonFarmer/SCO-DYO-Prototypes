@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import { FINISHING_GALLERY, type GalleryImage } from "@/data/dyo"
-import { ELLA_CATHEDRAL, galleryFor, type MetalId } from "@/data/products"
+import { flowMetalFor, flowSettingFor } from "@/data/flow-settings"
+import { galleryFor } from "@/data/products"
 import { previewImage } from "@/data/stones"
 import { findFlowDiamond } from "@/flow/stone/find-diamond"
 import { useRingBuild } from "@/state/ring-build"
@@ -21,17 +22,18 @@ export const ellaPreview = (article: string, shape: string, carat: number, width
  * then the stone, Ella's own photos in that metal and the shared Shane Co. tiles (source, size guide).
  */
 export function useFlowRingGallery() {
-  const { setting, stone, settingMetal } = useRingBuild()
+  const { setting, stone, settingId, settingMetal } = useRingBuild()
   return useMemo(() => {
-    const metal: MetalId = settingMetal ?? ELLA_CATHEDRAL.defaultMetal
+    const picked = flowSettingFor(settingId)
+    const metal = flowMetalFor(picked, settingMetal)
     const hero: GalleryImage = {
       src: ellaPreview(setting.article, stone.shape, stone.carat),
       alt: `${setting.name} in ${setting.metal.toLowerCase()} with a ${stone.title.toLowerCase()}`,
     }
     const stonePhoto = findFlowDiamond(stone.id)?.image
     const stoneTile: GalleryImage[] = stonePhoto ? [{ src: stonePhoto, alt: `${stone.title}, top view`, badge: `${stone.shape} · ${stone.carat.toFixed(2)} ct`, badgePosition: "bottom" }] : []
-    // Ella's own shots in the chosen metal (the PDP gallery, without its size guide).
-    const ellaPhotos: GalleryImage[] = galleryFor(ELLA_CATHEDRAL, metal)
+    // The setting's own shots in the chosen metal (the PDP gallery, without its size guide).
+    const ellaPhotos: GalleryImage[] = galleryFor(picked, metal)
       .filter((m) => m.kind === "image")
       .slice(0, 4)
       .map((m) => ({ src: m.src, alt: m.alt, badge: m.badge, badgePosition: m.badge ? ("bottom" as const) : undefined }))
@@ -48,5 +50,5 @@ export function useFlowRingGallery() {
       /** Ring Review: same images, the ring first. */
       review: [hero, ...stoneTile, ...ellaPhotos, source, sizeGuide],
     }
-  }, [setting.article, setting.name, setting.metal, stone, settingMetal])
+  }, [setting.article, setting.name, setting.metal, stone, settingId, settingMetal])
 }

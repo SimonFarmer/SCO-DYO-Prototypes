@@ -24,10 +24,10 @@ import {
   MATCHING_BANDS,
   RECENTLY_VIEWED,
   SIMILAR_STYLES,
-  ELLA_CATHEDRAL,
   METALS,
   galleryFor,
   type MetalId,
+  type Setting,
 } from "@/data/products"
 import { useElementHeight } from "@/lib/hooks"
 import { cn, PAGE_MAX } from "@/lib/utils"
@@ -37,6 +37,8 @@ import { SETTING_PDP_VARIANTS, type SettingPdpVariant } from "@/pages/test-1/var
 export interface SettingPdpFlow {
   /** The build's metal, so the stepper and later steps follow the PDP. */
   metal: MetalId
+  /** The setting picked on the PLP. */
+  setting: Setting
   onMetalChange: (metal: MetalId) => void
   /** Stone shape the shopper came in with, previewed first when the setting is made for it. */
   initialShape?: string | null
@@ -54,7 +56,7 @@ export interface SettingPdpFlow {
 export function SettingPdp({ variant: variantId, flow }: { variant: SettingPdpVariant["id"]; flow: SettingPdpFlow }) {
   const variant = SETTING_PDP_VARIANTS[variantId]
 
-  const setting = ELLA_CATHEDRAL
+  const setting = flow.setting
   const metal = flow.metal
   const setMetal = flow.onMetalChange
   const [detailsOpen, setDetailsOpen] = useState(false)

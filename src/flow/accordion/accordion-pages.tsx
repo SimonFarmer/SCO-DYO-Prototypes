@@ -25,7 +25,8 @@ import { Button } from "@/components/ui/button"
 import { RadioGroup } from "@/components/ui/radio-group"
 import { CLASSIC_CROWN, ENGRAVING, type GalleryImage } from "@/data/dyo"
 import { PLP_PATH, SHAPES } from "@/data/plp"
-import { ELLA_CATHEDRAL, descriptionFor, galleryFor } from "@/data/products"
+import { flowMetalFor, flowSettingFor, flowSettingStyle } from "@/data/flow-settings"
+import { descriptionFor, galleryFor } from "@/data/products"
 import { formatSize, recommend, shapesFor, stoneShape, stoneTitle, toQuickviewDiamond, type StonePick } from "@/data/stones"
 import { useFlow } from "@/flow/flow-context"
 import { FLOW_ROUTES } from "@/flow/flow-paths"
@@ -50,17 +51,21 @@ import { BuildPanel, PanelTotals } from "./build-panel"
 
 const COLUMNS = "grid lg:grid-cols-[826fr_606fr] lg:gap-2"
 
-/** The wireframes' trail: the product's own breadcrumb, ending on the setting (Home › … › Ella Cathedral …). */
-const PRODUCT_CRUMBS: Crumb[] = [
-  { label: "Home", to: "/shop" },
-  { label: "Engagement Rings", to: PLP_PATH },
-  { label: "Classic Engagement Rings", to: `${PLP_PATH}/classic` },
-  ELLA_CATHEDRAL.name,
-]
+/** The wireframes' trail: the product's own breadcrumb, ending on the picked setting (Home › … › its name). */
+function productCrumbs(settingId: string | null | undefined): Crumb[] {
+  const style = flowSettingStyle(settingId)
+  return [
+    { label: "Home", to: "/shop" },
+    { label: "Engagement Rings", to: PLP_PATH },
+    { label: style.label, to: `${PLP_PATH}/${style.id}` },
+    flowSettingFor(settingId).name,
+  ]
+}
 
 /** Header, the product breadcrumb, then gallery and panel side by side (stacked on phones), footer, mobile bar. */
 function AccordionFrame({ gallery, panel, galleryFull = true }: { gallery: ReactNode; panel: ReactNode; galleryFull?: boolean }) {
   const flow = useFlow()
+  const { settingId } = useRingBuild()
   // No jump to the top here: the panel scrolls the page to the current step (BuildPanel).
   return (
     <div className="min-h-svh bg-background">
@@ -68,7 +73,7 @@ function AccordionFrame({ gallery, panel, galleryFull = true }: { gallery: React
       <main className={PAGE_MAX}>
         {flow?.config.crumbs && (
           <div className={COLUMNS}>
-            <Breadcrumb items={PRODUCT_CRUMBS} className="mx-2 bg-secondary" />
+            <Breadcrumb items={productCrumbs(settingId)} className="mx-2 bg-secondary" />
           </div>
         )}
         <div className={COLUMNS}>
@@ -127,9 +132,9 @@ export function AccordionSetting() {
   const flow = useFlow()
   const go = useGo()
   const notInTest = useNotInTest()
-  const { settingMetal, setSettingMetal, shape, setting: built } = useRingBuild()
-  const setting = ELLA_CATHEDRAL
-  const metal = settingMetal ?? setting.defaultMetal
+  const { settingId, settingMetal, setSettingMetal, shape, setting: built } = useRingBuild()
+  const setting = flowSettingFor(settingId)
+  const metal = flowMetalFor(setting, settingMetal)
   const variant = setting.variants.find((v) => v.metal === metal) ?? setting.variants[0]
   const [previewShape, setPreviewShape] = useState(shape && setting.shapes.includes(shape) ? shape : setting.shapes[0])
   const [detailsOpen, setDetailsOpen] = useState(false)

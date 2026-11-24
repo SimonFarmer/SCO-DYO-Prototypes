@@ -1,0 +1,101 @@
+#!/usr/bin/env node
+/**
+ * Builds the full flow's setting PDP content from shaneco.com.
+ *
+ * Input: scripts/shaneco/pdps/{itemId}.json, one per PLP design (any of its metals), read from the live PDP in a
+ * real browser (JSON-LD description and price, the "Read More" highlights, the Product Details table and the
+ * gallery's Scene7 paths). shaneco.com blocks scripted page requests, so the pages are read by hand; the
+ * Scene7 image CDN isn't blocked, so this script downloads the styled photos itself.
+ *
+ * Output: src/data/setting-pdps.ts (generated, keyed by PLP design id) and
+ * public/images/gallery/{designId}/styled-{n}.jpg.
+ *
+ *   node scripts/shaneco/build-settings.mjs
+ */
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
+import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "../..")
+const pdpDir = join(root, "scripts/shaneco/pdps")
+const SCENE7 = "https://images.shaneco.com/is/image/ShaneCo/"
+
+// PLP designs: every item ID (one per metal) to its design id and metal, from the DESIGNS table in src/data/plp.ts.
+const plp = readFileSync(join(root, "src/data/plp.ts"), "utf8")
+const designByItem = new Map()
+for (const line of plp.matchAll(/^\s*\{ id: "([a-z0-9-]+)",.*metals: (\[.*\]) \},?$/gm))
+  for (const [, metal, item] of line[2].matchAll(/\["([a-z0-9-]+)", "(\d+)"/g)) designByItem.set(item, { id: line[1], metal })
+
+const METAL_WORDS = {
+  "14k-white-gold": ["14k white gold", "14-karat white gold"],
+  "14k-yellow-gold": ["14k yellow gold", "14-karat yellow gold"],
+  "14k-rose-gold": ["14k rose gold", "14-karat rose gold"],
+  platinum: ["platinum", "platinum"],
+}
+
+const titleCase = (s) => s.replace(/(^|[\s-])\w/g, (c) => c.toUpperCase())
+
+/** Specs for the drawer: the PDP's own table when it has one, otherwise read from the highlights. */
+function specsFrom(page) {
+  const own = page.specs.filter(([label]) => label !== "Metal Type")
+  if (own.length) return own.map(([label, value]) => ({ label, value }))
+  const specs = []
+  const width = page.highlights.filter((h) => /band width/i.test(h)).map((h) => h.replace(/\s*band width\s*/i, " ").replace(/\.$/, "").trim())
+  if (width.length) specs.push({ label: "Band Width", value: width.join(" – ").replace(/ max – (.*) min$/, " max, $1 min") })
+  specs.push({ label: "Engravable", value: "Yes" })
+  const accents = page.highlights.map((h) => h.match(/^(\d+) ([\w-]+(?: [\w-]+)?) natural diamond accents at (?:approx\. )?([\d./]+ tcw)/i)).filter(Boolean)
+  if (accents.length) {
+    specs.push({ label: "Gemstone Type", value: "Natural Diamond" })
+    specs.push({ label: "Number of Gemstones", value: String(accents.reduce((n, a) => n + Number(a[1]), 0)) })
+    specs.push({ label: "Accent Stone Shape", value: [...new Set(accents.map((a) => titleCase(a[2].replace(/-shaped$/, ""))))].join(", ") })
+  } else {
+    specs.push({ label: "Gemstone Type", value: "No Stones" })
+  }
+  return specs
+}
+
+async function download(path, file) {
+  if (existsSync(file)) return
+  // The 800 px preset (ring/800/…) exists for every gallery shot; larger presets fall back to a thumbnail.
+  const res = await fetch(SCENE7 + path.replace(/^ring\/570\//, "ring/800/"))
+  const type = res.headers.get("content-type") ?? ""
+  if (!res.ok || !type.startsWith("image/")) throw new Error(`${path}: ${res.status} ${type}`)
+  writeFileSync(file, Buffer.from(await res.arrayBuffer()))
+}
+
+const out = {}
+for (const f of readdirSync(pdpDir).filter((f) => f.endsWith(".json")).sort()) {
+  const page = JSON.parse(readFileSync(join(pdpDir, f), "utf8"))
+  const design = designByItem.get(page.id)
+  if (!design) throw new Error(`${page.id} (${page.name}) isn't a setting item in src/data/plp.ts`)
+  const [short, long] = METAL_WORDS[design.metal]
+  const highlights = page.highlights.map((h) => (h.toLowerCase() === short ? "{metal}" : h))
+  const description = page.description.replace(long, "{metal}")
+  if (!description.includes("{metal}")) console.warn(`${design.id}: no metal phrase in the description`)
+
+  // Styled shots (ring/…_A{n}), in the PDP's order. The built-item hero is replaced by the local renders.
+  const dir = join(root, "public/images/gallery", design.id)
+  mkdirSync(dir, { recursive: true })
+  const styled = []
+  for (const path of page.media.filter((p) => p.startsWith("ring/"))) {
+    const n = styled.length + 1
+    await download(path, join(dir, `styled-${n}.jpg`))
+    styled.push(`/images/gallery/${design.id}/styled-${n}.jpg`)
+  }
+
+  const section = page.url.split("/")[2] ?? "engagement-rings"
+  out[design.id] = {
+    url: `https://www.shaneco.com${page.url}`,
+    shownIn: design.metal,
+    breadcrumb: ["Home", "Engagement Rings", titleCase(section.replace(/-/g, " "))],
+    description,
+    highlights,
+    specs: specsFrom(page),
+    styled,
+  }
+  console.log(`${design.id}: ${styled.length} styled photos`)
+}
+
+const header = `// Generated by scripts/shaneco/build-settings.mjs from shaneco.com PDPs (November 2026). Do not edit by hand.\n\nimport type { MetalId } from "./products"\n\nexport interface SettingPdpContent {\n  /** Live PDP the content was read from (the design's lead metal). */\n  url: string\n  /** Metal the styled photos show. */\n  shownIn: MetalId\n  breadcrumb: string[]\n  /** \`{metal}\` is replaced with the selected metal. */\n  description: string\n  highlights: string[]\n  specs: { label: string; value: string }[]\n  /** Styled and on-hand photos, in the PDP's order. */\n  styled: string[]\n}\n\n`
+writeFileSync(join(root, "src/data/setting-pdps.ts"), `${header}export const SETTING_PDPS: Record<string, SettingPdpContent> = ${JSON.stringify(out, null, 2)}\n`)
+console.log(`Wrote src/data/setting-pdps.ts (${Object.keys(out).length} settings)`)

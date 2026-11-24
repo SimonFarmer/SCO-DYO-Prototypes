@@ -12,7 +12,8 @@ import {
   type Stone,
   type WeddingBand,
 } from "@/data/dyo"
-import { ELLA_CATHEDRAL, METALS, galleryFor, type MetalId } from "@/data/products"
+import { flowMetalFor, flowSettingFor } from "@/data/flow-settings"
+import { METALS, galleryFor, type MetalId } from "@/data/products"
 
 export interface Engraving {
   text: string
@@ -28,7 +29,9 @@ interface BuildState {
   bandEngraving: Engraving | null
   /** Stone chosen in the Stone step (Test 3). Falls back to the pre-chosen STONE. */
   stone: Stone | null
-  /** Full flow only: metal picked on the Setting PDP (the setting is always Ella Cathedral there). */
+  /** Full flow only: the PLP design picked (see flowSettingFor; none = Ella Cathedral). */
+  settingId?: string | null
+  /** Full flow only: metal picked on the Setting PDP. */
   settingMetal?: MetalId | null
   /** Full flow only: center-stone shape the shopper came in with (Engagement Rings › Shop by Shape). */
   shape?: string | null
@@ -55,6 +58,8 @@ interface RingBuild extends BuildState {
   setBandId: (id: string | null) => void
   setBandEngraving: (engraving: Engraving | null) => void
   setStone: (stone: Stone) => void
+  /** Full flow: the setting clicked on the PLP, in the card's metal. */
+  setSetting: (settingId: string, metal: MetalId) => void
   /** Full flow: the Setting PDP's metal (changes the setting price in the stepper and totals). */
   setSettingMetal: (metal: MetalId) => void
   /** Full flow: preferred center-stone shape, carried from the entry point to the PDP preview and stone step. */
@@ -78,23 +83,25 @@ const INITIAL: Record<BuildKey, BuildState> = {
   A: { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
   B: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
   T3: { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
-  FLOW: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingMetal: null, shape: null },
+  FLOW: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null },
   /** The accordion steps flow (/flow-accordion): its own build, apart from /flow. */
-  FLOWA: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingMetal: null, shape: null },
+  FLOWA: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null },
 }
 
 const BUILD_KEYS = Object.keys(INITIAL) as BuildKey[]
 
-/** The flow's setting: Ella Cathedral in the chosen metal, in the shape the stepper and review expect. */
-function flowSetting(metal: MetalId | null | undefined): typeof SETTING {
-  const variant = ELLA_CATHEDRAL.variants.find((v) => v.metal === metal) ?? ELLA_CATHEDRAL.variants[0]
+/** The flow's setting (the one picked on the PLP) in the chosen metal, in the shape the stepper and review expect. */
+function flowSetting(settingId: string | null | undefined, metal: MetalId | null | undefined): typeof SETTING {
+  const setting = flowSettingFor(settingId)
+  const chosen = flowMetalFor(setting, metal)
+  const variant = setting.variants.find((v) => v.metal === chosen) ?? setting.variants[0]
   return {
-    id: ELLA_CATHEDRAL.id,
-    name: ELLA_CATHEDRAL.name,
+    id: setting.id,
+    name: setting.name,
     article: variant.articleNo,
     price: variant.price,
     metal: METALS[variant.metal].label,
-    image: galleryFor(ELLA_CATHEDRAL, variant.metal)[0]?.src ?? SETTING.image,
+    image: galleryFor(setting, variant.metal)[0]?.src ?? SETTING.image,
   }
 }
 
@@ -152,7 +159,7 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
     const engravingStyle = styleOf(state.engraving)
     const band = WEDDING_BANDS.find((b) => b.id === state.bandId) ?? null
     const bandEngraving = band ? state.bandEngraving : null
-    const setting = key === "FLOW" || key === "FLOWA" ? flowSetting(state.settingMetal) : SETTING
+    const setting = key === "FLOW" || key === "FLOWA" ? flowSetting(state.settingId, state.settingMetal) : SETTING
     const lineItems: LineItem[] = [
       { kind: "setting", price: setting.price },
       { kind: "stone", price: stone.price },
@@ -178,6 +185,7 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
       setBandId: (bandId) => update(bandId ? { bandId } : { bandId: null, bandEngraving: null }),
       setBandEngraving: (bandEngraving) => update({ bandEngraving }),
       setStone: (stone) => update({ stone }),
+      setSetting: (settingId, settingMetal) => update({ settingId, settingMetal }),
       setSettingMetal: (settingMetal) => update({ settingMetal }),
       setShape: (shape) => update({ shape }),
       reset: () => update(INITIAL[key]),
