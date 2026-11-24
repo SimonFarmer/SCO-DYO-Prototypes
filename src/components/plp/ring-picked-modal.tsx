@@ -1,5 +1,5 @@
-import { CheckCircleIcon } from "@phosphor-icons/react"
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
+import { CheckCircleIcon, XIcon } from "@phosphor-icons/react"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { productImages, productVariant, type PlpProduct } from "@/data/plp"
 import { formatPrice } from "@/lib/format"
 
@@ -11,8 +11,8 @@ export interface PickedRing {
 /**
  * End of the PLP task (standalone PLP prototypes, where there is no product page): clicking a ring
  * ends the task, with the end-of-task note in the style of the other tests' end screens. The testing
- * tool has its own Finish Task button, so there is no confirmation step, and the modal can't be closed
- * (no outside click, Escape or close button).
+ * tool has its own Finish Task button, so there is no confirmation step. The modal closes with the X
+ * button, an outside click or Escape, so participants can go back to the listing.
  * No Figma frame: built from the exit modal and end screens.
  */
 export function RingPickedModal({
@@ -20,15 +20,21 @@ export function RingPickedModal({
   preferredShapes,
   priceLabel,
   pricePrefix,
+  onClose,
 }: {
   picked: PickedRing | null
   preferredShapes?: string[]
   priceLabel?: string
   pricePrefix?: string
+  onClose: () => void
 }) {
   return (
-    <Dialog open={!!picked}>
+    <Dialog open={!!picked} onOpenChange={(o) => !o && onClose()}>
       <DialogContent showCloseButton={false} className="gap-6 rounded-none bg-background p-6 ring-0 md:max-w-120">
+        {/* Same close button as the exit modal. */}
+        <DialogClose aria-label="Close" className="absolute top-3 right-3 flex cursor-pointer items-center justify-center p-3 text-primary">
+          <XIcon className="size-4" />
+        </DialogClose>
         {picked && <RingPicked picked={picked} preferredShapes={preferredShapes} priceLabel={priceLabel} pricePrefix={pricePrefix} />}
       </DialogContent>
     </Dialog>
