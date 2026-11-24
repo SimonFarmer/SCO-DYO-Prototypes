@@ -1,6 +1,6 @@
-import { useEffect, useRef, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useLocation, useNavigate } from "react-router"
-import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react"
+import { CheckIcon } from "@phosphor-icons/react"
 import { useFlow } from "@/flow/flow-context"
 import { findFlowDiamond } from "@/flow/stone/find-diamond"
 import { formatPrice } from "@/lib/format"
@@ -105,7 +105,7 @@ function DoneSummary({ step }: { step: StepKey }) {
 /** Price lines under the steps, then the total (bold). */
 export function PanelTotals({ rows, totalLabel, total }: { rows: { label: string; value: string }[]; totalLabel: string; total: string }) {
   return (
-    <div className="flex flex-col gap-3 px-6 py-5" aria-live="polite">
+    <div className="flex flex-col gap-3 px-margin py-5 lg:px-6" aria-live="polite">
       {rows.map((r) => (
         <div key={r.label} className="flex items-start justify-between gap-4 text-sm leading-5 text-muted-foreground">
           <span>{r.label}</span>
@@ -161,6 +161,37 @@ export function BuildPanel({ current, children, footer }: { current: StepKey | "
     [],
   )
 
+  // Whether the open step's sticky title is pinned: it sits at the header offset while its step's top has
+  // scrolled above it.
+  const headRef = useRef<HTMLDivElement>(null)
+  const [stuck, setStuck] = useState(false)
+  useEffect(() => {
+    let frame = 0
+    const check = () => {
+      frame = 0
+      const head = headRef.current
+      const step = currentRef.current
+      if (!head || !step) return setStuck(false)
+      const offset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-offset")) || 0
+      setStuck(step.getBoundingClientRect().top < offset - 1 && head.getBoundingClientRect().bottom > offset + 1)
+    }
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(check)
+    }
+    check()
+    // The site header showing or hiding moves the title (its `top` eases), so check again once that settles.
+    const head = headRef.current
+    window.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("resize", onScroll)
+    head?.addEventListener("transitionend", onScroll)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener("scroll", onScroll)
+      window.removeEventListener("resize", onScroll)
+      head?.removeEventListener("transitionend", onScroll)
+    }
+  }, [current])
+
   const edit = (step: StepKey) => {
     if (!flow) return
     if (step === "finishing") {
@@ -174,9 +205,11 @@ export function BuildPanel({ current, children, footer }: { current: StepKey | "
     <section ref={sectionRef} aria-label="Design your ring" className="flex scroll-mt-4 flex-col gap-6">
       <div className="flex items-baseline justify-between gap-4">
         <h1 className="type-h3 text-primary">{isReview ? "Review Your Ring" : "Design Your Ring"}</h1>
-        <p className="type-caption text-muted-foreground">{isReview ? "All 3 steps complete" : `Step ${index + 1} of 3`}</p>
+        <p className="shrink-0 type-caption whitespace-nowrap text-muted-foreground">{isReview ? "All 3 steps complete" : `Step ${index + 1} of 3`}</p>
       </div>
-      <ol className="flex flex-col border border-border-subtle">
+      {/* On phones the steps run edge to edge (rules and tints full width, content on the page margin), so
+          the open step gets the screen's width; from lg they sit in a bordered box. */}
+      <ol className="-mx-margin flex flex-col border-t border-border-subtle lg:mx-0 lg:border">
         {STEPS.map((s, i) => {
           const state = i < index ? "done" : i === index ? "current" : "upcoming"
           return (
@@ -188,17 +221,27 @@ export function BuildPanel({ current, children, footer }: { current: StepKey | "
             >
               {state === "done" ? (
                 // A step just finished settles into its summary.
-                <div className="flex items-start gap-4 p-6 animate-in fade-in duration-300 motion-reduce:animate-none">
+                // Phones: marker, label and Edit on one row, the summary full width beneath; from lg the
+                // summary sits under the label, beside the marker.
+                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-margin py-6 animate-in fade-in duration-300 motion-reduce:animate-none lg:items-start lg:p-6">
                   <Marker n={s.n} state="done" />
-                  <div className="flex min-w-0 flex-1 flex-col gap-3">
-                    <StepHeading label={s.label} done />
+                  <StepHeading label={s.label} done />
+                  <EditLink onClick={() => edit(s.key)} label={s.label} />
+                  <div className="col-span-3 lg:col-span-1 lg:col-start-2">
                     <DoneSummary step={s.key} />
                   </div>
-                  <EditLink onClick={() => edit(s.key)} label={s.label} />
                 </div>
               ) : state === "current" ? (
-                <div className="flex flex-col gap-6 p-6">
-                  <div className="flex items-start gap-4">
+                <div className="flex flex-col px-margin pb-6 lg:px-6">
+                  {/* The open step's title stays pinned under the site header while its content scrolls past,
+                      until the step ends; a hairline shadow shows once it is stuck. */}
+                  <div
+                    ref={headRef}
+                    className={cn(
+                      "sticky top-(--header-offset) z-10 -mx-margin flex items-start gap-4 bg-background px-margin py-6 lg:-mx-6 lg:px-6 transition-[top,box-shadow] duration-300 ease-out",
+                      stuck && "shadow-2xs",
+                    )}
+                  >
                     <Marker n={s.n} state="current" />
                     <StepHeading label={s.label} description={s.description} />
                   </div>
@@ -209,12 +252,11 @@ export function BuildPanel({ current, children, footer }: { current: StepKey | "
                 </div>
               ) : (
                 // Later steps open once the current one is done.
-                <div className="flex items-center gap-4 p-6" aria-disabled>
+                <div className="flex items-center gap-4 px-margin py-6 lg:p-6" aria-disabled>
                   <Marker n={s.n} state="upcoming" />
                   <div className="flex-1">
                     <StepHeading label={s.label} description={s.description} />
                   </div>
-                  <CaretDownIcon className="size-4 text-primary" />
                 </div>
               )}
             </li>
@@ -222,7 +264,7 @@ export function BuildPanel({ current, children, footer }: { current: StepKey | "
         })}
       </ol>
       {/* The box continues around the totals (and the review's actions). */}
-      <div className="-mt-6 border-x border-b border-border-subtle">{footer}</div>
+      <div className="-mx-margin -mt-6 border-b border-border-subtle lg:mx-0 lg:border-x">{footer}</div>
     </section>
   )
 }

@@ -515,7 +515,7 @@ export function AccordionReview() {
           <BuildPanel
             current="review"
             footer={
-              <div className="flex flex-col gap-6 px-6 py-6">
+              <div className="flex flex-col gap-6 px-margin py-6 lg:px-6">
                 <div className="flex items-baseline justify-between gap-4 text-primary">
                   <span className="text-base leading-6 font-semibold">Total</span>
                   <span className="text-2xl leading-8 font-semibold">{formatPrice(total)}</span>
