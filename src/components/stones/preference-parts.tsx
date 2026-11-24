@@ -207,7 +207,7 @@ function PriceTags({
   x1: number
   x2: number
   align: "center" | "ends"
-  /** A third tag (the over-budget projection), shown only where it clears the others */
+  /** A third tag (the over-budget projection): under its own point where it clears the others, else on the end of the last tag */
   extra?: { text: string; x: number; className: string } | null
 }) {
   const [ref, w] = useWidth<HTMLDivElement>()
@@ -220,23 +220,31 @@ function PriceTags({
   const right = align === "center" ? clamp(px2 - wb / 2, wb) : clamp(px2 - wb, wb)
   const merged = left + wa + 12 > right
   const both = `${a} – ${b}`
+  const wBoth = tagWidth(both)
+  const bothLeft = clamp((px1 + px2) / 2 - wBoth / 2, wBoth)
   const we = extra ? tagWidth(extra.text) : 0
   const extraLeft = extra ? clamp((extra.x / 100) * w - we / 2, we) : 0
-  const showExtra = !!extra && extraLeft > (merged ? clamp((px1 + px2) / 2 - tagWidth(both) / 2, tagWidth(both)) + tagWidth(both) : right + wb) + 12
+  const showExtra = !!extra && extraLeft > (merged ? bothLeft + wBoth : right + wb) + 12
+  // No room for it on its own: it rides on the end of the last tag instead, in its own colour.
+  const inline = !!extra && !showExtra
+  const tail = inline && extra ? <span className={cn("ml-2", extra.className)}>{extra.text}</span> : null
+  const tailW = inline ? we + 8 : 0
   return (
     <div ref={ref} className="relative mt-1.5 h-3" aria-hidden>
       {w > 0 &&
         (merged ? (
-          <span className={TAG} style={{ left: clamp((px1 + px2) / 2 - tagWidth(both) / 2, tagWidth(both)) }}>
+          <span className={TAG} style={{ left: Math.min(bothLeft, Math.max(0, w - wBoth - tailW)) }}>
             {both}
+            {tail}
           </span>
         ) : (
           <>
             <span className={TAG} style={{ left }}>
               {a}
             </span>
-            <span className={TAG} style={{ left: right }}>
+            <span className={TAG} style={{ left: Math.min(right, Math.max(0, w - wb - tailW)) }}>
               {b}
+              {tail}
             </span>
           </>
         ))}
@@ -420,10 +428,16 @@ export function SizeLine({
 export function PriceExplained({
   rows,
   total,
+  subtleDivider,
 }: {
-  /** `over`: the price in red with `note` (red) under the row (Size + Budget over budget) */
+  /**
+   * `over`: the price in red with `note` (red) under the row (Size + Budget over budget). Pass `note` as `null`
+   * (not left out) on a row that can get one, so it slides open and shut instead of jolting the page.
+   */
   rows: { label: string; desc: ReactNode; price: string; over?: boolean; note?: ReactNode }[]
   total: string
+  /** Test 2: the Stone / Ring Total divider in border-subtle (#D5D5D2) instead of input */
+  subtleDivider?: boolean
 }) {
   return (
     <div className="flex flex-col gap-3 bg-bg-input-50 p-4 text-primary" aria-live="polite">
@@ -434,13 +448,36 @@ export function PriceExplained({
             <p className="min-w-0 flex-1 tracking-[0.12px]">{r.desc}</p>
             <p className={cn("text-right font-semibold whitespace-nowrap", r.over && "text-tertiary")}>{r.price}</p>
           </div>
-          {r.note && <p className="text-xs leading-4 text-tertiary">{r.note}</p>}
+          {r.note !== undefined && <SlideNote>{r.note}</SlideNote>}
         </div>
       ))}
-      <div className="h-px bg-input" />
+      <div className={cn("h-px", subtleDivider ? "bg-border-subtle" : "bg-input")} />
       <div className="flex items-start justify-between gap-2 text-sm leading-5 font-semibold">
         <span>Ring Total:</span>
         <span className="whitespace-nowrap">{total}</span>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * A note that slides open (height and fade, 200ms) when it gets content and shut when it loses it, keeping
+ * its last text while it closes, so what sits below moves smoothly rather than jumping.
+ */
+function SlideNote({ children }: { children: ReactNode }) {
+  const open = children !== null && children !== false && children !== ""
+  const [last, setLast] = useState<ReactNode>(children)
+  if (open && children !== last) setLast(children)
+  return (
+    <div
+      className={cn(
+        "grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none",
+        open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+      )}
+      aria-hidden={!open}
+    >
+      <div className="min-h-0 overflow-hidden">
+        <p className="text-xs leading-4 text-tertiary">{open ? children : last}</p>
       </div>
     </div>
   )

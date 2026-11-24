@@ -155,10 +155,12 @@ export function Test2() {
               ),
               price: stonePrice,
               over: sim.overBy !== null,
-              note: sim.overBy ? `Selection is +${formatPrice(sim.overBy)} above your budget` : undefined,
+              // Variant C keeps the slot (null when within budget), so the note slides in and out.
+              note: shopBy === "both" ? (sim.overBy ? `Selection is +${formatPrice(sim.overBy)} above your budget` : null) : undefined,
             },
           ]}
           total={total}
+          subtleDivider
         />
         {sim.blocked && (
           <p className="-mb-4 text-xs leading-4 text-muted-foreground">
