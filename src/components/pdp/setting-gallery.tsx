@@ -14,8 +14,17 @@ interface SettingGalleryProps {
   previewMenu?: ReactNode
   /** Changing the shape scrolls the mobile carousel back to the first slide */
   previewShape?: string
+  /** Mobile carousel navigation: thumbnail row below (default) or dots on the image */
+  mobileNav?: MobileNav
   className?: string
 }
+
+/**
+ * How the mobile carousel shows where you are. "thumbnails": a thumbnail row below the slides
+ * (Figma SCO Drop 3a – PDP 5492:71771). "dots": no thumbnails, dots bottom-right of the slides and
+ * a "+X" count of the photos only seen in the expanded gallery (Figma SCO Drop 3a – PDP 4096:179324).
+ */
+export type MobileNav = "thumbnails" | "dots"
 
 /** Images open the zoomable gallery; the zoom-in cursor is the only affordance (no on-image icon). */
 const zoomTrigger =
@@ -50,6 +59,43 @@ function MediaTile({ item, onOpen }: { item: GalleryMedia; onOpen: () => void })
   )
 }
 
+/** Bottom-right corner brightness per image, so each photo is measured once. */
+const cornerCache = new Map<string, boolean>()
+
+/**
+ * Whether the bottom-right corner of an image is dark (where the carousel dots sit), so the dots
+ * can switch to the light colour there. Reads a downscaled copy of the image (same-origin files).
+ */
+function useDarkCorner(src: string | undefined) {
+  // Re-render once a newly measured image lands in the cache.
+  const [, setMeasured] = useState(0)
+  useEffect(() => {
+    if (!src || cornerCache.has(src)) return
+    let live = true
+    const img = new Image()
+    img.onload = () => {
+      const size = 48
+      const canvas = document.createElement("canvas")
+      canvas.width = canvas.height = size
+      const ctx = canvas.getContext("2d", { willReadFrequently: true })
+      if (!ctx) return
+      ctx.drawImage(img, 0, 0, size, size)
+      // The dots and "+X" take roughly the right 30% × bottom 10% of a slide.
+      const { data } = ctx.getImageData(Math.round(size * 0.7), Math.round(size * 0.9), Math.round(size * 0.3), Math.round(size * 0.1))
+      let sum = 0
+      for (let i = 0; i < data.length; i += 4) sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]
+      const isDark = sum / (data.length / 4) < 140
+      cornerCache.set(src, isDark)
+      if (live) setMeasured((n) => n + 1)
+    }
+    img.src = src
+    return () => {
+      live = false
+    }
+  }, [src])
+  return src ? (cornerCache.get(src) ?? false) : false
+}
+
 /**
  * Single image + thumbnail strip (Figma 7336:173017 — Drop 3A style gallery, Test 1 variant C).
  * Thumbnails list every media item for the selected metal, so the content matches the long-scroll variants.
@@ -62,13 +108,15 @@ const MAX_THUMBS = 4
  * square slides that swipe with scroll-snap, and a thumbnail row below on the secondary background
  * (4 thumbnails, then "+X More", which opens the gallery overlay). Only the thumbnailed photos swipe
  * inline; the rest are seen in the overlay. Tapping a thumbnail scrolls to that slide; tapping a slide
- * opens the overlay there. "Try it on" from the reference is not built.
+ * opens the overlay there. "Try it on" from the reference is not built: its slot holds the stone
+ * shape picker. With `nav="dots"` the thumbnail row gives way to dots on the slides (see MobileNav).
  */
 function MobileCarousel({
   media,
   onOpen,
   previewMenu,
   previewShape,
+  nav = "thumbnails",
   className,
 }: {
   media: GalleryMedia[]
@@ -77,6 +125,7 @@ function MobileCarousel({
   previewMenu?: ReactNode
   /** Changing the shape scrolls back to the first slide, where the preview shows */
   previewShape?: string
+  nav?: MobileNav
   className?: string
 }) {
   const [index, setIndex] = useState(0)
@@ -94,6 +143,7 @@ function MobileCarousel({
   // Up to 5 items fit as thumbnails; beyond that the 5th slot becomes "+X More".
   const shown = media.length > MAX_THUMBS + 1 ? media.slice(0, MAX_THUMBS) : media
   const hidden = media.length - shown.length
+  const darkCorner = useDarkCorner(nav === "dots" ? shown[Math.min(index, shown.length - 1)]?.src : undefined)
   return (
     <div className={cn("bg-secondary", className)}>
       <div className="relative">
@@ -136,7 +186,39 @@ function MobileCarousel({
         {/* The shape preview only changes the first image, so the picker shows only there
             (Figma's "Try it on" slot, bottom-left). */}
         {previewMenu && index === 0 && <div className="absolute bottom-2 left-2">{previewMenu}</div>}
+        {nav === "dots" && (
+          // Figma "Right Bottom Items": dots (current one 8px wide), then "+X" for the rest, which opens the gallery.
+          // Dark on light photos (as in Figma), light on dark ones: the colour follows the photo under them.
+          <div className="absolute right-0 bottom-0 flex h-9 items-center p-2">
+            <div className="flex h-5 items-center gap-1 px-2" aria-hidden>
+              {shown.map((item, i) => (
+                <span
+                  key={item.src}
+                  className={cn(
+                    "h-1 rounded-xs transition-all duration-300",
+                    darkCorner ? "bg-primary-foreground" : "bg-primary",
+                    i === index ? "w-2" : "w-1 opacity-50",
+                  )}
+                />
+              ))}
+            </div>
+            {hidden > 0 && (
+              <button
+                type="button"
+                aria-label={`Show ${hidden} more`}
+                onClick={() => onOpen(MAX_THUMBS)}
+                className={cn(
+                  "flex h-5 cursor-pointer items-center type-label-xs transition-colors duration-300",
+                  darkCorner ? "text-primary-foreground" : "text-primary",
+                )}
+              >
+                +{hidden}
+              </button>
+            )}
+          </div>
+        )}
       </div>
+      {nav === "thumbnails" && (
       <ul className="flex gap-1.5 px-2 pb-2" aria-label="Product media thumbnails">
         {shown.map((item, i) => (
           <li key={item.src} className="min-w-0 flex-1">
@@ -175,6 +257,7 @@ function MobileCarousel({
           </li>
         )}
       </ul>
+      )}
     </div>
   )
 }
@@ -292,13 +375,13 @@ export function ThumbnailGallery({
  * Settings PDP long-scroll gallery (Test 1 variants A and B): hero image + 2-column grid of supporting media.
  * Every image opens the zoomable gallery overlay at that image.
  */
-export function SettingGallery({ media, previewLabel, previewMenu, previewShape, className }: SettingGalleryProps) {
+export function SettingGallery({ media, previewLabel, previewMenu, previewShape, mobileNav, className }: SettingGalleryProps) {
   const [hero, ...rest] = media
   const overlay = useOverlay()
   return (
     <div className={className}>
-    {/* Mobile (below lg): carousel + thumbnails, same as variant C (Figma 5492:71771). */}
-    <MobileCarousel media={media} onOpen={overlay.openAt} previewMenu={previewMenu} previewShape={previewShape} className="lg:hidden" />
+    {/* Mobile (below lg): carousel + thumbnails, same as variant C (Figma 5492:71771), or with dots (mobileNav). */}
+    <MobileCarousel media={media} onOpen={overlay.openAt} previewMenu={previewMenu} previewShape={previewShape} nav={mobileNav} className="lg:hidden" />
     <div className="hidden flex-col gap-2 px-2 pb-8 lg:flex">
       <div className="relative">
         <button type="button" onClick={() => overlay.openAt(0)} aria-label={`Enlarge: ${hero.alt}`} className={cn(zoomTrigger, "aspect-square")}>

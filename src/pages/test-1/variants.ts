@@ -26,6 +26,8 @@ export interface SettingPdpVariant {
   figma: string
   gallery: GalleryMode
   details: DetailsMode
+  /** Mobile carousel without thumbnails, dots on the image instead (Figma SCO Drop 3a – PDP 4096:179324). Variant A only. */
+  mobileDots?: boolean
 }
 
 const FIGMA = "https://www.figma.com/design/Q4Wp6ls6O4nBvicBjbosQI/SCO-Drop-3b---Customizer?node-id="
@@ -51,7 +53,8 @@ const variant = (id: SettingPdpVariant["id"], gallery: GalleryMode, details: Det
 })
 
 export const SETTING_PDP_VARIANTS: Record<SettingPdpVariant["id"], SettingPdpVariant> = {
-  A: variant("A", "long-scroll", "drawer", "7342-118090"),
+  // A on phones: the carousel drops its thumbnail row for dots (desktop unchanged).
+  A: { ...variant("A", "long-scroll", "drawer", "7342-118090"), mobileDots: true },
   B: variant("B", "long-scroll", "teaser-drawer", "7342-118191"),
   C: variant("C", "thumbnails", "inline-tabs", "7342-118091"),
   D: variant("D", "long-scroll", "inline-tabs", "7342-118090"),
