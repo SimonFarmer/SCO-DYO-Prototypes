@@ -428,6 +428,7 @@ export function SizeLine({
 export function PriceExplained({
   rows,
   total,
+  subtleDivider,
 }: {
   /**
    * `over`: the price in red with `note` (red) under the row (Size + Budget over budget). Pass `note` as `null`
@@ -435,6 +436,8 @@ export function PriceExplained({
    */
   rows: { label: string; desc: ReactNode; price: string; over?: boolean; note?: ReactNode }[]
   total: string
+  /** Test 2: the Stone / Ring Total divider in border-subtle (#D5D5D2) instead of input */
+  subtleDivider?: boolean
 }) {
   return (
     <div className="flex flex-col gap-3 bg-bg-input-50 p-4 text-primary" aria-live="polite">
@@ -448,7 +451,7 @@ export function PriceExplained({
           {r.note !== undefined && <SlideNote>{r.note}</SlideNote>}
         </div>
       ))}
-      <div className="h-px bg-border-subtle" />
+      <div className={cn("h-px", subtleDivider ? "bg-border-subtle" : "bg-input")} />
       <div className="flex items-start justify-between gap-2 text-sm leading-5 font-semibold">
         <span>Ring Total:</span>
         <span className="whitespace-nowrap">{total}</span>

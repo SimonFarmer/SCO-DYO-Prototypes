@@ -160,6 +160,7 @@ export function Test2() {
             },
           ]}
           total={total}
+          subtleDivider
         />
         {sim.blocked && (
           <p className="-mb-4 text-xs leading-4 text-muted-foreground">
