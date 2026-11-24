@@ -5,21 +5,18 @@ import type { MetalId } from "./products"
 export interface SettingPdpContent {
   /** Live PDP the content was read from (the design's lead metal). */
   url: string
-  /** Metal the styled photos show. */
-  shownIn: MetalId
   breadcrumb: string[]
   /** `{metal}` is replaced with the selected metal. */
   description: string
   highlights: string[]
   specs: { label: string; value: string }[]
-  /** Styled and on-hand photos, in the PDP's order. */
-  styled: string[]
+  /** Each metal's own photos after the hero: front and side views, then the styled photos that metal has. */
+  gallery: Partial<Record<MetalId, string[]>>
 }
 
 export const SETTING_PDPS: Record<string, SettingPdpContent> = {
   "timeless-solitaire": {
     "url": "https://www.shaneco.com/engagement-rings/solitaire-engagement-rings/timeless-solitaire-engagement-ring-/p/41004888",
-    "shownIn": "14k-yellow-gold",
     "breadcrumb": [
       "Home",
       "Engagement Rings",
@@ -51,17 +48,36 @@ export const SETTING_PDPS: Record<string, SettingPdpContent> = {
         "value": "No Stones"
       }
     ],
-    "styled": [
-      "/images/gallery/timeless-solitaire/styled-1.jpg",
-      "/images/gallery/timeless-solitaire/styled-2.jpg",
-      "/images/gallery/timeless-solitaire/styled-3.jpg",
-      "/images/gallery/timeless-solitaire/styled-4.jpg",
-      "/images/gallery/timeless-solitaire/styled-5.jpg"
-    ]
+    "gallery": {
+      "14k-yellow-gold": [
+        "/images/gallery/timeless-solitaire/41004888-A2.jpg",
+        "/images/gallery/timeless-solitaire/41004888-A6.jpg",
+        "/images/gallery/timeless-solitaire/41004888-A7.jpg",
+        "/images/gallery/timeless-solitaire/41004888-A10.jpg",
+        "/images/gallery/timeless-solitaire/41004888-A8.jpg",
+        "/images/gallery/timeless-solitaire/41004888-A9.jpg"
+      ],
+      "14k-white-gold": [
+        "/images/gallery/timeless-solitaire/41004893-A2.jpg",
+        "/images/gallery/timeless-solitaire/41004893-A1.jpg"
+      ],
+      "14k-rose-gold": [
+        "/images/gallery/timeless-solitaire/41089052-A2.jpg",
+        "/images/gallery/timeless-solitaire/41089052-A1.jpg"
+      ],
+      "platinum": [
+        "/images/gallery/timeless-solitaire/41006535-A2.jpg",
+        "/images/gallery/timeless-solitaire/41006535-A1.jpg",
+        "/images/gallery/timeless-solitaire/41006535-A6.jpg",
+        "/images/gallery/timeless-solitaire/41006535-A7.jpg",
+        "/images/gallery/timeless-solitaire/41006535-A10.jpg",
+        "/images/gallery/timeless-solitaire/41006535-A8.jpg",
+        "/images/gallery/timeless-solitaire/41006535-A9.jpg"
+      ]
+    }
   },
   "luminary-solitaire": {
     "url": "https://www.shaneco.com/engagement-rings/solitaire-engagement-rings/luminary-solitaire-engagement-ring/p/41041604",
-    "shownIn": "14k-white-gold",
     "breadcrumb": [
       "Home",
       "Engagement Rings",
@@ -97,14 +113,27 @@ export const SETTING_PDPS: Record<string, SettingPdpContent> = {
         "value": "No Stones"
       }
     ],
-    "styled": [
-      "/images/gallery/luminary-solitaire/styled-1.jpg",
-      "/images/gallery/luminary-solitaire/styled-2.jpg"
-    ]
+    "gallery": {
+      "14k-white-gold": [
+        "/images/gallery/luminary-solitaire/41041604-A2.jpg",
+        "/images/gallery/luminary-solitaire/41041604-A1.jpg"
+      ],
+      "14k-yellow-gold": [
+        "/images/gallery/luminary-solitaire/41045174-A2.jpg",
+        "/images/gallery/luminary-solitaire/41045174-A1.jpg"
+      ],
+      "14k-rose-gold": [
+        "/images/gallery/luminary-solitaire/41060741-A2.jpg",
+        "/images/gallery/luminary-solitaire/41060741-A1.jpg"
+      ],
+      "platinum": [
+        "/images/gallery/luminary-solitaire/41045179-A2.jpg",
+        "/images/gallery/luminary-solitaire/41045179-A1.jpg"
+      ]
+    }
   },
   "willow-infinity": {
     "url": "https://www.shaneco.com/engagement-rings/infinity-engagement-rings/willow-infinity-engagement-ring/p/41046616",
-    "shownIn": "14k-white-gold",
     "breadcrumb": [
       "Home",
       "Engagement Rings",
@@ -140,16 +169,29 @@ export const SETTING_PDPS: Record<string, SettingPdpContent> = {
         "value": "Round"
       }
     ],
-    "styled": [
-      "/images/gallery/willow-infinity/styled-1.jpg",
-      "/images/gallery/willow-infinity/styled-2.jpg",
-      "/images/gallery/willow-infinity/styled-3.jpg",
-      "/images/gallery/willow-infinity/styled-4.jpg"
-    ]
+    "gallery": {
+      "14k-white-gold": [
+        "/images/gallery/willow-infinity/41046616-A2.jpg",
+        "/images/gallery/willow-infinity/41046616-A1.jpg",
+        "/images/gallery/willow-infinity/41046616-A98.jpg",
+        "/images/gallery/willow-infinity/41046616-A99.jpg"
+      ],
+      "14k-yellow-gold": [
+        "/images/gallery/willow-infinity/41046617-A2.jpg",
+        "/images/gallery/willow-infinity/41046617-A1.jpg"
+      ],
+      "14k-rose-gold": [
+        "/images/gallery/willow-infinity/41088492-A2.jpg",
+        "/images/gallery/willow-infinity/41088492-A1.jpg"
+      ],
+      "platinum": [
+        "/images/gallery/willow-infinity/41088476-A2.jpg",
+        "/images/gallery/willow-infinity/41088476-A1.jpg"
+      ]
+    }
   },
   "marianne-three-stone": {
     "url": "https://www.shaneco.com/engagement-rings/three-stone-engagement-rings/marianne-three-stone-engagement-ring/p/41047499",
-    "shownIn": "14k-white-gold",
     "breadcrumb": [
       "Home",
       "Engagement Rings",
@@ -185,15 +227,20 @@ export const SETTING_PDPS: Record<string, SettingPdpContent> = {
         "value": "Round"
       }
     ],
-    "styled": [
-      "/images/gallery/marianne-three-stone/styled-1.jpg",
-      "/images/gallery/marianne-three-stone/styled-2.jpg",
-      "/images/gallery/marianne-three-stone/styled-3.jpg"
-    ]
+    "gallery": {
+      "14k-white-gold": [
+        "/images/gallery/marianne-three-stone/41047499-A2.jpg",
+        "/images/gallery/marianne-three-stone/41047499-A1.jpg",
+        "/images/gallery/marianne-three-stone/41047499-A3.jpg"
+      ],
+      "14k-yellow-gold": [
+        "/images/gallery/marianne-three-stone/41047500-A2.jpg",
+        "/images/gallery/marianne-three-stone/41047500-A1.jpg"
+      ]
+    }
   },
   "vista-pave": {
     "url": "https://www.shaneco.com/engagement-rings/classic-engagement-rings/vista-diamond-pave-engagement-ring/p/41048069",
-    "shownIn": "14k-yellow-gold",
     "breadcrumb": [
       "Home",
       "Engagement Rings",
@@ -229,15 +276,28 @@ export const SETTING_PDPS: Record<string, SettingPdpContent> = {
         "value": "Round"
       }
     ],
-    "styled": [
-      "/images/gallery/vista-pave/styled-1.jpg",
-      "/images/gallery/vista-pave/styled-2.jpg",
-      "/images/gallery/vista-pave/styled-3.jpg"
-    ]
+    "gallery": {
+      "14k-yellow-gold": [
+        "/images/gallery/vista-pave/41048069-A2.jpg",
+        "/images/gallery/vista-pave/41048069-A1.jpg",
+        "/images/gallery/vista-pave/41048069-A96.jpg"
+      ],
+      "14k-white-gold": [
+        "/images/gallery/vista-pave/41045046-A2.jpg",
+        "/images/gallery/vista-pave/41045046-A1.jpg"
+      ],
+      "14k-rose-gold": [
+        "/images/gallery/vista-pave/41048912-A2.jpg",
+        "/images/gallery/vista-pave/41048912-A1.jpg"
+      ],
+      "platinum": [
+        "/images/gallery/vista-pave/41073550-A2.jpg",
+        "/images/gallery/vista-pave/41073550-A1.jpg"
+      ]
+    }
   },
   "modena-cathedral": {
     "url": "https://www.shaneco.com/engagement-rings/solitaire-engagement-rings/modena-cathedral-engagement-ring/p/41050654",
-    "shownIn": "14k-yellow-gold",
     "breadcrumb": [
       "Home",
       "Engagement Rings",
@@ -265,14 +325,27 @@ export const SETTING_PDPS: Record<string, SettingPdpContent> = {
         "value": "No Stones"
       }
     ],
-    "styled": [
-      "/images/gallery/modena-cathedral/styled-1.jpg",
-      "/images/gallery/modena-cathedral/styled-2.jpg"
-    ]
+    "gallery": {
+      "14k-yellow-gold": [
+        "/images/gallery/modena-cathedral/41050654-A2.jpg",
+        "/images/gallery/modena-cathedral/41050654-A1.jpg"
+      ],
+      "14k-white-gold": [
+        "/images/gallery/modena-cathedral/41050653-A2.jpg",
+        "/images/gallery/modena-cathedral/41050653-A1.jpg"
+      ],
+      "14k-rose-gold": [
+        "/images/gallery/modena-cathedral/41077509-A2.jpg",
+        "/images/gallery/modena-cathedral/41077509-A1.jpg"
+      ],
+      "platinum": [
+        "/images/gallery/modena-cathedral/41089432-A2.jpg",
+        "/images/gallery/modena-cathedral/41089432-A1.jpg"
+      ]
+    }
   },
   "ella-halo": {
     "url": "https://www.shaneco.com/engagement-rings/halo-engagement-rings/ella-halo-engagement-ring-for-1-ct-round/p/41071388",
-    "shownIn": "14k-white-gold",
     "breadcrumb": [
       "Home",
       "Engagement Rings",
@@ -310,19 +383,32 @@ export const SETTING_PDPS: Record<string, SettingPdpContent> = {
         "value": "Round"
       }
     ],
-    "styled": [
-      "/images/gallery/ella-halo/styled-1.jpg",
-      "/images/gallery/ella-halo/styled-2.jpg",
-      "/images/gallery/ella-halo/styled-3.jpg",
-      "/images/gallery/ella-halo/styled-4.jpg",
-      "/images/gallery/ella-halo/styled-5.jpg",
-      "/images/gallery/ella-halo/styled-6.jpg",
-      "/images/gallery/ella-halo/styled-7.jpg"
-    ]
+    "gallery": {
+      "14k-white-gold": [
+        "/images/gallery/ella-halo/41071388-A2.jpg",
+        "/images/gallery/ella-halo/41071388-A1.jpg",
+        "/images/gallery/ella-halo/41071388-A3.jpg",
+        "/images/gallery/ella-halo/41071388-A4.jpg",
+        "/images/gallery/ella-halo/41071388-A78.jpg",
+        "/images/gallery/ella-halo/41071388-A99.jpg",
+        "/images/gallery/ella-halo/41071388-A98.jpg"
+      ],
+      "14k-yellow-gold": [
+        "/images/gallery/ella-halo/41081279-A2.jpg",
+        "/images/gallery/ella-halo/41081279-A1.jpg",
+        "/images/gallery/ella-halo/41081279-A3.jpg",
+        "/images/gallery/ella-halo/41081279-A4.jpg"
+      ],
+      "14k-rose-gold": [
+        "/images/gallery/ella-halo/41074306-A2.jpg",
+        "/images/gallery/ella-halo/41074306-A1.jpg",
+        "/images/gallery/ella-halo/41074306-A3.jpg",
+        "/images/gallery/ella-halo/41074306-A4.jpg"
+      ]
+    }
   },
   "poesie-three-stone": {
     "url": "https://www.shaneco.com/engagement-rings/vintage-engagement-rings/poesie-three-stone-engagement-ring/p/41071639",
-    "shownIn": "14k-yellow-gold",
     "breadcrumb": [
       "Home",
       "Engagement Rings",
@@ -358,14 +444,23 @@ export const SETTING_PDPS: Record<string, SettingPdpContent> = {
         "value": "Round"
       }
     ],
-    "styled": [
-      "/images/gallery/poesie-three-stone/styled-1.jpg",
-      "/images/gallery/poesie-three-stone/styled-2.jpg"
-    ]
+    "gallery": {
+      "14k-white-gold": [
+        "/images/gallery/poesie-three-stone/41071262-A2.jpg",
+        "/images/gallery/poesie-three-stone/41071262-A1.jpg"
+      ],
+      "14k-yellow-gold": [
+        "/images/gallery/poesie-three-stone/41071639-A2.jpg",
+        "/images/gallery/poesie-three-stone/41071639-A1.jpg"
+      ],
+      "platinum": [
+        "/images/gallery/poesie-three-stone/41105477-A2.jpg",
+        "/images/gallery/poesie-three-stone/41105477-A1.jpg"
+      ]
+    }
   },
   "antonia": {
     "url": "https://www.shaneco.com/engagement-rings/vintage-engagement-rings/antonia-engagement-ring/p/41080416",
-    "shownIn": "14k-yellow-gold",
     "breadcrumb": [
       "Home",
       "Engagement Rings",
@@ -403,14 +498,19 @@ export const SETTING_PDPS: Record<string, SettingPdpContent> = {
         "value": "Round"
       }
     ],
-    "styled": [
-      "/images/gallery/antonia/styled-1.jpg",
-      "/images/gallery/antonia/styled-2.jpg"
-    ]
+    "gallery": {
+      "14k-yellow-gold": [
+        "/images/gallery/antonia/41080416-A2.jpg",
+        "/images/gallery/antonia/41080416-A1.jpg"
+      ],
+      "14k-white-gold": [
+        "/images/gallery/antonia/41061672-A2.jpg",
+        "/images/gallery/antonia/41061672-A1.jpg"
+      ]
+    }
   },
   "plume": {
     "url": "https://www.shaneco.com/engagement-rings/classic-engagement-rings/plume-engagement-ring/p/41093781",
-    "shownIn": "14k-yellow-gold",
     "breadcrumb": [
       "Home",
       "Engagement Rings",
@@ -446,16 +546,29 @@ export const SETTING_PDPS: Record<string, SettingPdpContent> = {
         "value": "Round"
       }
     ],
-    "styled": [
-      "/images/gallery/plume/styled-1.jpg",
-      "/images/gallery/plume/styled-2.jpg",
-      "/images/gallery/plume/styled-3.jpg",
-      "/images/gallery/plume/styled-4.jpg"
-    ]
+    "gallery": {
+      "14k-yellow-gold": [
+        "/images/gallery/plume/41093781-A2.jpg",
+        "/images/gallery/plume/41093781-A1.jpg",
+        "/images/gallery/plume/41093781-A94.jpg",
+        "/images/gallery/plume/41093781-A93.jpg"
+      ],
+      "14k-white-gold": [
+        "/images/gallery/plume/41093784-A2.jpg",
+        "/images/gallery/plume/41093784-A1.jpg"
+      ],
+      "14k-rose-gold": [
+        "/images/gallery/plume/41093780-A2.jpg",
+        "/images/gallery/plume/41093780-A1.jpg"
+      ],
+      "platinum": [
+        "/images/gallery/plume/41093785-A2.jpg",
+        "/images/gallery/plume/41093785-A1.jpg"
+      ]
+    }
   },
   "aspen-cathedral": {
     "url": "https://www.shaneco.com/engagement-rings/solitaire-engagement-rings/aspen-cathedral-engagement-ring/p/41097388",
-    "shownIn": "14k-white-gold",
     "breadcrumb": [
       "Home",
       "Engagement Rings",
@@ -483,14 +596,27 @@ export const SETTING_PDPS: Record<string, SettingPdpContent> = {
         "value": "No Stones"
       }
     ],
-    "styled": [
-      "/images/gallery/aspen-cathedral/styled-1.jpg",
-      "/images/gallery/aspen-cathedral/styled-2.jpg"
-    ]
+    "gallery": {
+      "14k-white-gold": [
+        "/images/gallery/aspen-cathedral/41097388-A2.jpg",
+        "/images/gallery/aspen-cathedral/41097388-A1.jpg"
+      ],
+      "14k-yellow-gold": [
+        "/images/gallery/aspen-cathedral/41097387-A2.jpg",
+        "/images/gallery/aspen-cathedral/41097387-A1.jpg"
+      ],
+      "14k-rose-gold": [
+        "/images/gallery/aspen-cathedral/41097389-A2.jpg",
+        "/images/gallery/aspen-cathedral/41097389-A1.jpg"
+      ],
+      "platinum": [
+        "/images/gallery/aspen-cathedral/41105441-A2.jpg",
+        "/images/gallery/aspen-cathedral/41105441-A1.jpg"
+      ]
+    }
   },
   "woodland": {
     "url": "https://www.shaneco.com/engagement-rings/swirl-engagement-rings/woodland-engagement-ring/p/41097557",
-    "shownIn": "14k-yellow-gold",
     "breadcrumb": [
       "Home",
       "Engagement Rings",
@@ -526,14 +652,27 @@ export const SETTING_PDPS: Record<string, SettingPdpContent> = {
         "value": "Round"
       }
     ],
-    "styled": [
-      "/images/gallery/woodland/styled-1.jpg",
-      "/images/gallery/woodland/styled-2.jpg"
-    ]
+    "gallery": {
+      "14k-yellow-gold": [
+        "/images/gallery/woodland/41097557-A2.jpg",
+        "/images/gallery/woodland/41097557-A1.jpg"
+      ],
+      "14k-white-gold": [
+        "/images/gallery/woodland/41097358-A2.jpg",
+        "/images/gallery/woodland/41097358-A1.jpg"
+      ],
+      "14k-rose-gold": [
+        "/images/gallery/woodland/41097559-A2.jpg",
+        "/images/gallery/woodland/41097559-A1.jpg"
+      ],
+      "platinum": [
+        "/images/gallery/woodland/41106380-A2.jpg",
+        "/images/gallery/woodland/41106380-A1.jpg"
+      ]
+    }
   },
   "cypress-halo": {
     "url": "https://www.shaneco.com/engagement-rings/halo-engagement-rings/cypress-halo-engagement-ring/p/41098343",
-    "shownIn": "14k-yellow-gold",
     "breadcrumb": [
       "Home",
       "Engagement Rings",
@@ -573,17 +712,34 @@ export const SETTING_PDPS: Record<string, SettingPdpContent> = {
         "value": "Round, Pear, Marquise"
       }
     ],
-    "styled": [
-      "/images/gallery/cypress-halo/styled-1.jpg",
-      "/images/gallery/cypress-halo/styled-2.jpg",
-      "/images/gallery/cypress-halo/styled-3.jpg",
-      "/images/gallery/cypress-halo/styled-4.jpg",
-      "/images/gallery/cypress-halo/styled-5.jpg"
-    ]
+    "gallery": {
+      "14k-yellow-gold": [
+        "/images/gallery/cypress-halo/41098343-A2.jpg",
+        "/images/gallery/cypress-halo/41098343-A1.jpg",
+        "/images/gallery/cypress-halo/41098343-A7.jpg",
+        "/images/gallery/cypress-halo/41098343-A6.jpg",
+        "/images/gallery/cypress-halo/41098343-A10.jpg",
+        "/images/gallery/cypress-halo/41098343-A9.jpg",
+        "/images/gallery/cypress-halo/41098343-A8.jpg"
+      ],
+      "14k-white-gold": [
+        "/images/gallery/cypress-halo/41088380-A2.jpg",
+        "/images/gallery/cypress-halo/41088380-A1.jpg"
+      ],
+      "14k-rose-gold": [
+        "/images/gallery/cypress-halo/41088555-A2.jpg",
+        "/images/gallery/cypress-halo/41088555-A1.jpg",
+        "/images/gallery/cypress-halo/41088555-A3.jpg",
+        "/images/gallery/cypress-halo/41088555-A4.jpg"
+      ],
+      "platinum": [
+        "/images/gallery/cypress-halo/41105430-A2.jpg",
+        "/images/gallery/cypress-halo/41105430-A1.jpg"
+      ]
+    }
   },
   "privet": {
     "url": "https://www.shaneco.com/engagement-rings/pave-engagement-rings/privet-engagement-ring-1-5-tcw-diamond-accents/p/41111140",
-    "shownIn": "14k-yellow-gold",
     "breadcrumb": [
       "Home",
       "Engagement Rings",
@@ -616,9 +772,23 @@ export const SETTING_PDPS: Record<string, SettingPdpContent> = {
         "value": "Natural Diamond"
       }
     ],
-    "styled": [
-      "/images/gallery/privet/styled-1.jpg",
-      "/images/gallery/privet/styled-2.jpg"
-    ]
+    "gallery": {
+      "14k-yellow-gold": [
+        "/images/gallery/privet/41111140-A2.jpg",
+        "/images/gallery/privet/41111140-A1.jpg"
+      ],
+      "14k-white-gold": [
+        "/images/gallery/privet/41111139-A2.jpg",
+        "/images/gallery/privet/41111139-A1.jpg"
+      ],
+      "14k-rose-gold": [
+        "/images/gallery/privet/41111142-A2.jpg",
+        "/images/gallery/privet/41111142-A1.jpg"
+      ],
+      "platinum": [
+        "/images/gallery/privet/41111141-A2.jpg",
+        "/images/gallery/privet/41111141-A1.jpg"
+      ]
+    }
   }
 }
