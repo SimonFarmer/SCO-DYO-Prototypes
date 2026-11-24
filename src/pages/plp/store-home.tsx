@@ -31,13 +31,15 @@ export function StoreHome() {
 
           {/* Mobile: the logo sits on the hero */}
           <div className="absolute inset-x-0 top-6 flex flex-col items-center gap-2 lg:hidden">
-            {/* Prototype-only: in the flows the logo returns to the start; in the standalone tests it is inert. */}
+            {/* Prototype-only: in the flows the logo returns to the start; in the standalone tests it shows the not-in-test notice. */}
             {flow ? (
               <Link to={flowPath("/")} aria-label="Shane Co. (back to the prototype list)">
                 <img src="/images/logo.svg" alt="" className="h-10 w-auto brightness-0 invert" />
               </Link>
             ) : (
-              <img src="/images/logo.svg" alt="Shane Co." className="h-10 w-auto brightness-0 invert" />
+              <button type="button" onClick={() => notInTest("The homepage")} aria-label="Shane Co." className="cursor-pointer">
+                <img src="/images/logo.svg" alt="" className="h-10 w-auto brightness-0 invert" />
+              </button>
             )}
             <img src="/images/tagline.svg" alt="Your friend & jeweler" className="h-2 w-auto brightness-0 invert" />
           </div>
