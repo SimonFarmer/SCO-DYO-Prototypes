@@ -61,9 +61,9 @@ export function SiteHeader({
   const visible = useStickyOnIntent(ref)
   const [menuOpen, setMenuOpen] = useState(false)
   // Prototype-only: in the full flows the logo returns to the index of prototypes (through the exit guard).
-  // In the standalone tests it is inert, so participants can't reach the list of every test.
+  // In the standalone tests it shows the not-in-test notice, so participants can't reach the list of every test.
   const flow = useFlow()
-  const toIndex = flow ? () => siteNavigate("/") : undefined
+  const toIndex = flow ? () => siteNavigate("/") : () => notInTest("The homepage")
   const closeTimer = useRef<number | undefined>(undefined)
 
   const openMenu = () => {
@@ -97,13 +97,9 @@ export function SiteHeader({
     >
       {/* Mobile: logo + tagline, as on the non-DYO mobile PDP */}
       <div className="flex h-22 items-center justify-center lg:hidden">
-        {toIndex ? (
-          <button type="button" onClick={toIndex} aria-label="Shane Co. (back to the prototype list)" className="cursor-pointer">
-            <Logo withTagline />
-          </button>
-        ) : (
+        <button type="button" onClick={toIndex} aria-label="Shane Co." className="cursor-pointer">
           <Logo withTagline />
-        )}
+        </button>
       </div>
 
       {/* Desktop */}
@@ -114,20 +110,14 @@ export function SiteHeader({
             <UtilityLink icon={DiamondIcon} label="Care" />
             <UtilityLink icon={MapPinIcon} label={STORE.name} />
           </div>
-          {toIndex ? (
-            <button
-              type="button"
-              onClick={toIndex}
-              aria-label="Shane Co. (back to the prototype list)"
-              className="absolute left-1/2 -translate-x-1/2 cursor-pointer"
-            >
-              <Logo />
-            </button>
-          ) : (
-            <span className="absolute left-1/2 -translate-x-1/2">
-              <Logo />
-            </span>
-          )}
+          <button
+            type="button"
+            onClick={toIndex}
+            aria-label="Shane Co."
+            className="absolute left-1/2 -translate-x-1/2 cursor-pointer"
+          >
+            <Logo />
+          </button>
           <div className="flex items-center gap-6">
             <UtilityLink icon={UserCircleIcon} label="Sign In" />
             <UtilityLink icon={HeartIcon} label="Wishlist" />
