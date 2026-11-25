@@ -3,6 +3,8 @@ import { Play } from "@phosphor-icons/react"
 import { Badge } from "@/components/ui/badge"
 import { ImageGalleryOverlay } from "@/components/pdp/image-gallery-overlay"
 import { MediaNote } from "@/components/pdp/media-note"
+import { GalleryCounter } from "@/components/shared/gallery-counter"
+import { GalleryNotes } from "@/components/shared/gallery-notes"
 import type { GalleryMedia } from "@/data/products"
 import { cn } from "@/lib/utils"
 
@@ -14,15 +16,15 @@ interface SettingGalleryProps {
   previewMenu?: ReactNode
   /** Changing the shape scrolls the mobile carousel back to the first slide */
   previewShape?: string
-  /** Mobile carousel navigation: thumbnail row below (default) or dots on the image */
+  /** Mobile carousel navigation: thumbnail row below (default) or a "1 / 4" counter on the image */
   mobileNav?: MobileNav
   className?: string
 }
 
 /**
  * How the mobile carousel shows where you are. "thumbnails": a thumbnail row below the slides
- * (Figma SCO Drop 3a – PDP 5492:71771). "dots": no thumbnails, dots bottom-right of the slides and
- * a "+X" count of the photos only seen in the expanded gallery (Figma SCO Drop 3a – PDP 4096:179324).
+ * (Figma SCO Drop 3a – PDP 5492:71771). "dots": no thumbnails; every photo swipes inline and a
+ * "1 / 4" counter sits bottom-right of the slides (Figma SCO Drop 3b – Customizer 8242:61615).
  */
 export type MobileNav = "thumbnails" | "dots"
 
@@ -59,43 +61,6 @@ function MediaTile({ item, onOpen }: { item: GalleryMedia; onOpen: () => void })
   )
 }
 
-/** Bottom-right corner brightness per image, so each photo is measured once. */
-const cornerCache = new Map<string, boolean>()
-
-/**
- * Whether the bottom-right corner of an image is dark (where the carousel dots sit), so the dots
- * can switch to the light colour there. Reads a downscaled copy of the image (same-origin files).
- */
-function useDarkCorner(src: string | undefined) {
-  // Re-render once a newly measured image lands in the cache.
-  const [, setMeasured] = useState(0)
-  useEffect(() => {
-    if (!src || cornerCache.has(src)) return
-    let live = true
-    const img = new Image()
-    img.onload = () => {
-      const size = 48
-      const canvas = document.createElement("canvas")
-      canvas.width = canvas.height = size
-      const ctx = canvas.getContext("2d", { willReadFrequently: true })
-      if (!ctx) return
-      ctx.drawImage(img, 0, 0, size, size)
-      // The dots and "+X" take roughly the right 30% × bottom 10% of a slide.
-      const { data } = ctx.getImageData(Math.round(size * 0.7), Math.round(size * 0.9), Math.round(size * 0.3), Math.round(size * 0.1))
-      let sum = 0
-      for (let i = 0; i < data.length; i += 4) sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]
-      const isDark = sum / (data.length / 4) < 140
-      cornerCache.set(src, isDark)
-      if (live) setMeasured((n) => n + 1)
-    }
-    img.src = src
-    return () => {
-      live = false
-    }
-  }, [src])
-  return src ? (cornerCache.get(src) ?? false) : false
-}
-
 /**
  * Single image + thumbnail strip (Figma 7336:173017 — Drop 3A style gallery, Test 1 variant C).
  * Thumbnails list every media item for the selected metal, so the content matches the long-scroll variants.
@@ -109,7 +74,7 @@ const MAX_THUMBS = 4
  * (4 thumbnails, then "+X More", which opens the gallery overlay). Only the thumbnailed photos swipe
  * inline; the rest are seen in the overlay. Tapping a thumbnail scrolls to that slide; tapping a slide
  * opens the overlay there. "Try it on" from the reference is not built: its slot holds the stone
- * shape picker. With `nav="dots"` the thumbnail row gives way to dots on the slides (see MobileNav).
+ * shape picker. With `nav="dots"` the thumbnail row gives way to a counter on the slides (see MobileNav).
  */
 function MobileCarousel({
   media,
@@ -129,6 +94,8 @@ function MobileCarousel({
   className?: string
 }) {
   const [index, setIndex] = useState(0)
+  /** Scroll position in slides (fractional mid-swipe), so the photo notes fade with the swipe. */
+  const [pos, setPos] = useState(0)
   const trackRef = useRef<HTMLUListElement>(null)
   const firstShape = useRef(previewShape)
   const goTo = (i: number) => {
@@ -140,10 +107,11 @@ function MobileCarousel({
     firstShape.current = previewShape
     trackRef.current?.scrollTo({ left: 0, behavior: "smooth" })
   }, [previewShape])
-  // Up to 5 items fit as thumbnails; beyond that the 5th slot becomes "+X More".
-  const shown = media.length > MAX_THUMBS + 1 ? media.slice(0, MAX_THUMBS) : media
+  // Thumbnails: up to 5 items fit; beyond that the 5th slot becomes "+X More" and only the
+  // thumbnailed photos swipe inline. Counter: every photo swipes inline, so nothing is hidden.
+  const shown = nav === "dots" || media.length <= MAX_THUMBS + 1 ? media : media.slice(0, MAX_THUMBS)
   const hidden = media.length - shown.length
-  const darkCorner = useDarkCorner(nav === "dots" ? shown[Math.min(index, shown.length - 1)]?.src : undefined)
+  const current = shown[Math.min(index, shown.length - 1)]
   return (
     <div className={cn("bg-secondary", className)}>
       <div className="relative">
@@ -153,10 +121,12 @@ function MobileCarousel({
           className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none]"
           onScroll={(e) => {
             const el = e.currentTarget
-            setIndex(Math.round(el.scrollLeft / el.clientWidth))
+            const p = el.scrollLeft / el.clientWidth
+            setPos(p)
+            setIndex(Math.round(p))
           }}
         >
-          {/* Only the thumbnailed photos swipe inline; the rest open in the expanded gallery ("+X More"). */}
+          {/* With thumbnails, only the thumbnailed photos swipe inline; the rest open in the expanded gallery ("+X More"). */}
           {shown.map((item, i) => (
             <li key={item.src} className="w-full shrink-0 snap-start">
               <button
@@ -178,44 +148,34 @@ function MobileCarousel({
                     </span>
                   </span>
                 )}
-                {item.badge && <MediaNote className="bottom-2 left-2 max-w-[calc(100%-1rem)]">{item.badge}</MediaNote>}
+                {/* With the counter, the note stays put above the track instead (below). */}
+                {item.badge && nav !== "dots" && <MediaNote className="bottom-2 left-2 max-w-[calc(100%-1rem)]">{item.badge}</MediaNote>}
               </button>
             </li>
           ))}
         </ul>
         {/* The shape preview only changes the first image, so the picker shows only there
             (Figma's "Try it on" slot, bottom-left). */}
-        {previewMenu && index === 0 && <div className="absolute bottom-2 left-2">{previewMenu}</div>}
-        {nav === "dots" && (
-          // Figma "Right Bottom Items": dots (current one 8px wide), then "+X" for the rest, which opens the gallery.
-          // Dark on light photos (as in Figma), light on dark ones: the colour follows the photo under them.
-          <div className="absolute right-0 bottom-0 flex h-9 items-center p-2">
-            <div className="flex h-5 items-center gap-1 px-2" aria-hidden>
-              {shown.map((item, i) => (
-                <span
-                  key={item.src}
-                  className={cn(
-                    "h-1 rounded-xs transition-all duration-300",
-                    darkCorner ? "bg-primary-foreground" : "bg-primary",
-                    i === index ? "w-2" : "w-1 opacity-50",
-                  )}
-                />
-              ))}
-            </div>
-            {hidden > 0 && (
-              <button
-                type="button"
-                aria-label={`Show ${hidden} more`}
-                onClick={() => onOpen(MAX_THUMBS)}
-                className={cn(
-                  "flex h-5 cursor-pointer items-center type-label-xs transition-colors duration-300",
-                  darkCorner ? "text-primary-foreground" : "text-primary",
-                )}
-              >
-                +{hidden}
-              </button>
-            )}
+        {previewMenu && nav !== "dots" && index === 0 && <div className="absolute bottom-2 left-2">{previewMenu}</div>}
+        {/* Counter variant: the picker fades with the swipe like the photo notes, and stops taking taps
+            once it's mostly gone. */}
+        {previewMenu && nav === "dots" && pos < 0.5 && (
+          <div
+            className={cn("absolute bottom-2 left-2", pos > 0.25 && "pointer-events-none")}
+            style={{ opacity: Math.max(0, 1 - pos * 2) }}
+            aria-hidden={index !== 0}
+          >
+            {previewMenu}
           </div>
+        )}
+        {/* Counter variant: the photo note is fixed bottom-left and swaps text with the slide, so it
+            doesn't slide along with the photo. Left clear of the counter on the right. */}
+        {nav === "dots" && (
+          // The picker takes the bottom-left of the first slide, so its note never shows.
+          <GalleryNotes notes={shown.map((item, i) => (previewMenu && i === 0 ? undefined : item.badge))} pos={pos} index={index} />
+        )}
+        {nav === "dots" && (
+          <GalleryCounter index={index} total={shown.length} src={current?.src} />
         )}
       </div>
       {nav === "thumbnails" && (
