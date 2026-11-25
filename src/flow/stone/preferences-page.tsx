@@ -10,6 +10,7 @@ import {
   SizeLine,
   StockNote,
   StoneTypeToggle,
+  useSectionClass,
 } from "@/components/stones/preference-parts"
 import { StoneCtas } from "@/components/stones/stone-ctas"
 import { formatSize, gemById, shapesFor, snapSize, stoneShape, stoneType } from "@/data/stones"
@@ -55,8 +56,9 @@ export function SizeSection({ sim, setSize, shopBy }: { sim: StoneSim; setSize: 
 
 /** Total ring budget section. Handles in the budget modes; in Carat first, only the size's price band. */
 export function BudgetSection({ sim, update, interactive, withBand }: { sim: StoneSim; update: (p: Partial<StonePrefs>) => void; interactive: boolean; withBand: boolean }) {
+  const section = useSectionClass()
   return (
-    <section className="flex flex-col gap-6">
+    <section className={section}>
       <ConfigHeader title={interactive ? "Set your Total Ring Budget" : "Total Ring Budget"} />
       {!interactive && !sim.row ? (
         <StockNote>No stones available at this size right now. Try a nearby size to see prices.</StockNote>

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react"
+import { useContext, useState, type ReactNode } from "react"
 import { ArrowLeftIcon, InfoIcon } from "@phosphor-icons/react"
 import {
   BAND_FROM_PRICE,
@@ -9,6 +9,7 @@ import {
   WEDDING_BANDS,
   type EngravingStyle,
 } from "@/data/dyo"
+import { CompactSections, useSectionClass } from "@/components/stones/preference-parts"
 import { formatPrice } from "@/lib/format"
 import { useRingBuild, type Engraving } from "@/state/ring-build"
 import { BandSheet } from "./band-sheet"
@@ -16,6 +17,16 @@ import { CrownSheet } from "./crown-sheet"
 import { EngravingSheet } from "./engraving-sheet"
 import { AddedOptionBlock, OptionBlock } from "./option-block"
 import { RingSizeSheet } from "./ring-size-sheet"
+
+/** A finishing section's title: H4, or H5 in the accordion flow's panel (CompactSections). */
+function SectionHeading({ id, children }: { id: string; children: ReactNode }) {
+  const compact = useContext(CompactSections)
+  return (
+    <h2 id={id} className={compact ? "type-h5 text-primary" : "type-h4 text-primary"}>
+      {children}
+    </h2>
+  )
+}
 
 /** Section divider used between buy-form sections (Figma "Separator"). */
 export function SectionDivider() {
@@ -95,8 +106,8 @@ export function RingSizeSection({
 }) {
   const { ringSize } = useRingBuild()
   return (
-    <section id={id} className="flex scroll-mt-24 flex-col gap-6" aria-labelledby="ring-size-heading">
-      <h2 id="ring-size-heading" className="type-h4 text-primary">Select your Ring Size</h2>
+    <section id={id} className={useSectionClass("scroll-mt-24")} aria-labelledby="ring-size-heading">
+      <SectionHeading id="ring-size-heading">{"Select your Ring Size"}</SectionHeading>
       <div className="flex flex-col gap-2">
         <OptionBlock
           label="Ring Size"
@@ -141,8 +152,8 @@ const engravingDetail = (e: Engraving, style: EngravingStyle | null) => `Style: 
 export function PersonalizeSection({ onOpen }: { onOpen: (overlay: "engraving" | "crown") => void }) {
   const { engraving, engravingStyle, crown, setEngraving, setCrownId } = useRingBuild()
   return (
-    <section className="flex flex-col gap-6" aria-labelledby="personalize-heading">
-      <h2 id="personalize-heading" className="type-h4 text-primary">Personalize your Piece</h2>
+    <section className={useSectionClass()} aria-labelledby="personalize-heading">
+      <SectionHeading id="personalize-heading">{"Personalize your Piece"}</SectionHeading>
       <div className="flex flex-col gap-2">
         {engraving ? (
           <AddedOptionBlock
@@ -187,8 +198,8 @@ export function PersonalizeSection({ onOpen }: { onOpen: (overlay: "engraving" |
 export function WeddingBandSection({ onOpen }: { onOpen: (overlay: "band" | "band-engraving") => void }) {
   const { band, bandEngraving, bandEngravingStyle, setBandId, setBandEngraving } = useRingBuild()
   return (
-    <section className="flex flex-col gap-6" aria-labelledby="band-heading">
-      <h2 id="band-heading" className="type-h4 text-primary">Matching Wedding Bands</h2>
+    <section className={useSectionClass()} aria-labelledby="band-heading">
+      <SectionHeading id="band-heading">{"Matching Wedding Bands"}</SectionHeading>
       <div className="flex flex-col gap-2">
         {band ? (
           <AddedOptionBlock

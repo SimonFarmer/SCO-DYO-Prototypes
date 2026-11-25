@@ -54,7 +54,7 @@ export function picksHeading(type: StoneTypeId, shape: string, gem: string) {
  * Carat (Size for gemstones) · Clarity · Color · Cut in one row, a divider left of each cell (Figma 8173:188141);
  * the cells this pick optimises are lightly shaded.
  */
-function SpecStrip({ pick }: { pick: StonePick }) {
+function SpecStrip({ pick, plain = false }: { pick: StonePick; /** No shading (the headline tiles) */ plain?: boolean }) {
   const specs = stoneSpecs(pick.stone)
   const cells: { key: SpecKey; label: string; value: string }[] = [
     pick.stone.type === "gemstone"
@@ -70,7 +70,7 @@ function SpecStrip({ pick }: { pick: StonePick }) {
         // A divider on the left of every cell; the cells this pick optimises are lightly shaded.
         <div
           key={c.key}
-          className={cn("flex min-w-0 flex-1 flex-col gap-1 border-l border-border-subtle px-2.5 py-2", pick.highlight.includes(c.key) ? "bg-bg-input-50" : "bg-background")}
+          className={cn("flex min-w-0 flex-1 flex-col gap-1 border-l border-border-subtle px-2.5 py-2", !plain && pick.highlight.includes(c.key) ? "bg-bg-input-50" : "bg-background")}
         >
           <dt className="text-xxs leading-3 font-semibold tracking-[1px] text-muted-foreground uppercase">{c.label}</dt>
           <dd className="text-xs leading-4 tracking-[0.12px] text-primary tabular-nums">{c.value}</dd>
@@ -84,9 +84,26 @@ function SpecStrip({ pick }: { pick: StonePick }) {
  * Pick tile (Figma 8173:187709): photo; the pick and what it's optimized for, with the radio; the 4Cs pill;
  * then the stone price, ring total and View details. Selection only changes the border.
  */
-export function PickTile({ pick, selected, onSelect, onDetails }: { pick: StonePick; selected: boolean; onSelect: () => void; onDetails: () => void }) {
+export function PickTile({
+  pick,
+  selected,
+  onSelect,
+  onDetails,
+  headline,
+}: {
+  pick: StonePick
+  selected: boolean
+  onSelect: () => void
+  onDetails: () => void
+  /**
+   * The accordion flow's tile (Figma 8224:180625, as Test 2's 8212:97435): this headline over the stone, plain 4Cs,
+   * a 72px photo and "STONE ONLY" price, no ring total. Without it, the /flow tile as before.
+   */
+  headline?: string
+}) {
   const { setting: SETTING } = useRingBuild()
   const img = stoneImage(pick.stone)
+  if (headline) return <HeadlineTile pick={pick} selected={selected} onSelect={onSelect} onDetails={onDetails} headline={headline} img={img} />
   return (
     <div
       onClick={onSelect}
@@ -129,6 +146,66 @@ export function PickTile({ pick, selected, onSelect, onDetails }: { pick: StoneP
             View details
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function HeadlineTile({
+  pick,
+  selected,
+  onSelect,
+  onDetails,
+  headline,
+  img,
+}: {
+  pick: StonePick
+  selected: boolean
+  onSelect: () => void
+  onDetails: () => void
+  headline: string
+  img: ReturnType<typeof stoneImage>
+}) {
+  return (
+    <div
+      onClick={onSelect}
+      className={cn(
+        "grid cursor-pointer grid-cols-[--spacing(18)_minmax(0,1fr)] items-start gap-x-4 gap-y-4 bg-background md:gap-x-5",
+        selected ? "border-2 border-primary p-3.75" : "border border-border-subtle p-4 hover:border-border",
+      )}
+    >
+      <div className="size-18 overflow-hidden bg-secondary md:row-span-3">
+        <img
+          src={img.src}
+          alt=""
+          className={cn("size-full", img.render ? "origin-[50%_30%] scale-[2.4] object-contain" : img.photo ? "object-cover" : "object-contain p-2.5 mix-blend-multiply")}
+        />
+      </div>
+      <div className="flex items-start gap-4 text-primary">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <p className="text-sm leading-5 font-semibold">{headline}</p>
+          <p className="text-xs leading-4 tracking-[0.12px]">{stoneTitle(pick.stone)}</p>
+        </div>
+        <RadioGroupItem value={pick.kind} aria-label={`${headline}: ${stoneTitle(pick.stone)}`} className="border-primary" />
+      </div>
+      <div className="col-span-2 md:col-span-1 md:col-start-2">
+        <SpecStrip pick={pick} plain />
+      </div>
+      <div className="col-span-2 flex items-baseline justify-between gap-3 text-primary md:col-span-1 md:col-start-2">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onDetails()
+          }}
+          className="shrink-0 cursor-pointer type-label-xs underline"
+        >
+          View details
+        </button>
+        <p className="flex items-baseline gap-2 whitespace-nowrap">
+          <span className="text-xxs leading-3 tracking-[1px] uppercase">Stone only</span>
+          <span className="text-sm leading-5 font-semibold">{formatPrice(pick.stone.price)}</span>
+        </p>
       </div>
     </div>
   )

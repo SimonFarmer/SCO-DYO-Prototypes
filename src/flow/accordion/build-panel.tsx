@@ -4,6 +4,7 @@ import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react"
 import { useFlow } from "@/flow/flow-context"
 import { findFlowDiamond } from "@/flow/stone/find-diamond"
 import { formatPrice } from "@/lib/format"
+import { CompactSections } from "@/components/stones/preference-parts"
 import { cn } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
 
@@ -24,10 +25,11 @@ export type StepKey = "setting" | "stone" | "finishing"
 let lastPanelPath: string | null = null
 let panelLeftAt = 0
 
-const STEPS: { key: StepKey; n: 1 | 2 | 3; label: string; description: string }[] = [
-  { key: "setting", n: 1, label: "Setting", description: "Select your setting" },
-  { key: "stone", n: 2, label: "Stone", description: "Find your perfect stone" },
-  { key: "finishing", n: 3, label: "Finishing Touches", description: "Size, personalize & review" },
+/** Each step's header: what to do while it's open or ahead ("Select your setting"), what was chosen once done. */
+const STEPS: { key: StepKey; n: 1 | 2 | 3; label: string; done: string }[] = [
+  { key: "setting", n: 1, label: "Select your setting", done: "Your setting" },
+  { key: "stone", n: 2, label: "Find your perfect stone", done: "Your stone" },
+  { key: "finishing", n: 3, label: "Finishing Touches", done: "Your finishing touches" },
 ]
 
 /** Step marker: done = filled with a check; current = filled with the number; upcoming = outlined number. */
@@ -35,9 +37,8 @@ function Marker({ n, state }: { n: 1 | 2 | 3; state: "done" | "current" | "upcom
   return (
     <span
       className={cn(
-        // Playfair lining figures, trimmed to cap height so the digit sits centred (as the 1/2/3 stepper).
-        "flex size-8 shrink-0 items-center justify-center rounded-full font-heading text-xl leading-8 font-medium lining-nums proportional-nums [text-box:trim-both_cap_alphabetic]",
-        state === "upcoming" ? "border border-border text-primary" : "bg-primary text-primary-foreground",
+        "flex size-8 shrink-0 items-center justify-center rounded-full type-label-xs",
+        state === "upcoming" ? "border border-border-subtle bg-background text-primary" : "bg-primary text-primary-foreground",
       )}
       aria-hidden
     >
@@ -46,15 +47,15 @@ function Marker({ n, state }: { n: 1 | 2 | 3; state: "done" | "current" | "upcom
   )
 }
 
-/** Step heading: "SETTING · Complete" or the label over its description. */
-function StepHeading({ label, description, done }: { label: string; description?: string; done?: boolean }) {
+/** Header row (Figma 8224:180625): marker, the step in caps, the caret on the right. */
+function StepHeader({ n, state, label }: { n: 1 | 2 | 3; state: "done" | "current" | "upcoming"; label: string }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <p className="type-label-xs text-primary">
-        {label}
-        {done && <span className="ml-1 font-medium tracking-normal text-muted-foreground normal-case">· Complete</span>}
-      </p>
-      {description && <p className="type-caption text-muted-foreground">{description}</p>}
+    <div className="flex items-center gap-4">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <Marker n={n} state={state} />
+        <p className="type-label-xs text-primary">{label}</p>
+      </div>
+      <CaretDownIcon className="size-6 shrink-0 text-primary" aria-hidden />
     </div>
   )
 }
@@ -102,19 +103,22 @@ function DoneSummary({ step }: { step: StepKey }) {
   )
 }
 
-/** Price lines under the steps, then the total (bold). */
+/** Ring Summary under the steps (Figma 8224:180625): price lines, divider, the total. */
 export function PanelTotals({ rows, totalLabel, total }: { rows: { label: string; value: string }[]; totalLabel: string; total: string }) {
   return (
-    <div className="flex flex-col gap-3 px-6 py-5" aria-live="polite">
-      {rows.map((r) => (
-        <div key={r.label} className="flex items-start justify-between gap-4 text-sm leading-5 text-muted-foreground">
-          <span>{r.label}</span>
-          <span className="whitespace-nowrap">{r.value}</span>
-        </div>
-      ))}
+    <div className="flex flex-col gap-4 bg-bg-input-50 p-4" aria-live="polite">
+      <h2 className="type-h4 text-primary">Ring Summary</h2>
+      <div className="flex flex-col gap-3">
+        {rows.map((r) => (
+          <div key={r.label} className="flex items-start justify-between gap-4">
+            <span className="text-xs leading-4 font-medium text-primary">{r.label}</span>
+            <span className="text-sm leading-none font-semibold whitespace-nowrap text-muted-foreground">{r.value}</span>
+          </div>
+        ))}
+      </div>
       <div className="h-px bg-border-subtle" />
       <div className="flex items-start justify-between gap-4 text-base leading-6 font-semibold text-primary">
-        <span>{totalLabel}</span>
+        <span>{totalLabel}:</span>
         <span className="whitespace-nowrap">{total}</span>
       </div>
     </div>
@@ -123,9 +127,10 @@ export function PanelTotals({ rows, totalLabel, total }: { rows: { label: string
 
 /**
  * The panel. `current` is the open step ("review" = every step finished, as on Review Your Ring); `children`
- * is the open step's content; `footer` closes the box (totals, or the review's total and actions).
+ * is the open step's content; `summary` follows the box (the Ring Summary); `footer` closes the box (the
+ * review's total and actions).
  */
-export function BuildPanel({ current, children, footer }: { current: StepKey | "review"; children?: ReactNode; footer: ReactNode }) {
+export function BuildPanel({ current, children, summary, footer }: { current: StepKey | "review"; children?: ReactNode; summary?: ReactNode; footer?: ReactNode }) {
   const flow = useFlow()
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -174,7 +179,7 @@ export function BuildPanel({ current, children, footer }: { current: StepKey | "
     <section ref={sectionRef} aria-label="Design your ring" className="flex scroll-mt-4 flex-col gap-6">
       <div className="flex items-baseline justify-between gap-4">
         <h1 className="type-h3 text-primary">{isReview ? "Review Your Ring" : "Design Your Ring"}</h1>
-        <p className="type-caption text-muted-foreground">{isReview ? "All 3 steps complete" : `Step ${index + 1} of 3`}</p>
+        <p className="type-label-xs text-primary">{isReview ? "All 3 steps complete" : `Step ${index + 1} of 3`}</p>
       </div>
       <ol className="flex flex-col border border-border-subtle">
         {STEPS.map((s, i) => {
@@ -183,46 +188,39 @@ export function BuildPanel({ current, children, footer }: { current: StepKey | "
             <li
               key={s.key}
               ref={state === "current" ? currentRef : undefined}
-              className={cn("border-b border-border-subtle", state === "upcoming" && "bg-bg-input-50")}
+              className={cn("border-b border-border-subtle", !footer && "last:border-b-0", state === "upcoming" && "bg-bg-input-50")}
               aria-current={state === "current" ? "step" : undefined}
             >
               {state === "done" ? (
-                // A step just finished settles into its summary.
-                <div className="flex items-start gap-4 p-6 animate-in fade-in duration-300 motion-reduce:animate-none">
-                  <Marker n={s.n} state="done" />
-                  <div className="flex min-w-0 flex-1 flex-col gap-3">
-                    <StepHeading label={s.label} done />
+                // A step just finished settles into its summary, with Edit beside it.
+                <div className="flex flex-col gap-4 p-6 animate-in fade-in duration-300 motion-reduce:animate-none">
+                  <StepHeader n={s.n} state="done" label={s.done} />
+                  <div className="flex items-start justify-between gap-4">
                     <DoneSummary step={s.key} />
+                    <EditLink onClick={() => edit(s.key)} label={s.done.replace(/^Your /, "")} />
                   </div>
-                  <EditLink onClick={() => edit(s.key)} label={s.label} />
                 </div>
               ) : state === "current" ? (
-                <div className="flex flex-col gap-6 p-6">
-                  <div className="flex items-start gap-4">
-                    <Marker n={s.n} state="current" />
-                    <StepHeading label={s.label} description={s.description} />
-                  </div>
+                <div className="flex flex-col gap-4 p-6">
+                  <StepHeader n={s.n} state="current" label={s.label} />
                   {/* The open step's content eases in (keyed by page, so 2a → 2b animates too). */}
                   <div key={pathname} className="flex flex-col gap-6 animate-in fade-in slide-in-from-top-2 duration-300 ease-out motion-reduce:animate-none">
-                    {children}
+                    <CompactSections.Provider value={true}>{children}</CompactSections.Provider>
                   </div>
                 </div>
               ) : (
                 // Later steps open once the current one is done.
-                <div className="flex items-center gap-4 p-6" aria-disabled>
-                  <Marker n={s.n} state="upcoming" />
-                  <div className="flex-1">
-                    <StepHeading label={s.label} description={s.description} />
-                  </div>
-                  <CaretDownIcon className="size-4 text-primary" />
+                <div className="px-6 py-4" aria-disabled>
+                  <StepHeader n={s.n} state="upcoming" label={s.label} />
                 </div>
               )}
             </li>
           )
         })}
       </ol>
-      {/* The box continues around the totals (and the review's actions). */}
-      <div className="-mt-6 border-x border-b border-border-subtle">{footer}</div>
+      {/* The box continues around the review's total and actions; the Ring Summary sits under it. */}
+      {footer && <div className="-mt-6 border-x border-b border-border-subtle">{footer}</div>}
+      {summary}
     </section>
   )
 }

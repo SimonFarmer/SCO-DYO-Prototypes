@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react"
 import { Menu } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import {
@@ -22,11 +22,23 @@ import { cn } from "@/lib/utils"
  * styling from Figma 7685:417428 ("Find your Stone", Size + Budget).
  */
 
+/**
+ * Compact sections (the accordion flow's panel, Figma 8224:180625): H5 titles and 16px under them, to save
+ * height. Off by default, so Test 2 and the /flow pages keep their H4 titles and 24px.
+ */
+export const CompactSections = createContext(false)
+
+/** A preference section's column: title, then its control. */
+export function useSectionClass(extra?: string) {
+  return cn("flex flex-col", useContext(CompactSections) ? "gap-4" : "gap-6", extra)
+}
+
 /** Section title row: "Carat Size ........ Preview Size: 1.50 ct" (Headings/H4 + Caption). */
 export function ConfigHeader({ title, aside }: { title: string; aside?: { label: string; value: string } }) {
+  const compact = useContext(CompactSections)
   return (
     <div className="flex items-baseline justify-between gap-4 text-primary">
-      <h2 className="type-h4 lining-nums">{title}</h2>
+      <h2 className={cn(compact ? "type-h5" : "type-h4", "lining-nums")}>{title}</h2>
       {aside && (
         <p aria-live="polite" className="text-right text-xs leading-4 font-medium whitespace-nowrap">
           {aside.label}: <span className="font-semibold">{aside.value}</span>
@@ -38,8 +50,9 @@ export function ConfigHeader({ title, aside }: { title: string; aside?: { label:
 
 /** Natural / Lab Grown / Gemstones (Figma "Stone Type Configuration"). */
 export function StoneTypeToggle({ value, onChange }: { value: StoneTypeId; onChange: (t: StoneTypeId) => void }) {
+  const section = useSectionClass()
   return (
-    <section className="flex flex-col gap-6">
+    <section className={section}>
       <ConfigHeader title="Select your Stone Type" />
       <div className="flex gap-2" role="radiogroup" aria-label="Stone type">
         {STONE_TYPES.map((t) => {
@@ -130,9 +143,10 @@ export function ShapeSelector({
     if (chosen && !shown.includes(chosen)) shown = [...shown.slice(0, -1), chosen]
   }
   const hidden = STONE_SHAPES.length - shown.length
+  const section = useSectionClass()
 
   return (
-    <section className="flex flex-col gap-6">
+    <section className={section}>
       <ConfigHeader title="Select your Shape" aside={{ label: "Preview Shape", value: stoneShape(value).label }} />
       <div ref={rowRef} className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Shape">
         {shown.map((s) => (
@@ -157,8 +171,9 @@ export function ShapeSelector({
 
 /** Gemstone picker: only shown when Gemstones is the stone type (concept). */
 export function GemSelector({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+  const section = useSectionClass("animate-in fade-in")
   return (
-    <section className="flex flex-col gap-6 animate-in fade-in">
+    <section className={section}>
       <ConfigHeader title="Select your Gemstone" aside={{ label: "Preview Gemstone", value: gemById(value).label }} />
       <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Gemstone">
         {GEMS.map((g) => (
