@@ -30,7 +30,7 @@ export interface GalleryMedia {
 }
 
 /** Carat size guide — not metal-specific, shown in every metal's gallery. */
-const SIZE_GUIDE: GalleryMedia = {
+export const SIZE_GUIDE: GalleryMedia = {
   kind: "size-guide",
   src: "/images/gallery/size-guide.png",
   alt: "Carat size guide on hand, 1 to 5 ct",

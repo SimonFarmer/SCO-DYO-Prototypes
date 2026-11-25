@@ -5,7 +5,7 @@ import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { PLP_PATH } from "@/data/plp"
-import { useFlowPath } from "@/flow/flow-context"
+import { useFlow, useFlowPath } from "@/flow/flow-context"
 
 /**
  * Storefront homepage: the entry point to the Engagement Ring PLP prototype.
@@ -15,6 +15,7 @@ export function StoreHome() {
   const navigate = useNavigate()
   const notInTest = useNotInTest()
   const flowPath = useFlowPath()
+  const flow = useFlow()
 
   return (
     <div className="min-h-svh bg-background">
@@ -30,10 +31,16 @@ export function StoreHome() {
 
           {/* Mobile: the logo sits on the hero */}
           <div className="absolute inset-x-0 top-6 flex flex-col items-center gap-2 lg:hidden">
-            {/* Prototype-only: the logo returns to the list of prototypes. */}
-            <Link to={flowPath("/")} aria-label="Shane Co. (back to the prototype list)">
-              <img src="/images/logo.svg" alt="" className="h-10 w-auto brightness-0 invert" />
-            </Link>
+            {/* Prototype-only: in the flows the logo returns to the start; in the standalone tests it shows the not-in-test notice. */}
+            {flow ? (
+              <Link to={flowPath("/")} aria-label="Shane Co. (back to the prototype list)">
+                <img src="/images/logo.svg" alt="" className="h-10 w-auto brightness-0 invert" />
+              </Link>
+            ) : (
+              <button type="button" onClick={() => notInTest("The homepage")} aria-label="Shane Co." className="cursor-pointer">
+                <img src="/images/logo.svg" alt="" className="h-10 w-auto brightness-0 invert" />
+              </button>
+            )}
             <img src="/images/tagline.svg" alt="Your friend & jeweler" className="h-2 w-auto brightness-0 invert" />
           </div>
 

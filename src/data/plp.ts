@@ -104,7 +104,7 @@ export const DEFAULT_SORT = "recommended"
 // Designs → cards
 // ---------------------------------------------------------------------------------------------
 
-interface Design {
+export interface Design {
   id: string
   name: string
   styles: string[]
@@ -122,7 +122,7 @@ interface Design {
 const ALL_SHAPES = ["round", "oval", "cushion", "pear", "marquise", "princess", "emerald", "radiant", "heart", "asscher"]
 
 /** Catalogue order = "Recommended" order. */
-const DESIGNS: Design[] = [
+export const DESIGNS: Design[] = [
   { id: "timeless-solitaire", label: true, name: "Timeless Solitaire Engagement Ring", styles: ["classic"], accent: "none", topSeller: true, shapes: ALL_SHAPES, metals: [["14k-yellow-gold", "41004888", 690], ["14k-white-gold", "41004893", 690], ["14k-rose-gold", "41089052", 690], ["platinum", "41006535", 1050]] },
   { id: "luminary-solitaire", name: "Luminary Solitaire Engagement Ring", styles: ["classic"], accent: "none", shapes: ["round", "oval", "cushion", "pear", "emerald", "heart"], metals: [["14k-white-gold", "41041604", 690], ["14k-yellow-gold", "41045174", 690], ["14k-rose-gold", "41060741", 690], ["platinum", "41045179", 1050]] },
   { id: "cypress-halo", name: "Cypress Halo Engagement Ring", styles: ["halo", "pave", "vintage"], accent: "diamond", topSeller: true, shapes: ["marquise"], metals: [["14k-yellow-gold", "41098343", 4175], ["14k-white-gold", "41088380", 4175], ["14k-rose-gold", "41088555", 4175], ["platinum", "41105430", 4375]] },

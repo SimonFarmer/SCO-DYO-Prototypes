@@ -4,16 +4,16 @@ import { SETTING_PDP_VARIANTS } from "./test-1/variants"
 
 const PROTOTYPES = [
   {
-    test: "Full DYO flow · moderated (step interface A; accordion B waits for hi-fi)",
+    test: "Full DYO Flow · Step by Step",
     links: [
-      { label: "Start: homepage, default variants (T1 B · T2 B · T3.1 B · T3.2 A · T4 B)", to: "/flow?t1=b&t2=b&t31=b&t32=a&t4=b&crumbs=on" },
+      { label: "Start on the homepage", to: "/flow?t1=b&t2=b&t31=b&t32=a&t4=b&crumbs=on" },
       { label: "Start without breadcrumbs", to: "/flow?t1=b&t2=b&t31=b&t32=a&t4=b&crumbs=off" },
     ],
   },
   {
-    test: "Full DYO flow · accordion steps (Lucid wireframes, separate flow test)",
+    test: "Full DYO Flow · Accordion",
     links: [
-      { label: "Start: homepage (T2 B · T3.1 B · T3.2 A)", to: "/flow-accordion?t2=b&t31=b&t32=a&crumbs=on" },
+      { label: "Start on the homepage", to: "/flow-accordion?t2=b&t31=b&t32=a&crumbs=on" },
       { label: "Start without breadcrumbs", to: "/flow-accordion?t2=b&t31=b&t32=a&crumbs=off" },
     ],
   },

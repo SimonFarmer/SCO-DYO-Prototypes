@@ -8,7 +8,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react"
 import { useEffect, useRef, useState } from "react"
-import { useSiteNavigate } from "@/flow/flow-context"
+import { useFlow, useSiteNavigate } from "@/flow/flow-context"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { MegaMenu } from "@/components/site/mega-menu"
 import { useStickyOnIntent } from "@/components/site/use-sticky-on-intent"
@@ -60,8 +60,10 @@ export function SiteHeader({
   const ref = useRef<HTMLElement>(null)
   const visible = useStickyOnIntent(ref)
   const [menuOpen, setMenuOpen] = useState(false)
-  // Prototype-only: the logo returns to the index of prototypes (not the storefront homepage).
-  const toIndex = () => siteNavigate("/")
+  // Prototype-only: in the full flows the logo returns to the index of prototypes (through the exit guard).
+  // In the standalone tests it shows the not-in-test notice, so participants can't reach the list of every test.
+  const flow = useFlow()
+  const toIndex = flow ? () => siteNavigate("/") : () => notInTest("The homepage")
   const closeTimer = useRef<number | undefined>(undefined)
 
   const openMenu = () => {
@@ -95,7 +97,7 @@ export function SiteHeader({
     >
       {/* Mobile: logo + tagline, as on the non-DYO mobile PDP */}
       <div className="flex h-22 items-center justify-center lg:hidden">
-        <button type="button" onClick={toIndex} aria-label="Shane Co. (back to the prototype list)" className="cursor-pointer">
+        <button type="button" onClick={toIndex} aria-label="Shane Co." className="cursor-pointer">
           <Logo withTagline />
         </button>
       </div>
@@ -111,7 +113,7 @@ export function SiteHeader({
           <button
             type="button"
             onClick={toIndex}
-            aria-label="Shane Co. (back to the prototype list)"
+            aria-label="Shane Co."
             className="absolute left-1/2 -translate-x-1/2 cursor-pointer"
           >
             <Logo />

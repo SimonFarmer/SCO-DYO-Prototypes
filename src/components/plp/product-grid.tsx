@@ -1,15 +1,17 @@
-import { Fragment } from "react"
+import { Fragment, useState } from "react"
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { ProductTileSkeleton, TileLoading } from "@/components/shared/tile-skeletons"
-import { ELLA_CATHEDRAL, type MetalId } from "@/data/products"
+import { flowSettingFor } from "@/data/flow-settings"
+import type { MetalId } from "@/data/products"
 import { useFlow } from "@/flow/flow-context"
 import { useFilterLoading } from "@/lib/use-filter-loading"
 import { useRingBuild } from "@/state/ring-build"
 import { cn } from "@/lib/utils"
 import { PlpProductCard } from "./plp-product-card"
+import { RingPickedModal, type PickedRing } from "./ring-picked-modal"
 import type { Listing } from "./use-listing"
 
 /** "Find Your Ring Style" in-grid content banner (Figma In-Grid Content Banner). */
@@ -83,23 +85,27 @@ export function ProductGrid({ listing, wide }: { listing: Listing; wide: boolean
   const loading = useFilterLoading(JSON.stringify([listing.filters, listing.sort]))
   const flow = useFlow()
   const navigate = useNavigate()
-  const { setSettingMetal, setShape } = useRingBuild()
+  const { setSetting, setShape } = useRingBuild()
 
   /**
-   * Full flow: every setting opens the Ella Cathedral PDP (the only setting with full PDP data), in the
-   * card's metal when Ella comes in it, previewing the first shape the listing is filtered by.
+   * Full flow: a card opens that setting's PDP (shaneco.com content, see flow-settings.ts) in the card's
+   * metal, previewing the first shape the listing is filtered by.
    */
   const openSetting =
     flow && mode === "dyo"
-      ? (metalId: string) => {
-          const ella = ELLA_CATHEDRAL.variants.find((v) => v.metal === metalId)
-          setSettingMetal((ella?.metal ?? ELLA_CATHEDRAL.defaultMetal) as MetalId)
-          const shape = listing.filters.shape.find((s) => ELLA_CATHEDRAL.shapes.includes(s))
+      ? (designId: string, metalId: string) => {
+          setSetting(designId, metalId as MetalId)
+          const shape = listing.filters.shape.find((s) => flowSettingFor(designId).shapes.includes(s))
           setShape(shape ?? null)
           navigate(flow.path("/setting"))
           window.scrollTo({ top: 0 })
         }
       : undefined
+
+  // Standalone PLP prototypes have no product page: a click on a ring ends the task.
+  const [picked, setPicked] = useState<PickedRing | null>(null)
+  const priceLabel = mode === "dyo" ? "Setting only" : undefined
+  const pricePrefix = mode === "rts" ? "Starting at" : undefined
 
   if (results.length === 0) {
     return (
@@ -117,6 +123,13 @@ export function ProductGrid({ listing, wide }: { listing: Listing; wide: boolean
 
   return (
     <div className="flex flex-col gap-10">
+      <RingPickedModal
+        picked={picked}
+        preferredShapes={listing.filters.shape}
+        priceLabel={priceLabel}
+        pricePrefix={pricePrefix}
+        onClose={() => setPicked(null)}
+      />
       <ul aria-busy={loading} className={cn("grid grid-flow-row-dense grid-cols-2 gap-x-card-gap gap-y-6 lg:gap-y-8", wide ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
         {pageItems.map((p, i) => (
           <Fragment key={p.id}>
@@ -130,10 +143,10 @@ export function ProductGrid({ listing, wide }: { listing: Listing; wide: boolean
               <TileLoading loading={loading} skeleton={<ProductTileSkeleton />}>
                 <PlpProductCard
                   product={p}
-                  priceLabel={mode === "dyo" ? "Setting only" : undefined}
-                  pricePrefix={mode === "rts" ? "Starting at" : undefined}
+                  priceLabel={priceLabel}
+                  pricePrefix={pricePrefix}
                   preferredShapes={listing.filters.shape}
-                  onOpen={openSetting}
+                  onOpen={openSetting ? (metalId) => openSetting(p.designId, metalId) : flow ? undefined : (metalId) => setPicked({ product: p, metalId })}
                 />
               </TileLoading>
             </li>
