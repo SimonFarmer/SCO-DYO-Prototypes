@@ -19,6 +19,7 @@ import { ProductInfoDrawer } from "@/components/pdp/product-info-drawer"
 import { SettingBuyForm } from "@/components/pdp/setting-buy-form"
 import { SettingGallery, ThumbnailGallery } from "@/components/pdp/setting-gallery"
 import { StonePreviewMenu } from "@/components/pdp/stone-preview-menu"
+import { ShapeSelector } from "@/components/stones/preference-parts"
 import { SHAPES } from "@/data/plp"
 import { ProductCarousel } from "@/components/shared/product-carousel"
 import {
@@ -58,8 +59,18 @@ export function Test1() {
   const isThumbnails = variant.gallery === "thumbnails"
   // The stone preview dropdown swaps the hero image in every variant.
   const media = galleryFor(setting, metal, previewShape)
-  // Same selector in every variant; on phones it also carries the carat (no room for a separate badge).
-  const previewMenu = (
+  // G: the preview is a shape selector in the buy form instead, so the gallery has no dropdown.
+  const shapeInForm = variant.shapeInForm === true
+  // Picking a shape on phones, where the gallery is above the form: glide back up so the new preview is seen
+  // (as a metal change does).
+  const previewShapeInForm = (next: string) => {
+    if (next === previewShape) return
+    setPreviewShape(next)
+    if (window.matchMedia("(min-width: 80rem)").matches) return
+    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" })))
+  }
+  // Same selector in every other variant; on phones it also carries the carat (no room for a separate badge).
+  const previewMenu = shapeInForm ? undefined : (
     <StonePreviewMenu
       shapes={setting.shapes}
       value={previewShape}
@@ -154,6 +165,16 @@ export function Test1() {
                 onViewDetails={viewDetails}
                 ctaRef={ctaRef}
                 teaser={variant.details === "teaser-drawer"}
+                afterMetal={
+                  shapeInForm ? (
+                    <ShapeSelector
+                      title="Preview a Stone Shape"
+                      shapes={setting.shapes}
+                      value={previewShape}
+                      onChange={previewShapeInForm}
+                    />
+                  ) : null
+                }
                 beforeDelivery={
                   variant.details === "inline-tabs" ? (
                     <InlineProductDetails

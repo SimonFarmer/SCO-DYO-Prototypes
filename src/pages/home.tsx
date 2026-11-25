@@ -33,7 +33,7 @@ const PROTOTYPES = [
     test: "Test 1 · Settings PDP Gallery & Details",
     links: [
       // 2 galleries × 3 details placements, listed gallery by gallery (A, B, C keep their launch URLs).
-      ...(["A", "B", "D", "E", "F", "C"] as const).map((id) => ({
+      ...(["A", "B", "D", "E", "F", "C", "G"] as const).map((id) => ({
         label: `Variant ${id}: ${SETTING_PDP_VARIANTS[id].name}`,
         to: `/test-1/${id.toLowerCase()}`,
       })),

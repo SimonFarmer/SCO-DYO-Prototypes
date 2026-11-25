@@ -123,31 +123,38 @@ export function ShapeSelector({
   value,
   onChange,
   offered,
+  title = "Select your Shape",
+  shapes,
 }: {
   value: string
   onChange: (id: string) => void
   /** Shapes this stone comes in; others are crossed out (gemstones) */
   offered?: string[]
+  /** Section title (Test 1 G: "Preview a Stone Shape") */
+  title?: string
+  /** Only these shapes, e.g. the ones a setting comes in (Test 1 G); default every shape */
+  shapes?: string[]
 }) {
+  const all = shapes ? STONE_SHAPES.filter((s) => shapes.includes(s.id)) : STONE_SHAPES
   // One row, truncated to fit: when every shape fits there's no "+N"; otherwise the last slot becomes "+N"
   // and narrower screens show fewer shapes (and a bigger N). "+N" expands to every shape, wrapping.
   const [rowRef, width] = useWidth<HTMLDivElement>()
   const [expanded, setExpanded] = useState(false)
-  const fits = width ? Math.max(1, Math.floor((width + SWATCH_GAP) / (SWATCH + SWATCH_GAP))) : STONE_SHAPES.length
-  const truncated = !expanded && fits < STONE_SHAPES.length
-  let shown = STONE_SHAPES
+  const fits = width ? Math.max(1, Math.floor((width + SWATCH_GAP) / (SWATCH + SWATCH_GAP))) : all.length
+  const truncated = !expanded && fits < all.length
+  let shown = all
   if (truncated) {
-    shown = STONE_SHAPES.slice(0, Math.max(0, fits - 1))
+    shown = all.slice(0, Math.max(0, fits - 1))
     // The chosen shape always stays visible: it takes the last visible slot if it would be hidden.
-    const chosen = STONE_SHAPES.find((s) => s.id === value)
+    const chosen = all.find((s) => s.id === value)
     if (chosen && !shown.includes(chosen)) shown = [...shown.slice(0, -1), chosen]
   }
-  const hidden = STONE_SHAPES.length - shown.length
+  const hidden = all.length - shown.length
   const section = useSectionClass()
 
   return (
     <section className={section}>
-      <ConfigHeader title="Select your Shape" aside={{ label: "Preview Shape", value: stoneShape(value).label }} />
+      <ConfigHeader title={title} aside={{ label: "Preview Shape", value: stoneShape(value).label }} />
       <div ref={rowRef} className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Shape">
         {shown.map((s) => (
           <Swatch key={s.id} on={s.id === value} label={s.label} onClick={() => onChange(s.id)} disabled={offered ? !offered.includes(s.id) : false}>

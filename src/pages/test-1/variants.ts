@@ -9,6 +9,8 @@
  *   Thumbnail gallery   |       E       |           F            |            C
  *
  * A, B and C keep the URLs they launched with; D, E and F fill the remaining cells.
+ * G is A with the stone shape preview moved from the gallery's dropdown into the buy form (Test 2's shape
+ * selector, worded as a preview), to see whether the preview is easier to use there.
  * Products, prices and data are identical across variants; only these two dimensions change.
  * Open a variant with `/test-1/a` … `/test-1/f`, or `/test-1?variant=A`. Unknown or missing → A (via `useVariant`).
  */
@@ -17,7 +19,7 @@ export type GalleryMode = "long-scroll" | "thumbnails"
 export type DetailsMode = "drawer" | "teaser-drawer" | "inline-tabs"
 
 export interface SettingPdpVariant {
-  id: "A" | "B" | "C" | "D" | "E" | "F"
+  id: "A" | "B" | "C" | "D" | "E" | "F" | "G"
   /** Short name used in the prototype index */
   name: string
   /** What the researcher needs to know about this variant */
@@ -28,6 +30,8 @@ export interface SettingPdpVariant {
   details: DetailsMode
   /** Mobile carousel without thumbnails, dots on the image instead (Figma SCO Drop 3a – PDP 4096:179324). Variant A only. */
   mobileDots?: boolean
+  /** The shape preview is a shape selector in the buy form, under the metal, instead of the gallery's dropdown. Variant G. */
+  shapeInForm?: boolean
 }
 
 const FIGMA = "https://www.figma.com/design/Q4Wp6ls6O4nBvicBjbosQI/SCO-Drop-3b---Customizer?node-id="
@@ -60,7 +64,13 @@ export const SETTING_PDP_VARIANTS: Record<SettingPdpVariant["id"], SettingPdpVar
   D: variant("D", "long-scroll", "inline-tabs", "7342-118090"),
   E: variant("E", "thumbnails", "drawer", "7342-118091"),
   F: variant("F", "thumbnails", "teaser-drawer", "7342-118091"),
+  G: {
+    ...variant("G", "long-scroll", "drawer", "7342-118090"),
+    name: `${GALLERY_LABEL["long-scroll"]} · ${DETAILS_LABEL.drawer} · shape preview in the buy form`,
+    summary: `As A, but the stone shape preview sits in the buy form under the metal (Test 2's shape selector) instead of the gallery's dropdown.`,
+    shapeInForm: true,
+  },
 }
 
 /** Allowed ?variant= values, first one is the default. */
-export const VARIANT_IDS = ["A", "B", "C", "D", "E", "F"] as const
+export const VARIANT_IDS = ["A", "B", "C", "D", "E", "F", "G"] as const
