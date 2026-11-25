@@ -33,6 +33,8 @@ interface SettingBuyFormProps {
   onSelect?: () => void
   /** Show a 2-line description teaser above the details link (Test 1 variant B) */
   teaser?: boolean
+  /** Rendered under the metal selector, with its own separator, e.g. the shape preview (Test 1 variant G) */
+  afterMetal?: ReactNode
   /** Rendered after the CTAs, e.g. "Complete the Look" (variant C) */
   afterActions?: ReactNode
   /** Rendered between assurances and delivery, e.g. inline details tabs (variant C) */
@@ -264,6 +266,7 @@ export function SettingBuyForm({
   onViewDetails,
   onSelect,
   teaser = false,
+  afterMetal,
   afterActions,
   beforeDelivery,
   ctaRef,
@@ -315,6 +318,12 @@ export function SettingBuyForm({
         <Separator className="my-3 bg-muted" />
         <MetalSelector options={setting.variants.map((v) => ({ metal: v.metal, price: v.price }))} value={metal} onChange={changeMetal} />
         <Separator className="my-3 bg-muted" />
+        {afterMetal && (
+          <>
+            {afterMetal}
+            <Separator className="my-3 bg-muted" />
+          </>
+        )}
       </div>
       {/* Financing is hidden until the ring is complete (fixes sheet, Settings PDP #12). */}
       <BuyActions onSelect={onSelect} ctaRef={ctaRef} />
