@@ -50,17 +50,33 @@ export function MetalSelector({
   options,
   value,
   onChange,
+  compact = false,
 }: {
   options: { metal: MetalId; price: number }[]
   value: MetalId
   onChange: (m: MetalId) => void
+  /**
+   * The accordion flow's panel (Figma 8224:180625): an H5 title with the metal beside it, and no metal line or
+   * "Learn about Metals" box under the swatches. Off by default (Test 1's buy form).
+   */
+  compact?: boolean
 }) {
   const notInTest = useNotInTest()
   const [hovered, setHovered] = useState<MetalId | null>(null)
   const hoveredOption = options.find((o) => o.metal === hovered)
   return (
-    <div className="flex flex-col gap-6">
-      <h2 className="type-h4 font-medium text-primary">Select your Metal</h2>
+    <div className={cn("flex flex-col", compact ? "gap-4" : "gap-6")}>
+      {compact ? (
+        <div className="flex items-baseline justify-between gap-4 text-primary">
+          <h2 className="type-h5">Select your Metal</h2>
+          <p aria-live="polite" className="text-right text-xs leading-4 font-semibold whitespace-nowrap">
+            {METALS[hoveredOption?.metal ?? value].label}
+            {hoveredOption && <span className="ml-2 font-medium">{formatPrice(hoveredOption.price)}</span>}
+          </p>
+        </div>
+      ) : (
+        <h2 className="type-h4 font-medium text-primary">Select your Metal</h2>
+      )}
       <div role="radiogroup" aria-label="Metal" className="flex flex-wrap gap-1.5" onMouseLeave={() => setHovered(null)}>
         {options.map(({ metal: id }) => {
           const selected = id === value
@@ -83,6 +99,8 @@ export function MetalSelector({
           )
         })}
       </div>
+      {!compact && (
+        <>
       <p className="flex items-center gap-2 text-sm leading-none">
         <span className="font-semibold text-muted-foreground">{METALS[hoveredOption?.metal ?? value].label}</span>
         {hoveredOption && <span className="font-medium text-primary">{formatPrice(hoveredOption.price)}</span>}
@@ -96,6 +114,8 @@ export function MetalSelector({
           Compare {METALS[value].label.toLowerCase()} with our other metals, and how each one wears over time.
         </p>
       </div>
+        </>
+      )}
     </div>
   )
 }

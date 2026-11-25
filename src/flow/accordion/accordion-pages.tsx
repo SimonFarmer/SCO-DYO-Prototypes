@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react"
+import { useMemo, useRef, useState, type ReactNode } from "react"
 import { Navigate, useNavigate } from "react-router"
 import { ChatCircleIcon, HeartStraightIcon } from "@phosphor-icons/react"
 import { DiamondQuickview } from "@/components/diamond/diamond-quickview"
@@ -12,7 +12,7 @@ import {
 import { ProductGallery } from "@/components/dyo/product-gallery"
 import { ProductInfoDrawer } from "@/components/pdp/product-info-drawer"
 import type { ProductInfoTab } from "@/components/pdp/product-info"
-import { DeliveryOptions, DyoAssurances, MetalSelector, PriceExplained } from "@/components/pdp/setting-buy-form"
+import { DyoAssurances, MetalSelector, PriceExplained } from "@/components/pdp/setting-buy-form"
 import { SettingGallery } from "@/components/pdp/setting-gallery"
 import { StonePreviewMenu } from "@/components/pdp/stone-preview-menu"
 import { useNotInTest } from "@/components/prototype/not-in-test"
@@ -33,10 +33,11 @@ import { FLOW_ROUTES } from "@/flow/flow-paths"
 import { useFlowRingGallery } from "@/flow/ring-images"
 import { FlowStoneGallery } from "@/flow/stone/flow-stone-gallery"
 import { BudgetSection, SizeSection, stoneName } from "@/flow/stone/preferences-page"
-import { Basis, PickTile, picksHeading } from "@/flow/stone/recommendations-page"
+import { Basis, PickTile } from "@/flow/stone/recommendations-page"
 import { firstStoneQuery, flowStonePath, effectiveShape, useFlowStonePrefs } from "@/flow/stone/simulator"
 import { useFlowSelectDiamond } from "@/flow/stone/use-flow-stone"
 import { formatPrice } from "@/lib/format"
+import { useElementHeight } from "@/lib/hooks"
 import { cn, PAGE_MAX } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
 import { BuildPanel, PanelTotals } from "./build-panel"
@@ -66,6 +67,8 @@ function productCrumbs(settingId: string | null | undefined): Crumb[] {
 function AccordionFrame({ gallery, panel, galleryFull = true }: { gallery: ReactNode; panel: ReactNode; galleryFull?: boolean }) {
   const flow = useFlow()
   const { settingId } = useRingBuild()
+  const panelRef = useRef<HTMLDivElement>(null)
+  const panelHeight = useElementHeight(panelRef)
   // No jump to the top here: the panel scrolls the page to the current step (BuildPanel).
   return (
     <div className="min-h-svh bg-background">
@@ -80,7 +83,19 @@ function AccordionFrame({ gallery, panel, galleryFull = true }: { gallery: React
           {/* A single preview image stays in view while the panel scrolls; long galleries scroll beside a sticky panel. */}
           <div className={cn(!galleryFull && "transition-[top] duration-300 ease-out lg:sticky lg:top-(--header-offset) lg:self-start lg:pb-8")}>{gallery}</div>
           <aside className="px-margin pt-8 pb-12 lg:px-14 lg:pt-5">
-            <div className={cn(galleryFull && "transition-[top] duration-300 ease-out lg:sticky lg:top-[calc(var(--header-offset)+--spacing(5))]")}>{panel}</div>
+            {/* As the setting PDP's long-scroll buy form: when the panel is taller than the screen it scrolls with the
+                page until its bottom is in view, then sticks there while the gallery carries on scrolling. */}
+            <div
+              ref={panelRef}
+              className={cn(galleryFull && "transition-[top] duration-300 ease-out lg:sticky")}
+              style={
+                galleryFull
+                  ? { top: `min(calc(var(--header-offset) + var(--spacing) * 5), calc(100vh - ${panelHeight}px - var(--spacing) * 8))` }
+                  : undefined
+              }
+            >
+              {panel}
+            </div>
           </aside>
         </div>
       </main>
@@ -160,11 +175,11 @@ export function AccordionSetting() {
         <div className="flex flex-col gap-6">
           <BuildPanel
             current="setting"
-            footer={
+            summary={
               <PanelTotals
                 rows={[
-                  { label: "Setting", value: formatPrice(built.price) },
-                  { label: "Center stone", value: "Not selected" },
+                  { label: `Setting: ${setting.name}`, value: formatPrice(built.price) },
+                  { label: "Stone", value: "Not selected" },
                 ]}
                 totalLabel="Ring total so far"
                 total={formatPrice(built.price)}
@@ -172,10 +187,12 @@ export function AccordionSetting() {
             }
           >
             <div className="flex flex-col gap-4">
-              <h2 className="type-h3 text-primary">{setting.name}</h2>
-              <p className="type-caption text-muted-foreground">
-                {built.metal} · Article No. {variant.articleNo}
-              </p>
+              <div className="flex flex-col gap-1.5">
+                <h2 className="type-h3 text-primary">{setting.name}</h2>
+                <p className="type-caption text-muted-foreground">
+                  {built.metal} · Article No. {variant.articleNo}
+                </p>
+              </div>
               <div className="flex flex-wrap items-baseline gap-2">
                 <span className="text-lg font-semibold text-primary">{formatPrice(variant.price)}</span>
                 <span className="type-label-xs font-medium text-muted-foreground">Setting only</span>
@@ -188,7 +205,8 @@ export function AccordionSetting() {
                 </Button>
               </div>
             </div>
-            <MetalSelector options={setting.variants.map((v) => ({ metal: v.metal, price: v.price }))} value={metal} onChange={setSettingMetal} />
+            <MetalSelector compact options={setting.variants.map((v) => ({ metal: v.metal, price: v.price }))} value={metal} onChange={setSettingMetal} />
+            <div className="h-px bg-border-subtle" />
             <div className="flex flex-col gap-2">
               <Button className="w-full" onClick={next}>
                 Select this Setting &amp; Continue
@@ -204,7 +222,6 @@ export function AccordionSetting() {
             </div>
           </BuildPanel>
           <DyoAssurances />
-          <DeliveryOptions />
           <ChatLink />
           <ProductInfoDrawer
             setting={setting}
@@ -258,10 +275,10 @@ export function AccordionStone() {
         <div className="flex flex-col gap-6" data-variant={variant.id}>
           <BuildPanel
             current="stone"
-            footer={
+            summary={
               <PanelTotals
                 rows={[
-                  { label: "Setting", value: formatPrice(set) },
+                  { label: `Setting: ${setting.name}`, value: formatPrice(set) },
                   { label: `${stoneName(prefs, sim.scope.shape)} (${formatSize(sim.size, sim.sizes.unit)} ±${inBudget})`, value: stonePrice },
                 ]}
                 totalLabel="Estimated ring total"
@@ -289,6 +306,7 @@ export function AccordionStone() {
                 {shopBy !== "budget" ? "No stones are available at this size right now. Choose a different size to continue." : "No stones in this budget right now. Widen your budget to continue."}
               </p>
             )}
+            <div className="h-px bg-border-subtle" />
             <StepCtas
               primary="View Recommended Stones"
               onPrimary={() => navigate(href("recommendations"))}
@@ -307,6 +325,16 @@ export function AccordionStone() {
   )
 }
 
+/** Each pick's headline (as Test 2's tiles, Figma 8212:97435). */
+function pickHeadline(pick: StonePick, scope: string) {
+  if (pick.kind === "size") return `Biggest stone ${scope}`
+  if (pick.kind === "value") return "Best balance of size, sparkle and color"
+  return "Top grades, slightly smaller size"
+}
+
+/** Tile order (Figma 8224:180625): the biggest stone first, then the balanced pick, then top grades. */
+const PICK_ORDER: StonePick["kind"][] = ["size", "value", "quality"]
+
 /** Stone recommendations (Lucid "Step 2b – Find your Stone: recommendations"): Test 2's picks in the panel. */
 export function AccordionRecommendations() {
   const navigate = useNavigate()
@@ -315,7 +343,12 @@ export function AccordionRecommendations() {
   const { variant, prefs, sim, matching, href, setting } = useFlowStonePrefs()
   const { shopBy } = variant
   const picks = useMemo(
-    () => (sim.blocked ? [] : recommend({ scope: sim.scope, mode: sim.pickMode, size: sim.size, stoneMin: sim.stoneMin, stoneMax: sim.stoneMax })),
+    () =>
+      sim.blocked
+        ? []
+        : recommend({ scope: sim.scope, mode: sim.pickMode, size: sim.size, stoneMin: sim.stoneMin, stoneMax: sim.stoneMax }).sort(
+            (a, b) => PICK_ORDER.indexOf(a.kind) - PICK_ORDER.indexOf(b.kind),
+          ),
     [sim],
   )
   const [selectedKind, setSelectedKind] = useState(picks[0]?.kind)
@@ -327,12 +360,6 @@ export function AccordionRecommendations() {
     window.scrollTo({ top: 0 })
   }
   const shapeLabel = stoneShape(effectiveShape(prefs)).label
-  const prefsLine = [
-    "Natural",
-    shapeLabel,
-    formatSize(sim.size, sim.sizes.unit),
-    ...(shopBy === "size" ? [] : [`${formatPrice(sim.budgetLo)} – ${formatPrice(sim.budgetHi)} ring budget`]),
-  ].join(" · ")
 
   return (
     <>
@@ -343,7 +370,7 @@ export function AccordionRecommendations() {
           <div className="flex flex-col gap-6" data-variant={variant.id}>
             <BuildPanel
               current="stone"
-              footer={
+              summary={
                 <PanelTotals
                   rows={[
                     { label: `Setting: ${setting.name.replace(/ Engagement Ring$/, "")}, ${setting.metal}`, value: formatPrice(setting.price) },
@@ -354,18 +381,14 @@ export function AccordionRecommendations() {
                 />
               }
             >
-              {/* The shopper's preferences, with the way back to change them. */}
-              <div className="flex items-start justify-between gap-4 bg-bg-input-50 p-4">
-                <div className="flex min-w-0 flex-col gap-1">
-                  <p className="type-label-xs text-muted-foreground">Your preferences</p>
-                  <p className="text-sm leading-5 text-primary">{prefsLine}</p>
+              {/* The shopper's preferences, with the way back to change them (Figma 8224:180625). */}
+              <div className="flex flex-col gap-2 bg-bg-input-50 p-4">
+                <div className="flex items-start justify-between gap-4 type-label-xs text-primary">
+                  <p>Your preferences</p>
+                  <button type="button" onClick={() => navigate(href("preferences"))} aria-label="Edit preferences" className="shrink-0 cursor-pointer type-label-xs underline">
+                    Edit
+                  </button>
                 </div>
-                <button type="button" onClick={() => navigate(href("preferences"))} className="shrink-0 cursor-pointer type-label-xs text-primary underline">
-                  Edit preferences
-                </button>
-              </div>
-              <div className="flex flex-col gap-2">
-                <h2 className="type-h4 text-primary">{picksHeading(prefs.type, effectiveShape(prefs), prefs.gem)}</h2>
                 <Basis shopBy={shopBy} sim={sim} />
               </div>
               {selected ? (
@@ -375,6 +398,7 @@ export function AccordionRecommendations() {
                       key={p.kind}
                       pick={p}
                       selected={p.kind === selected.kind}
+                      headline={pickHeadline(p, shopBy === "size" || !sim.inBudget ? "near your preferred size" : "within your budget")}
                       onSelect={() => setSelectedKind(p.kind)}
                       onDetails={() => (opensQuickview ? setQuickview(p) : toPdp(p.stone.id))}
                     />
@@ -387,7 +411,7 @@ export function AccordionRecommendations() {
                 </div>
               )}
               <StepCtas
-                primary="Select this Diamond & Continue"
+                primary="Select this diamond & Continue"
                 onPrimary={() => selected && selectDiamond(toQuickviewDiamond(selected.stone))}
                 disabled={!selected}
                 link={{
@@ -482,7 +506,7 @@ export function AccordionFinish() {
       gallery={<div className="lg:-mt-2"><ProductGallery images={gallery} /></div>}
       panel={
         <div className="flex flex-col gap-6">
-          <BuildPanel current="finishing" footer={<PanelTotals rows={rows} totalLabel="Ring total" total={total} />}>
+          <BuildPanel current="finishing" summary={<PanelTotals rows={rows} totalLabel="Ring total" total={total} />}>
             <p className="text-sm leading-5 text-muted-foreground">Add the final details to make your ring yours.</p>
             <PersonalizeSection onOpen={open} />
             <WeddingBandSection onOpen={open} />
