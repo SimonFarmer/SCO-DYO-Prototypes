@@ -25,6 +25,7 @@ import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { useStepNumber } from "@/flow/flow-context"
+import { useFlowDelivery } from "@/flow/delivery"
 
 interface SettingBuyFormProps {
   setting: Setting
@@ -220,11 +221,13 @@ export function DyoAssurances() {
 /** Shipping / faster delivery / store pickup rows — shared by the setting and diamond buy forms. */
 export function DeliveryOptions() {
   const notInTest = useNotInTest()
+  // Full flows: the ring's own dates and the header's store (flow/delivery.ts); the tests keep the Figma copy.
+  const flowDates = useFlowDelivery()
   return (
     <div className="flex flex-col">
       <div className="flex items-start justify-between bg-primary-foreground p-4">
         <p className="pt-1 type-label-xs font-semibold text-primary">Free &amp; fast shipping</p>
-        <p className="type-h5 font-medium text-primary">By Tue, Nov 10</p>
+        <p className="type-h5 font-medium text-primary">By {flowDates?.shipBy ?? "Tue, Nov 10"}</p>
       </div>
       <button
         type="button"
@@ -233,7 +236,7 @@ export function DeliveryOptions() {
       >
         <span className="flex flex-1 flex-col gap-2">
           <span className="type-label-xs font-semibold text-primary">Need it sooner?</span>
-          <span className="type-caption text-secondary-foreground">$10 faster shipping: by Sat, Nov 7</span>
+          <span className="type-caption text-secondary-foreground">$10 faster shipping: by {flowDates?.fasterBy ?? "Sat, Nov 7"}</span>
         </span>
         <CaretDown className="size-4 text-primary" />
       </button>
@@ -248,9 +251,9 @@ export function DeliveryOptions() {
         <span className="flex flex-1 flex-col gap-2">
           <span className="type-label-xs font-semibold text-primary">Pick up in store</span>
           <span className="flex gap-1 text-xs font-medium">
-            <span className="tracking-[0.12px] text-primary underline">Greenwood Village</span>
+            <span className="tracking-[0.12px] text-primary underline">{flowDates?.pickupStore ?? "Greenwood Village"}</span>
             <span className="text-primary">-</span>
-            <span className="text-muted-foreground">Check availability</span>
+            <span className="text-muted-foreground">{flowDates ? `Ready ${flowDates.pickupReady}` : "Check availability"}</span>
           </span>
         </span>
         <CaretRight className="size-4 self-center text-primary" />

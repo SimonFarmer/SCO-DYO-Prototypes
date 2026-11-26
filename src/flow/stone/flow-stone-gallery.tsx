@@ -22,7 +22,7 @@ export function FlowStoneGallery({ shape, size, previewNote, mode = "preview" }:
   const scale = sizeScale("natural")
   const shown = formatSize(size, scale.unit)
   const label = stoneShape(shape).label
-  const previewLabel = `Previewing: ${label} · ${shown}${previewNote ? `, ${previewNote}` : ""}`
+  const previewLabel = `Previewing: ${label} ∙ ${shown}${previewNote ? `, ${previewNote}` : ""}`
 
   const media = useMemo<GalleryMedia[]>(() => {
     const hero: GalleryMedia = {
@@ -36,8 +36,8 @@ export function FlowStoneGallery({ shape, size, previewNote, mode = "preview" }:
     const photos = stonePhotos("natural", shape)
     const stone: GalleryMedia[] = photos
       ? [
-          { kind: "video", src: photos.spin, alt: `360° view of the ${noun}`, badge: `${label} · ${shown}` },
-          { kind: "image", src: photos.faceUp, alt: `The ${noun}, face up`, badge: `${label} · ${shown}` },
+          { kind: "video", src: photos.spin, alt: `360° view of the ${noun}`, badge: `${label} ∙ ${shown}` },
+          { kind: "image", src: photos.faceUp, alt: `The ${noun}, face up`, badge: `${label} ∙ ${shown}` },
         ]
       : []
     const sizeGuide = FINISHING_GALLERY.tiles[3]

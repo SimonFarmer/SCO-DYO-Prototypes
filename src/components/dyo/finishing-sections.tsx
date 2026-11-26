@@ -5,11 +5,14 @@ import {
   CLASSIC_CROWN,
   CROWNS,
   CROWN_FROM_PRICE,
+  FLOW_CROWNS,
+  FLOW_CROWN_FROM_PRICE,
   ENGRAVING,
   WEDDING_BANDS,
   type EngravingStyle,
 } from "@/data/dyo"
 import { CompactSections, useSectionClass } from "@/components/stones/preference-parts"
+import { useFlow } from "@/flow/flow-context"
 import { formatPrice } from "@/lib/format"
 import { useRingBuild, type Engraving } from "@/state/ring-build"
 import { BandSheet } from "./band-sheet"
@@ -151,6 +154,8 @@ const engravingDetail = (e: Engraving, style: EngravingStyle | null) => `Style: 
 
 export function PersonalizeSection({ onOpen }: { onOpen: (overlay: "engraving" | "crown") => void }) {
   const { engraving, engravingStyle, crown, setEngraving, setCrownId } = useRingBuild()
+  // Full flows: four crown upgrades instead of twelve.
+  const flow = useFlow()
   return (
     <section className={useSectionClass()} aria-labelledby="personalize-heading">
       <SectionHeading id="personalize-heading">{"Personalize your Piece"}</SectionHeading>
@@ -185,7 +190,7 @@ export function PersonalizeSection({ onOpen }: { onOpen: (overlay: "engraving" |
           <OptionBlock
             label="Upgrade your Crown"
             media={thumb(CLASSIC_CROWN.image)}
-            description={fromPrice(`${CROWNS.length} available options`, CROWN_FROM_PRICE)}
+            description={flow ? fromPrice(`${FLOW_CROWNS.length} available options`, FLOW_CROWN_FROM_PRICE) : fromPrice(`${CROWNS.length} available options`, CROWN_FROM_PRICE)}
             onClick={() => onOpen("crown")}
           />
         )}

@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { NAV_LEVEL_1, NAV_SECTIONS, NAV_TOP_LINKS, STORE } from "@/data/plp"
 import { cn } from "@/lib/utils"
 import { NavLinkGroup, NavPromo, NavTextLink, useOpenNavLink } from "./nav-links"
+import { CountBadge } from "./site-header"
 
 type Screen = { level: 1 } | { level: 2 } | { level: 3; section: string }
 
@@ -141,6 +142,7 @@ export function MobileBottomNav({
   shopInTest?: boolean
 }) {
   const notInTest = useNotInTest()
+  const flow = useFlow()
   const showCta = useScrolledPast(cta?.watch)
   const [screen, setScreen] = useState<Screen | null>(null)
   const close = () => setScreen(null)
@@ -254,7 +256,10 @@ export function MobileBottomNav({
               onClick={() => notInTest(label)}
               className={cn("flex cursor-pointer flex-col items-center justify-center gap-1.5 type-label-xs text-primary", screen && "text-muted-foreground")}
             >
-              <IconCmp className="size-5" weight="light" />
+              <span className="relative">
+                <IconCmp className="size-5" weight="light" />
+                {label === "Bag" && <CountBadge count={flow?.bagCount ?? 0} />}
+              </span>
               {label}
             </button>
           ))}

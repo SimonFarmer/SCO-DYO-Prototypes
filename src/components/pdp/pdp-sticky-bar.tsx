@@ -1,4 +1,5 @@
-import { Fragment, useEffect, useRef, useState, type RefObject } from "react"
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type RefObject } from "react"
+import { useFlow } from "@/flow/flow-context"
 import { cn } from "@/lib/utils"
 
 interface PdpStickyBarProps {
@@ -12,30 +13,49 @@ interface PdpStickyBarProps {
   onViewGallery?: () => void
   /** The bar shows once the top of this section reaches the top of the viewport (and below it). */
   showFrom: RefObject<HTMLElement | null>
+  /**
+   * Full flows, mobile: the section right after the gallery (the buy form). The bar shows once it reaches
+   * the bar's place, i.e. once the gallery has scrolled away. Without it (or outside the flows) the bar is desktop only.
+   */
+  mobileFrom?: RefObject<HTMLElement | null>
 }
 
 /**
- * Sticky product bar (Figma SCO Drop 3a – PDP, “Sticky Add to Bag” 2408:28961). Desktop only.
+ * Sticky product bar (Figma SCO Drop 3a – PDP, “Sticky Add to Bag” 2408:28961). Desktop; in the full flows
+ * also on mobile (`mobileFrom`), under the sticky stepper bar, without the price.
  * Slides in once the shopper scrolls down to the `showFrom` section (“About this setting/diamond”) and sits just below the sticky-on-intent
  * site header (--header-offset). Publishes its visible height as `--sticky-bar-offset` so other
  * sticky elements (gallery, buy form) can stay clear of it.
  */
-export function PdpStickyBar({ image, imageAlt, title, specs, price, onViewGallery, showFrom }: PdpStickyBarProps) {
+export function PdpStickyBar({ image, imageAlt, title, specs, price, onViewGallery, showFrom, mobileFrom }: PdpStickyBarProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [shown, setShown] = useState(false)
+  const mobile = !!useFlow() && !!mobileFrom
+  // Mobile: height of the sticky stepper bar the bar sits under.
+  const [stepperHeight, setStepperHeight] = useState(0)
 
   useEffect(() => {
     const root = document.documentElement
     const desktop = window.matchMedia("(min-width: 80rem)" /* lg */)
     let current = false
     const update = () => {
-      const section = showFrom.current
-      const next = desktop.matches && !!section && section.getBoundingClientRect().top <= 0
+      let next: boolean
+      if (desktop.matches) {
+        const section = showFrom.current
+        next = !!section && section.getBoundingClientRect().top <= 0
+      } else {
+        const after = mobile ? mobileFrom?.current : null
+        const stepper = document.querySelector<HTMLElement>('[data-slot="stepper-bar"]')?.offsetHeight ?? 0
+        setStepperHeight(stepper)
+        const header = parseFloat(getComputedStyle(root).getPropertyValue("--header-offset")) || 0
+        next = !!after && after.getBoundingClientRect().top <= header + stepper
+      }
       if (next !== current) {
         current = next
         setShown(next)
       }
-      root.style.setProperty("--sticky-bar-offset", next && ref.current ? `${ref.current.offsetHeight}px` : "0px")
+      // Only the desktop sticky gallery and buy form read this.
+      root.style.setProperty("--sticky-bar-offset", next && desktop.matches && ref.current ? `${ref.current.offsetHeight}px` : "0px")
     }
     update()
     window.addEventListener("scroll", update, { passive: true })
@@ -45,7 +65,7 @@ export function PdpStickyBar({ image, imageAlt, title, specs, price, onViewGalle
       window.removeEventListener("resize", update)
       root.style.removeProperty("--sticky-bar-offset")
     }
-  }, [showFrom])
+  }, [showFrom, mobileFrom, mobile])
 
   const viewGallery =
     onViewGallery ??
@@ -58,8 +78,10 @@ export function PdpStickyBar({ image, imageAlt, title, specs, price, onViewGalle
       ref={ref}
       aria-hidden={!shown}
       inert={!shown}
+      style={mobile ? ({ "--stepper-height": `${stepperHeight}px` } as CSSProperties) : undefined}
       className={cn(
-        "fixed inset-x-0 top-(--header-offset) z-20 hidden items-center justify-between gap-4 bg-background px-page py-2 shadow-md transition-[top,translate,opacity] duration-300 ease-out lg:flex",
+        "fixed inset-x-0 z-20 hidden items-center justify-between gap-4 bg-background px-page py-2 shadow-md transition-[top,translate,opacity] duration-300 ease-out lg:top-(--header-offset) lg:flex",
+        mobile && "top-[calc(var(--header-offset)+var(--stepper-height))] flex px-margin",
         !shown && "pointer-events-none -translate-y-full opacity-0",
       )}
     >
@@ -88,7 +110,7 @@ export function PdpStickyBar({ image, imageAlt, title, specs, price, onViewGalle
           </button>
         </div>
       </div>
-      <p className="shrink-0 text-lg leading-[1.2] font-semibold tracking-tight text-primary">{price}</p>
+      <p className="shrink-0 text-lg leading-[1.2] font-semibold tracking-tight text-primary max-lg:hidden">{price}</p>
     </div>
   )
 }

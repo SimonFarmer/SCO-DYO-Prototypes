@@ -14,7 +14,7 @@ import { useRingBuild } from "@/state/ring-build"
 export function FlowSettingPdp() {
   const flow = useFlow()
   const navigate = useNavigate()
-  const { settingId, settingMetal, setSettingMetal, shape, start } = useRingBuild()
+  const { settingId, settingMetal, setSettingMetal, shape, start, setting: built, setSettingChosen } = useRingBuild()
   const setting = flowSettingFor(settingId)
   if (!flow) return null
 
@@ -27,10 +27,11 @@ export function FlowSettingPdp() {
         metal: flowMetalFor(setting, settingMetal),
         onMetalChange: setSettingMetal,
         initialShape: shape,
-        breadcrumb: flow.config.crumbs ? FLOW_CRUMBS : null,
+        breadcrumb: flow.config.crumbs ? FLOW_CRUMBS.setting(settingId) : null,
         // On to step 2, stone preferences, in the shape the shopper came in with when this setting takes it,
         // otherwise the setting's own default shape (a marquise halo starts on marquise, not round).
         onSelect: () => {
+          setSettingChosen(true)
           // Stone-first (setting removed with a stone already picked): the stone is done, so on to step 3.
           if (start === "stone") {
             navigate(flow.path("/finish"))
@@ -38,7 +39,7 @@ export function FlowSettingPdp() {
             return
           }
           const stoneShape = shape && setting.shapes.includes(shape) ? shape : setting.shapes[0]
-          navigate(flow.path(flowStonePath("preferences", firstStoneQuery(flow.config.t2, stoneShape))))
+          navigate(flow.path(flowStonePath("preferences", firstStoneQuery(flow.config.t2, stoneShape, built.price))))
           window.scrollTo({ top: 0 })
         },
       }}

@@ -17,7 +17,7 @@ import { PriceBreakdown } from "@/components/dyo/price-breakdown"
 import { ProductGallery } from "@/components/dyo/product-gallery"
 import { RingSummary } from "@/components/dyo/ring-summary"
 import { useNotInTest } from "@/components/prototype/not-in-test"
-import { Breadcrumb } from "@/components/site/breadcrumb"
+import { Breadcrumb, type Crumb } from "@/components/site/breadcrumb"
 import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
 import { SiteHeader } from "@/components/site/site-header"
 import { Button } from "@/components/ui/button"
@@ -38,7 +38,7 @@ import { useRingBuild } from "@/state/ring-build"
 const OVERLAYS: FinishingOverlay[] = ["size", "size-guide", "engraving", "crown", "band", "band-engraving"]
 
 /** Header, stepper and the flow breadcrumb over the gallery column, then the page, then the mobile bar. */
-function FlowStep3Frame({ mobileLabel, children }: { mobileLabel: string; children: ReactNode }) {
+function FlowStep3Frame({ mobileLabel, crumbs, children }: { mobileLabel: string; crumbs: Crumb[]; children: ReactNode }) {
   const flow = useFlow()
   // Each step 3 screen starts at the top.
   useEffect(() => {
@@ -52,7 +52,7 @@ function FlowStep3Frame({ mobileLabel, children }: { mobileLabel: string; childr
         // Sits over the gallery column, inside the 1680px page cap (PAGE_MAX) as the columns below.
         <div className={PAGE_MAX}>
           <div className="bg-secondary lg:w-7/12">
-            <Breadcrumb items={FLOW_CRUMBS} className="px-margin lg:px-4" />
+            <Breadcrumb items={crumbs} className="px-margin lg:px-4" />
           </div>
         </div>
       )}
@@ -130,7 +130,7 @@ function FlowFinishingTouches() {
   }
 
   return (
-    <FlowStep3Frame mobileLabel="Personalize">
+    <FlowStep3Frame mobileLabel="Personalize" crumbs={FLOW_CRUMBS.finish}>
       <PageColumns gallery={<ProductGallery images={gallery} />}>
         <StepIntro eyebrow="Step 3 of 3 · Finishing Touches" title="Complete your ring" subtitle="Add the final details to make your ring yours." />
         <SectionDivider />
@@ -161,7 +161,7 @@ function FlowRingReviewA() {
   const { open, sheets } = useFinishingOverlays()
   const { review } = useFlowRingGallery()
   return (
-    <FlowStep3Frame mobileLabel="Review">
+    <FlowStep3Frame mobileLabel="Review" crumbs={FLOW_CRUMBS.review}>
       <PageColumns gallery={<ProductGallery images={review} />}>
         <StepIntro eyebrow="Step 3 of 3 · Finishing Touches" title="Review Your Ring" subtitle="Add the final details to make your ring yours." />
         <SectionDivider />
@@ -196,7 +196,7 @@ export function FlowRingReviewB() {
   const backTo = (overlay: "crown" | "engraving" | "size" | "band" | "band-engraving") => go(`${FLOW_ROUTES.finish}?open=${overlay}`)
 
   return (
-    <FlowStep3Frame mobileLabel="Review">
+    <FlowStep3Frame mobileLabel="Review" crumbs={FLOW_CRUMBS.review}>
       <PageColumns gallery={<ProductGallery images={review} />}>
         <StepIntro eyebrow="Step 3 of 3 · Finishing Touches" title="Review Your Ring" onBack={() => go(FLOW_ROUTES.finish)} />
         <SectionDivider />

@@ -157,10 +157,11 @@ export function BuildPanel({
   const navigate = useNavigate()
   // The recommendations modal opens over the stone step: same step, so no scroll or re-animation behind it.
   const pathname = useLocation().pathname.replace(/\/recommendations$/, "")
-  const { start } = useRingBuild()
+  const { start, chosen } = useRingBuild()
   const steps = stepsFor(start)
   const index = current === "review" ? steps.length : steps.findIndex((s) => s.key === current)
-  const isDone = (key: StepKey) => steps.findIndex((s) => s.key === key) < index
+  // Done: before the open step, or already chosen in the build (going back to the setting keeps the stone done).
+  const isDone = (key: StepKey) => key !== current && (steps.findIndex((s) => s.key === key) < index || chosen[key])
   const summaries = useStepSummaries(isDone)
   const sectionRef = useRef<HTMLElement>(null)
   const currentRef = useRef<HTMLLIElement>(null)

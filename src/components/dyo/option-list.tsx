@@ -44,9 +44,11 @@ export function OptionPreview({
 export interface ListOption {
   id: string
   name: string
-  /** 0 shows "No Cost". */
-  price: number
-  image: string
+  /** 0 shows "No Cost"; null shows no price (e.g. "None"). */
+  price: number | null
+  /** Thumbnail, or `icon` in its place (e.g. "None"). */
+  image?: string
+  icon?: ReactNode
 }
 
 /** Single-choice list of options with thumbnails (Figma crown / wedding band overlays). */
@@ -70,10 +72,10 @@ export function OptionList({
           className="flex cursor-pointer items-center gap-3 border-b border-muted px-3 py-3 hover:bg-bg-input-50"
         >
           <span className="flex size-16 shrink-0 items-center justify-center bg-secondary">
-            <img src={o.image} alt="" className="size-14 object-contain mix-blend-multiply" />
+            {o.image ? <img src={o.image} alt="" className="size-14 object-contain mix-blend-multiply" /> : o.icon}
           </span>
           <span className="flex-1 text-sm leading-5 font-semibold text-primary">{o.name}</span>
-          <span className="text-sm leading-5 font-medium text-primary">{o.price ? formatPrice(o.price) : "No Cost"}</span>
+          <span className="text-sm leading-5 font-medium text-primary">{o.price === null ? null : o.price ? formatPrice(o.price) : "No Cost"}</span>
           <RadioGroupItem value={o.id} />
         </label>
       ))}

@@ -1,6 +1,7 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router"
-import { stripFlowBase, useFlowPath } from "@/flow/flow-context"
+import { stripFlowBase, useFlow, useFlowPath } from "@/flow/flow-context"
+import { useRingBuild } from "@/state/ring-build"
 import {
   DEFAULT_SORT,
   EMPTY_FILTERS,
@@ -102,10 +103,17 @@ export function useListing() {
   const sort = params.get("sort") ?? DEFAULT_SORT
   const page = Math.max(1, Number(params.get("page")) || 1)
 
-  const filters = useMemo<ListingFilters>(
-    () => (collection ? { ...EMPTY_FILTERS, ...collection.filters } : parseFilters(params)),
-    [collection, params],
-  )
+  // Full flow turned stone-first (setting removed with a stone picked): the settings are for that stone's
+  // shape. It is the default shape filter, and moving off it asks first (`shapeGuard`).
+  const flow = useFlow()
+  const { start, hasStone, stone, clearStone } = useRingBuild()
+  const lockedShape = flow && mode === "dyo" && start === "stone" && hasStone ? stone.shape.toLowerCase() : null
+
+  const filters = useMemo<ListingFilters>(() => {
+    if (collection) return { ...EMPTY_FILTERS, ...collection.filters }
+    const parsed = parseFilters(params)
+    return lockedShape && !params.has("shape") ? { ...parsed, shape: [lockedShape] } : parsed
+  }, [collection, params, lockedShape])
 
   const results = useMemo(() => {
     const source = mode === "rts" ? READY_TO_SHIP : SETTINGS
@@ -120,8 +128,12 @@ export function useListing() {
   }
 
   /** Apply filters: always lands on Level 2 (this mode's base path), page 1. */
+  const apply = (next: ListingFilters, nextSort: string) => navigate(`${basePath}${toQuery(next, nextSort)}`, { preventScrollReset: true })
+  // Filters waiting on the shape warning (stone-first flow, a shape other than the stone's).
+  const [held, setHeld] = useState<{ next: ListingFilters; sort: string } | null>(null)
   const setFilters = (next: ListingFilters, nextSort = sort) => {
-    navigate(`${basePath}${toQuery(next, nextSort)}`, { preventScrollReset: true })
+    if (lockedShape && next.shape[0] !== lockedShape) return setHeld({ next, sort: nextSort })
+    apply(next, nextSort)
   }
 
   const toggle = (key: ListKey, value: string) => setFilters(toggleFilter(filters, key, value))
@@ -171,6 +183,18 @@ export function useListing() {
     setSort,
     setPage,
     clearAll: () => setFilters(EMPTY_FILTERS),
+    /** Stone-first flow: the warning before a shape change drops the chosen stone. */
+    shapeGuard: {
+      open: held !== null,
+      stoneShape: stone.shape,
+      cancel: () => setHeld(null),
+      confirm: () => {
+        if (!held) return
+        clearStone()
+        apply(held.next, held.sort)
+        setHeld(null)
+      },
+    },
   }
 }
 

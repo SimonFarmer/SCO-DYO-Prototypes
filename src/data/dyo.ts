@@ -118,6 +118,17 @@ export const CLASSIC_CROWN: Crown = {
 /** Crown overlay options: the included classic crown first, then the paid upgrades. */
 export const CROWN_OPTIONS: Crown[] = [CLASSIC_CROWN, ...CROWNS]
 
+/**
+ * The full flows' crowns: the classic crown and four upgrades, one per crown image, so each can get an
+ * AI preview on the shopper's own ring.
+ */
+const FLOW_CROWN_IDS = ["halo-diamond", "rosebud-diamond", "rosebud-petite", "rosebud-pave"]
+export const FLOW_CROWNS: Crown[] = CROWNS.filter((c) => FLOW_CROWN_IDS.includes(c.id))
+export const FLOW_CROWN_FROM_PRICE = Math.min(...FLOW_CROWNS.map((c) => c.price))
+
+/** "Holds approx. 7.2mm Oval": the crown sized to a given stone (the full flows' chosen stone). */
+export const crownHolds = (stone: Pick<Stone, "diameterMm" | "shape">) => `Holds approx. ${stone.diameterMm.toFixed(1)}mm ${stone.shape}`
+
 /** Ring front view used beside the crown in the crown preview. */
 export const CROWN_PREVIEW_RING = "/images/crowns/ring-preview.png"
 

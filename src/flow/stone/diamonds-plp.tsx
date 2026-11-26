@@ -56,8 +56,8 @@ const GEM_EXPLORE: GlpCatalog["explore"] = [
     copy: "Shape is often the first step in choosing a gemstone. Each shape has its own character, from the timeless brilliance of Round to the distinctive elegance of Oval, Emerald and Pear.",
     learnMore: false,
   },
-  { key: "color", label: "Color", copy: "Colour runs from Light to Vivid. Richer, more saturated colour is rarer and costs more.", learnMore: true },
-  { key: "clarity", label: "Clarity", copy: "Clarity grades visible inclusions, from Included to Very Clean. Most coloured gemstones have some.", learnMore: true },
+  { key: "color", label: "Color", copy: "Color runs from Light to Vivid. Richer, more saturated color is rarer and costs more.", learnMore: true },
+  { key: "clarity", label: "Clarity", copy: "Clarity grades visible inclusions, from Included to Very Clean. Most colored gemstones have some.", learnMore: true },
 ]
 
 const SORTERS: Record<GlpSort, (a: LooseStone, b: LooseStone) => number> = {
@@ -132,18 +132,18 @@ function catalogFor(type: StoneTypeId, back: GlpCatalog["hero"]["back"], onType:
     priceLabel: gem ? "Gemstone Price" : "Diamond Price",
     priceBounds,
     size: gem
-      ? { label: "Gemstone Size", info: "Gemstones are sized in millimetres across the stone, as Shane Co. sells them.", bounds: sizeBounds, step: 0.5, format }
+      ? { label: "Gemstone Size", info: "Gemstones are sized in millimeters across the stone, as Shane Co. sells them.", bounds: sizeBounds, step: 0.5, format }
       : { ...NATURAL_GLP.size, bounds: sizeBounds },
     noFilters,
     grades,
     cutHint: Object.fromEntries(g.cut.map((x) => [x.label, x.detail ?? ""])),
     info: gem
       ? {
-          cut: "Cut decides how a gemstone shows its colour and brilliance.",
-          color: "Colour runs from Light to Vivid. Richer, more saturated colour is rarer and costs more.",
+          cut: "Cut decides how a gemstone shows its color and brilliance.",
+          color: "Color runs from Light to Vivid. Richer, more saturated color is rarer and costs more.",
           clarity: "Clarity grades visible inclusions, from Included to Very Clean.",
         }
-      : NATURAL_GLP.info,
+      : { ...NATURAL_GLP.info, color: "Color grade helps compare diamonds from D (brightest white) to M (warmest tone)." },
     colorBands: gem ? undefined : DIAMOND_COLOR_BANDS,
     presets: !gem,
     certification:

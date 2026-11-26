@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router"
 import { CaretLeftIcon } from "@phosphor-icons/react"
 import { SectionDivider, StepIntro } from "@/components/dyo/finishing-sections"
 import { StoneCtas } from "@/components/stones/stone-ctas"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { DiamondQuickview } from "@/components/diamond/diamond-quickview"
-import { formatSize, gemById, recommend, stoneImage, stoneShape, stoneSpecs, stoneTitle, stoneType, toQuickviewDiamond, type SpecKey, type StonePick, type StoneTypeId } from "@/data/stones"
+import { formatSize, gemById, stoneImage, stoneShape, stoneSpecs, stoneTitle, stoneType, toQuickviewDiamond, type SpecKey, type StonePick, type StoneTypeId } from "@/data/stones"
 import { formatPrice } from "@/lib/format"
 import { useFlow, useStepNumber } from "@/flow/flow-context"
 import { FLOW_ROUTES } from "@/flow/flow-paths"
@@ -253,26 +253,13 @@ export function FlowStoneRecommendations() {
   const stoneStep = useStepNumber("stone")
   const flow = useFlow()
   const selectDiamond = useFlowSelectDiamond()
-  const { variant, prefs, sim, matching, href } = useStonePrefs()
+  const { variant, prefs, sim, matching, picks, matchedBy, href } = useStonePrefs()
   const opensQuickview = flow?.config.t31 !== "A"
   const toPdp = (id: string) => {
     navigate(flow ? flow.path(FLOW_ROUTES.diamond(id)) : FLOW_ROUTES.diamond(id))
     window.scrollTo({ top: 0 })
   }
-  const { shopBy } = variant
-  const picks = useMemo(
-    () =>
-      sim.blocked
-        ? []
-        : recommend({
-            scope: sim.scope,
-            mode: sim.pickMode,
-            size: sim.size,
-            stoneMin: sim.stoneMin,
-            stoneMax: sim.stoneMax,
-          }),
-    [sim],
-  )
+  // Matched as View All is: with Budget first, near the Preview Size as well as in the budget (simulator matchMode).
   const [selectedKind, setSelectedKind] = useState(picks[0]?.kind)
   const [quickview, setQuickview] = useState<StonePick | null>(null)
   const selected = picks.find((p) => p.kind === selectedKind) ?? picks[0]
@@ -295,7 +282,7 @@ export function FlowStoneRecommendations() {
           </button>
           <div className="flex flex-col gap-2">
             <h2 className="type-h4 text-primary">{picksHeading(prefs.type, effectiveShape(prefs), prefs.gem)}</h2>
-            <Basis shopBy={shopBy} sim={sim} />
+            <Basis shopBy={matchedBy} sim={sim} />
           </div>
         </div>
         {selected ? (

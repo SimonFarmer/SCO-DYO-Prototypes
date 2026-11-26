@@ -185,7 +185,8 @@ export function RingSummary({
               rows={[
                 ["Carat", `${stone.carat} Ct`],
                 ["Clarity", stone.clarity],
-                ["Colour", stone.color],
+                // The flows use US spelling, as the diamond pages and filters do; Test 4 keeps its frame's copy.
+                [flow ? "Color" : "Colour", stone.color],
                 ["Cut", stone.cut],
               ]}
             />

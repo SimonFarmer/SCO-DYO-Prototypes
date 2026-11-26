@@ -6,15 +6,24 @@ const cornerCache = new Map<string, boolean>()
 
 /**
  * Whether the bottom-right corner of an image is dark (where the "1 / 4" counter sits), so the counter
- * can switch to the light colour there. Reads a downscaled copy of the image (same-origin files).
+ * can switch to the light colour there. Reads a downscaled copy of the image. Images from other hosts
+ * (Shane Co.'s ring renders, the full flows' first slide) aren't read: they can't be without CORS, and
+ * they are always on a light background, so they keep the dark counter.
  */
+const isSameOrigin = (src: string) => new URL(src, window.location.href).origin === window.location.origin
+
 function useDarkCorner(src: string | undefined) {
   // Re-render once a newly measured image lands in the cache.
   const [, setMeasured] = useState(0)
   useEffect(() => {
-    if (!src || cornerCache.has(src)) return
+    if (!src || cornerCache.has(src) || !isSameOrigin(src)) return
     let live = true
     const img = new Image()
+    const settle = (isDark: boolean) => {
+      cornerCache.set(src, isDark)
+      if (live) setMeasured((n) => n + 1)
+    }
+    img.onerror = () => settle(false)
     img.onload = () => {
       const size = 48
       const canvas = document.createElement("canvas")
@@ -23,12 +32,15 @@ function useDarkCorner(src: string | undefined) {
       if (!ctx) return
       ctx.drawImage(img, 0, 0, size, size)
       // The counter takes roughly the right 20% × bottom 10% of a slide.
-      const { data } = ctx.getImageData(Math.round(size * 0.8), Math.round(size * 0.9), Math.round(size * 0.2), Math.round(size * 0.1))
+      let data: Uint8ClampedArray
+      try {
+        data = ctx.getImageData(Math.round(size * 0.8), Math.round(size * 0.9), Math.round(size * 0.2), Math.round(size * 0.1)).data
+      } catch {
+        return settle(false) // unreadable: keep the default dark counter
+      }
       let sum = 0
       for (let i = 0; i < data.length; i += 4) sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]
-      const isDark = sum / (data.length / 4) < 140
-      cornerCache.set(src, isDark)
-      if (live) setMeasured((n) => n + 1)
+      settle(sum / (data.length / 4) < 140)
     }
     img.src = src
     return () => {

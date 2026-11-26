@@ -31,17 +31,18 @@ export function useFlowRingGallery() {
       alt: `${setting.name} in ${setting.metal.toLowerCase()} with a ${stone.title.toLowerCase()}`,
     }
     const stonePhoto = findFlowDiamond(stone.id)?.image
-    const stoneTile: GalleryImage[] = stonePhoto ? [{ src: stonePhoto, alt: `${stone.title}, top view`, badge: `${stone.shape} · ${stone.carat.toFixed(2)} ct`, badgePosition: "bottom" }] : []
-    // The setting's own shots in the chosen metal (the PDP gallery, without its size guide).
+    const stoneTile: GalleryImage[] = stonePhoto ? [{ src: stonePhoto, alt: `${stone.title}, top view`, badge: `${stone.shape} ∙ ${stone.carat.toFixed(2)} ct`, badgePosition: "bottom" }] : []
+    // The setting's own shots in the chosen metal (the PDP gallery, without its size guide). Its first shot is
+    // the front view the hero already shows with the shopper's stone, so it is left out (no repeated photo).
     const ellaPhotos: GalleryImage[] = galleryFor(picked, metal)
       .filter((m) => m.kind === "image")
-      .slice(0, 4)
+      .slice(1, 5)
       .map((m) => ({ src: m.src, alt: m.alt, badge: m.badge, badgePosition: m.badge ? ("bottom" as const) : undefined }))
     const [, , source, sizeGuide] = FINISHING_GALLERY.tiles
     return {
       /** Finishing Touches: the hero spans the grid, with a "Previewing" badge (Test 4 B layout). */
       finishing: [
-        { ...hero, span: 2 as const, badge: `Previewing: ${stone.origin} · ${stone.shape} · ${stone.carat.toFixed(2)} ct`, badgePosition: "bottom" as const },
+        { ...hero, span: 2 as const, badge: `Previewing: ${stone.origin} ∙ ${stone.shape} ∙ ${stone.carat.toFixed(2)} ct`, badgePosition: "bottom" as const },
         ...stoneTile,
         ...ellaPhotos,
         source,
