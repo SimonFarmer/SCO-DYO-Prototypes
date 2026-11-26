@@ -17,6 +17,7 @@ import { formatSize, gemById, shapesFor, snapSize, stoneShape, stoneType } from 
 import { formatPrice } from "@/lib/format"
 import type { ShopBy } from "@/pages/test-2/variants"
 import { useFlowStonePrefs, type StonePrefs, type StoneSim } from "./simulator"
+import { useStepNumber } from "@/flow/flow-context"
 import { FlowStoneStepLayout as StoneStepLayout } from "./stone-step-layout"
 
 /** Ranges to the nearest $5, so the exact end prices show (concept). */
@@ -85,6 +86,7 @@ export function FlowStonePreferences() {
   const navigate = useNavigate()
   const notInTest = useNotInTest()
   const { variant, prefs, sim, update, setSize, matching, href, setting } = useFlowStonePrefs()
+  const stoneStep = useStepNumber("stone")
   const { shopBy } = variant
   const set = setting.price
 
@@ -116,7 +118,7 @@ export function FlowStonePreferences() {
     <div data-variant={variant.id}>
       <StoneStepLayout prefs={prefs} size={sim.size}>
         <StepIntro
-          eyebrow="Step 2 of 3 · Stone"
+          eyebrow={`Step ${stoneStep} of 3 · Stone`}
           title="Find your Stone"
           subtitle="Tell us what you're looking for and we'll recommend stones to suit your ring and budget."
         />

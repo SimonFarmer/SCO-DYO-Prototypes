@@ -35,6 +35,11 @@ interface BuildState {
   settingMetal?: MetalId | null
   /** Full flow only: center-stone shape the shopper came in with (Engagement Rings › Shop by Shape). */
   shape?: string | null
+  /**
+   * Full flow only: the step order. "stone" once the setting is removed with a stone already chosen:
+   * the stone becomes step 1 and the setting step 2 (none = setting first).
+   */
+  start?: "setting" | "stone" | null
 }
 
 export interface LineItem {
@@ -45,6 +50,8 @@ export interface LineItem {
 interface RingBuild extends BuildState {
   setting: typeof SETTING
   stone: Stone
+  /** A stone has been picked (otherwise `stone` is the pre-chosen fallback). */
+  hasStone: boolean
   crown: Crown | null
   engravingStyle: EngravingStyle | null
   band: WeddingBand | null
@@ -64,6 +71,8 @@ interface RingBuild extends BuildState {
   setSettingMetal: (metal: MetalId) => void
   /** Full flow: preferred center-stone shape, carried from the entry point to the PDP preview and stone step. */
   setShape: (shape: string | null) => void
+  /** Full flow: the step order (see `start`). */
+  setStart: (start: "setting" | "stone") => void
   reset: () => void
   /** Clears every build (used when launching a prototype from the index). */
   resetAll: () => void
@@ -83,9 +92,9 @@ const INITIAL: Record<BuildKey, BuildState> = {
   A: { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
   B: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
   T3: { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
-  FLOW: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null },
+  FLOW: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null, start: null },
   /** The accordion steps flow (/flow-accordion): its own build, apart from /flow. */
-  FLOWA: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null },
+  FLOWA: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null, start: null },
 }
 
 const BUILD_KEYS = Object.keys(INITIAL) as BuildKey[]
@@ -172,6 +181,7 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
       ...state,
       setting,
       stone,
+      hasStone: state.stone != null,
       crown,
       engravingStyle,
       bandEngraving,
@@ -188,6 +198,7 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
       setSetting: (settingId, settingMetal) => update({ settingId, settingMetal }),
       setSettingMetal: (settingMetal) => update({ settingMetal }),
       setShape: (shape) => update({ shape }),
+      setStart: (start) => update({ start }),
       reset: () => update(INITIAL[key]),
       resetAll: () => setBuilds(INITIAL),
     }

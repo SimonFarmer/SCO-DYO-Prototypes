@@ -67,7 +67,8 @@ function StepMarker({
 /**
  * DYO progress stepper.
  * Desktop (lg+): horizontal bar (Test 4 frames). Mobile: accordion (Steps Interface frame).
- * View/Edit links are inert in the unmoderated tests.
+ * Done steps: in the full flows the chosen item's name opens it and "Remove" starts the step over;
+ * in the unmoderated tests they show inert View/Edit links instead.
  */
 export function DyoStepper({
   current,
@@ -90,11 +91,17 @@ export function DyoStepper({
   /** Cap the desktop bar's contents at the page max width (1680px); the bar itself stays full width. */
   contained?: boolean
 }) {
-  const { setting, stone, total } = useRingBuild()
+  const { setting, stone, total, start: buildStart } = useRingBuild()
   const notInTest = useNotInTest()
-  // Full flow: View/Edit go back to that step with the build kept. In the tests they stay inert.
+  // Full flow: the name opens the chosen setting/stone, Remove starts the step over. In the tests View/Edit stay inert.
   const flow = useFlow()
   const [open, setOpen] = useState(false)
+  // Full flow turned stone-first (the setting removed with a stone picked): pages still say which step they
+  // are as in the setting-first order, so place that step in the stone-first order instead.
+  if (flow && buildStart === "stone" && start !== "stone") {
+    current = (ORDER.stone.indexOf(ORDER.setting[current - 1]) + 1) as StepNumber
+    start = "stone"
+  }
 
   const stateOf = (n: StepNumber) => (n < current ? "done" : n === current ? "current" : "upcoming")
   const order = ORDER[start]
@@ -121,7 +128,28 @@ export function DyoStepper({
                 {step.n > 1 && <li aria-hidden className="w-px self-stretch bg-muted" />}
                 <li className="flex min-w-0 flex-1 items-center gap-3" aria-current={state === "current" ? "step" : undefined}>
                   <StepMarker n={step.n} state={state} shape="circle" />
-                  {state === "done" && kind !== "finishing" ? (
+                  {state === "done" && kind !== "finishing" && flow ? (
+                    // Full flow: the chosen item's name opens it (was "View"), and "Remove" (was "Edit")
+                    // starts that step's choice over.
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <div className="flex items-center gap-3 type-label-xs text-primary">
+                        <span className="flex gap-2">
+                          <span>{step.label}:</span>
+                          <span>{formatPrice(step.price)}</span>
+                        </span>
+                        <button type="button" className="cursor-pointer underline" onClick={() => flow.removeStep(kind as "setting" | "stone")}>
+                          Remove
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => flow.goToStep(kind as "setting" | "stone", "view")}
+                        className="cursor-pointer truncate text-left type-caption font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        {step.detail}
+                      </button>
+                    </div>
+                  ) : state === "done" && kind !== "finishing" ? (
                     <div className="flex min-w-0 flex-col gap-1">
                       <div className="flex items-center gap-3 type-label-xs text-primary">
                         <span className="flex gap-2">
@@ -200,11 +228,26 @@ export function DyoStepper({
                 <StepMarker n={step.n} state={stateOf(step.n)} shape="square" />
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="type-label-xs text-muted-foreground">{step.label}</span>
-                  {step.lines.map((line) => (
-                    <span key={line} className="text-xs-2 leading-4 text-primary">
-                      {line}
-                    </span>
-                  ))}
+                  {step.lines.map((line, li) =>
+                    // Full flow: a done step's name opens the chosen setting or stone.
+                    flow && li === 0 && step.n < current && step.kind !== "finishing" ? (
+                      <button
+                        key={line}
+                        type="button"
+                        onClick={() => {
+                          setOpen(false)
+                          flow.goToStep(step.kind as "setting" | "stone", "view")
+                        }}
+                        className="cursor-pointer self-start text-left text-xs-2 leading-4 text-primary underline underline-offset-2"
+                      >
+                        {line}
+                      </button>
+                    ) : (
+                      <span key={line} className="text-xs-2 leading-4 text-primary">
+                        {line}
+                      </span>
+                    ),
+                  )}
                   {step.price && <span className="text-xs-2 leading-4 font-semibold text-primary">{step.price}</span>}
                 </div>
                 {step.n < current && (
@@ -213,11 +256,12 @@ export function DyoStepper({
                     onClick={() => {
                       if (!flow) return notInTest("Editing a previous step")
                       setOpen(false)
-                      flow.goToStep(step.kind as "setting" | "stone", "edit")
+                      flow.removeStep(step.kind as "setting" | "stone")
                     }}
                     className="cursor-pointer self-start type-label-xs text-primary underline"
                   >
-                    Edit
+                    {/* Full flow: "Remove" starts the step over; the tests keep the inert "Edit". */}
+                    {flow ? "Remove" : "Edit"}
                   </button>
                 )}
               </li>

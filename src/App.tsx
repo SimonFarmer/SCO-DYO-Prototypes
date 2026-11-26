@@ -23,8 +23,10 @@ import { RingReviewB } from "@/pages/test-4/ring-review-b"
 import { RingBuildProvider } from "@/state/ring-build"
 
 export default function App() {
+  // No startTransition: pages call window.scrollTo right after navigate, and a transition kept the old page
+  // on screen (scrolled to its top) for a beat before the new one showed, a visible flash.
   return (
-    <BrowserRouter>
+    <BrowserRouter useTransitions={false}>
       <NotInTestProvider>
         <RingBuildProvider>
           <Routes>

@@ -24,6 +24,7 @@ import { METALS, descriptionFor, type MetalId, type Setting } from "@/data/produ
 import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { useStepNumber } from "@/flow/flow-context"
 
 interface SettingBuyFormProps {
   setting: Setting
@@ -271,6 +272,8 @@ export function SettingBuyForm({
   beforeDelivery,
   ctaRef,
 }: SettingBuyFormProps) {
+  // Step 2 once the full flow turns stone-first; always step 1 in the tests.
+  const settingStep = useStepNumber("setting")
   const variant = setting.variants.find((v) => v.metal === metal) ?? setting.variants[0]
   // Below lg the gallery is stacked above this form, so a metal change would happen out of sight:
   // glide back to the top so the new metal's images are in view (both mobile gallery navs).
@@ -284,7 +287,7 @@ export function SettingBuyForm({
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-8">
-        <p className="type-label-xs font-semibold text-muted-foreground">Step 1 of 3 · Select your setting</p>
+        <p className="type-label-xs font-semibold text-muted-foreground">Step {settingStep} of 3 · Select your setting</p>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4">
             <h1 className="type-h2 font-medium text-primary">{setting.name}</h1>

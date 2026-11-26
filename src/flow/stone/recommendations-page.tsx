@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { DiamondQuickview } from "@/components/diamond/diamond-quickview"
 import { formatSize, gemById, recommend, stoneImage, stoneShape, stoneSpecs, stoneTitle, stoneType, toQuickviewDiamond, type SpecKey, type StonePick, type StoneTypeId } from "@/data/stones"
 import { formatPrice } from "@/lib/format"
-import { useFlow } from "@/flow/flow-context"
+import { useFlow, useStepNumber } from "@/flow/flow-context"
 import { FLOW_ROUTES } from "@/flow/flow-paths"
 import { cn } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
@@ -250,6 +250,7 @@ function RingSummaryBox({ stone }: { stone: StonePick["stone"] }) {
  */
 export function FlowStoneRecommendations() {
   const navigate = useNavigate()
+  const stoneStep = useStepNumber("stone")
   const flow = useFlow()
   const selectDiamond = useFlowSelectDiamond()
   const { variant, prefs, sim, matching, href } = useStonePrefs()
@@ -280,7 +281,7 @@ export function FlowStoneRecommendations() {
   return (
     <div data-variant={variant.id}>
       <StoneStepLayout prefs={prefs} size={selected?.stone.size ?? sim.size} gallery="full">
-        <StepIntro eyebrow="Step 2 of 3 · Stone" title="Stone Recommendations" />
+        <StepIntro eyebrow={`Step ${stoneStep} of 3 · Stone`} title="Stone Recommendations" />
         <SectionDivider />
         {/* Figma 8173:187709: Edit preferences, then what the picks are ("Round Natural Diamonds"), over the tiles. */}
         <div className="flex flex-col gap-4.5">

@@ -89,6 +89,12 @@ interface FlowState {
   leave: (to: string) => void
   /** Stepper View/Edit and the summary's Edit links: back to a step with the build kept. */
   goToStep: (step: "setting" | "stone", mode: "view" | "edit") => void
+  /**
+   * Stepper "Remove": start that step's choice over. The setting goes back to the engagement ring PLP;
+   * with a stone already picked, the journey turns stone-first (stone step 1, setting step 2). The stone
+   * goes back to the stone step.
+   */
+  removeStep: (step: "setting" | "stone") => void
 }
 
 /** Pages past step 1, where leaving would lose the build (stone step, GLP, diamond, finishing, review). */
@@ -116,7 +122,7 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
   const toFlowPath = useMemo(() => toFlowPathIn(base), [base])
   const { pathname, search } = useLocation()
   const navigate = useNavigate()
-  const { setting, stone, total, reset, shape } = useRingBuild()
+  const { setting, stone, total, reset, shape, hasStone, setStart, setShape } = useRingBuild()
   const [config, setConfig] = useState<FlowConfig>(() => fromSearch(load(base), search))
   const [pending, setPending] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -187,7 +193,24 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
     savedTimer.current = window.setTimeout(() => setSaved(false), 3200)
   }
 
-  const value = useMemo<FlowState>(() => ({ base, config, path: toFlowPath, leave, goToStep }), [base, config, toFlowPath, leave, goToStep])
+  const removeStep = useCallback<FlowState["removeStep"]>(
+    (step) => {
+      if (step === "stone") return goToStep("stone", "edit")
+      // With a stone already picked, the journey turns stone-first: the stone becomes step 1 and the
+      // setting step 2, and the PLP previews settings in that stone's shape.
+      if (hasStone) {
+        setStart("stone")
+        setShape(stone.shape.toLowerCase())
+      }
+      go("/engagement-rings")
+    },
+    [go, goToStep, hasStone, setStart, setShape, stone.shape],
+  )
+
+  const value = useMemo<FlowState>(
+    () => ({ base, config, path: toFlowPath, leave, goToStep, removeStep }),
+    [base, config, toFlowPath, leave, goToStep, removeStep],
+  )
   return (
     <FlowContext.Provider value={value}>
       <Outlet />
@@ -208,6 +231,18 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
 /** The flow context, or null outside /flow (the unmoderated tests and other prototypes). */
 // eslint-disable-next-line react-refresh/only-export-components
 export const useFlow = () => useContext(FlowContext)
+
+/**
+ * The step's number in this journey, for "Step N of 3" labels: setting 1 / stone 2, swapped once the full
+ * flow turns stone-first (setting removed with a stone picked). Outside the flows it is always setting-first.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useStepNumber(step: "setting" | "stone"): 1 | 2 {
+  const flow = useFlow()
+  const { start } = useRingBuild()
+  const stoneFirst = flow != null && start === "stone"
+  return (step === "setting") === stoneFirst ? 2 : 1
+}
 
 /**
  * Navigation for site chrome (header, menus, breadcrumb, logo), starting at the top of the page. Inside the
