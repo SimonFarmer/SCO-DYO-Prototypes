@@ -25,17 +25,34 @@ function Logo({ withTagline = false }: { withTagline?: boolean }) {
   )
 }
 
-function UtilityLink({ icon: IconCmp, label }: { icon: Icon; label: string }) {
+function UtilityLink({ icon: IconCmp, label, count = 0 }: { icon: Icon; label: string; count?: number }) {
   const notInTest = useNotInTest()
   return (
     <button
       type="button"
       onClick={() => notInTest(label)}
+      aria-label={count ? `${label}, ${count} item${count === 1 ? "" : "s"}` : undefined}
       className="flex cursor-pointer items-center gap-2 text-xxs leading-3 font-semibold text-primary"
     >
-      <IconCmp className="size-5" weight="light" />
+      <span className="relative">
+        <IconCmp className="size-5" weight="light" />
+        <CountBadge count={count} />
+      </span>
       {label}
     </button>
+  )
+}
+
+/** Item count on the Bag icon (full flows: the end screen, once the ring is added), hidden at 0. */
+export function CountBadge({ count }: { count: number }) {
+  if (!count) return null
+  return (
+    <span
+      aria-hidden
+      className="absolute -top-1.5 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-xxs leading-none font-semibold text-primary-foreground"
+    >
+      {count}
+    </span>
   )
 }
 
@@ -121,7 +138,7 @@ export function SiteHeader({
           <div className="flex items-center gap-6">
             <UtilityLink icon={UserCircleIcon} label="Sign In" />
             <UtilityLink icon={HeartIcon} label="Wishlist" />
-            <UtilityLink icon={ShoppingBagIcon} label="Bag" />
+            <UtilityLink icon={ShoppingBagIcon} label="Bag" count={flow?.bagCount} />
           </div>
         </div>
         <div className="relative" onMouseLeave={navigation ? closeMenu : undefined}>

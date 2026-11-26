@@ -1,7 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import { Outlet, useLocation, useNavigate } from "react-router"
 import { HeartStraightIcon } from "@phosphor-icons/react"
+import { diamondName } from "@/data/diamonds"
 import { useRingBuild } from "@/state/ring-build"
+import { findFlowDiamond } from "./stone/find-diamond"
 import { FlowExitModal } from "./exit-modal"
 
 /**
@@ -91,10 +93,13 @@ interface FlowState {
   goToStep: (step: "setting" | "stone", mode: "view" | "edit") => void
   /**
    * Stepper "Remove": start that step's choice over. The setting goes back to the engagement ring PLP;
-   * with a stone already picked, the journey turns stone-first (stone step 1, setting step 2). The stone
-   * goes back to the stone step.
+   * with a stone already picked, the journey turns stone-first (stone step 1, setting step 2) and the PLP
+   * shows settings for that stone's shape. The stone
+   * leaves the build and the shopper goes back to the stone step.
    */
   removeStep: (step: "setting" | "stone") => void
+  /** Items in the bag, shown on the header's Bag icon: 1 on the end screen (the ring just added), otherwise 0. */
+  bagCount: number
 }
 
 /** Pages past step 1, where leaving would lose the build (stone step, GLP, diamond, finishing, review). */
@@ -102,6 +107,16 @@ const BUILD_PAGES = /^\/(stone|diamonds|diamond|finish|review)(\/|$)/
 
 /** Last stone preferences URL query, so "Edit" on the stone returns to the shopper's own preferences. */
 export const stoneQueryKey = (base: FlowBase) => (base === FLOW_BASE ? "flow-stone-query" : `flow-stone-query${base}`)
+
+/** The shopper's last stone preferences query ("" before any), for links back into the stone step. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function storedStoneQuery(base: FlowBase) {
+  try {
+    return sessionStorage.getItem(stoneQueryKey(base)) ?? ""
+  } catch {
+    return ""
+  }
+}
 
 /** Rings saved with "Save & Navigate Away" (the prototype's Wish List). */
 const WISHLIST_KEY = "flow-wishlist"
@@ -117,12 +132,31 @@ const toFlowPathIn = (base: FlowBase) => (to: string) => {
   return to === "/" ? base : `${base}${to}`
 }
 
+/**
+ * The browser tab's title on the flow's own pages, as the PLPs set theirs ("Engagement Rings | Shane Co."), instead
+ * of the prototype index's. The PLPs (settings and diamonds) set their own title, so they are left alone.
+ */
+function flowPageTitle(base: FlowBase, page: string, settingName: string): string | null {
+  if (page === "/" || page === "/shop") return "Shane Co. | Engagement Rings, Diamonds & Fine Jewelry"
+  // The accordion's steps are one product page (its breadcrumb ends on the setting), so the title is the setting's.
+  if (base === ACCORDION_BASE && /^\/(setting|stone|finish|review)(\/|$)/.test(page)) return settingName
+  if (page === "/setting") return settingName
+  if (page === "/stone") return "Find Your Stone"
+  if (page === "/stone/recommendations") return "Stone Recommendations"
+  const diamond = findFlowDiamond(page.match(/^\/diamond\/([^/]+)/)?.[1])
+  if (diamond) return diamondName(diamond)
+  if (page === "/finish") return "Complete Your Ring"
+  if (page === "/review") return "Review Your Ring"
+  if (page === "/added") return "Added to Your Bag"
+  return null
+}
+
 /** Route layout for /flow/* (and /flow-accordion/*): provides the flow context to every page of that flow. */
 export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
   const toFlowPath = useMemo(() => toFlowPathIn(base), [base])
   const { pathname, search } = useLocation()
   const navigate = useNavigate()
-  const { setting, stone, total, reset, shape, hasStone, setStart, setShape } = useRingBuild()
+  const { setting, stone, total, reset, shape, hasStone, setStart, setShape, setSettingChosen, clearStone, chosen, start } = useRingBuild()
   const [config, setConfig] = useState<FlowConfig>(() => fromSearch(load(base), search))
   const [pending, setPending] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -151,7 +185,18 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
     [navigate, toFlowPath],
   )
 
-  const inBuild = BUILD_PAGES.test(stripFlowBase(pathname))
+  const page = stripFlowBase(pathname)
+  useEffect(() => {
+    const title = flowPageTitle(base, page, setting.name)
+    if (!title) return
+    const previous = document.title
+    document.title = title.includes("Shane Co.") ? title : `${title} | Shane Co.`
+    return () => {
+      document.title = previous
+    }
+  }, [base, page, setting.name])
+
+  const inBuild = BUILD_PAGES.test(page)
   const leave = useCallback((to: string) => (inBuild ? setPending(toFlowPath(to)) : go(to)), [inBuild, go, toFlowPath])
 
   const goToStep = useCallback<FlowState["goToStep"]>(
@@ -195,21 +240,30 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
 
   const removeStep = useCallback<FlowState["removeStep"]>(
     (step) => {
-      if (step === "stone") return goToStep("stone", "edit")
+      if (step === "stone") {
+        // The stone leaves the build (the stepper, summaries and totals stop showing it), then back to the stone
+        // step with the shopper's last preferences. A setting still in the build makes the journey setting-first
+        // again (setting done, stone next); without one, a stone-first journey stays stone-first.
+        clearStone()
+        if (start === "stone" && !chosen.setting) setStart("stone")
+        return goToStep("stone", "edit")
+      }
+      setSettingChosen(false)
       // With a stone already picked, the journey turns stone-first: the stone becomes step 1 and the
       // setting step 2, and the PLP previews settings in that stone's shape.
       if (hasStone) {
         setStart("stone")
         setShape(stone.shape.toLowerCase())
+        return go(`/engagement-rings?shape=${stone.shape.toLowerCase()}`)
       }
       go("/engagement-rings")
     },
-    [go, goToStep, hasStone, setStart, setShape, stone.shape],
+    [go, goToStep, hasStone, setStart, setShape, setSettingChosen, clearStone, start, chosen.setting, stone.shape],
   )
 
   const value = useMemo<FlowState>(
-    () => ({ base, config, path: toFlowPath, leave, goToStep, removeStep }),
-    [base, config, toFlowPath, leave, goToStep, removeStep],
+    () => ({ base, config, path: toFlowPath, leave, goToStep, removeStep, bagCount: page === "/added" ? 1 : 0 }),
+    [base, config, toFlowPath, leave, goToStep, removeStep, page],
   )
   return (
     <FlowContext.Provider value={value}>

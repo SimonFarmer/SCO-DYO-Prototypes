@@ -85,31 +85,14 @@ export function BudgetSection({ sim, update, interactive, withBand }: { sim: Sto
 export function FlowStonePreferences() {
   const navigate = useNavigate()
   const notInTest = useNotInTest()
-  const { variant, prefs, sim, update, setSize, matching, href, setting } = useFlowStonePrefs()
+  const { variant, prefs, sim, update, setSize, matching, prices, href, setting } = useFlowStonePrefs()
   const stoneStep = useStepNumber("stone")
   const { shopBy } = variant
   const set = setting.price
 
-  // Price Explained: Carat first = that size's range; Budget first = the budget; Size + Budget = the overlap,
-  // or that size's range when the shopper has taken it outside the budget.
-  const stonePrice =
-    shopBy === "both" && sim.inBudget
-      ? sim.overlap
-        ? range(sim.overlap.lo - set, sim.overlap.hi - set)
-        : "—"
-      : sim.blocked || !sim.row
-        ? "—"
-        : range(sim.row.min, sim.row.max)
-  const total =
-    sim.pickMode === "size"
-      ? sim.sizeRing
-        ? range(sim.sizeRing.lo, sim.sizeRing.hi)
-        : "—"
-      : shopBy === "budget"
-        ? `${formatPrice(sim.budgetLo)} - ${formatPrice(sim.budgetHi)}`
-        : sim.overlap
-          ? range(sim.overlap.lo, sim.overlap.hi)
-          : "—"
+  // Price Explained: the stones that match (what View All lists), so Setting + Stone adds up to the Ring Total.
+  const stonePrice = prices ? range(prices.stone.lo, prices.stone.hi) : "—"
+  const total = prices ? range(prices.ring.lo, prices.ring.hi) : "—"
 
   const size = <SizeSection sim={sim} setSize={setSize} shopBy={shopBy} />
   const budget = <BudgetSection sim={sim} update={update} interactive={shopBy !== "size"} withBand={shopBy === "size"} />

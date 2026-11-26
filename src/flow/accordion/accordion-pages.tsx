@@ -13,19 +13,19 @@ import { DyoAssurances, MetalSelector } from "@/components/pdp/setting-buy-form"
 import { SettingGallery } from "@/components/pdp/setting-gallery"
 import { StonePreviewMenu } from "@/components/pdp/stone-preview-menu"
 import { useNotInTest } from "@/components/prototype/not-in-test"
-import { Breadcrumb, type Crumb } from "@/components/site/breadcrumb"
+import { Breadcrumb } from "@/components/site/breadcrumb"
 import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { ShapeSelector, StoneTypeToggle } from "@/components/stones/preference-parts"
 import { Button } from "@/components/ui/button"
 import { CLASSIC_CROWN, ENGRAVING, type GalleryImage } from "@/data/dyo"
-import { PLP_PATH, SHAPES } from "@/data/plp"
-import { flowMetalFor, flowSettingFor, flowSettingStyle } from "@/data/flow-settings"
+import { SHAPES } from "@/data/plp"
+import { flowMetalFor, flowSettingFor } from "@/data/flow-settings"
 import { galleryFor } from "@/data/products"
-import { formatSize, recommend, shapesFor, stoneShape, stoneType, toQuickviewDiamond, type StonePick } from "@/data/stones"
+import { formatSize, shapesFor, stoneShape, stoneType, toQuickviewDiamond, type StonePick } from "@/data/stones"
 import { useFlow } from "@/flow/flow-context"
-import { FLOW_ROUTES } from "@/flow/flow-paths"
+import { FLOW_CRUMBS, FLOW_ROUTES } from "@/flow/flow-paths"
 import { useFlowRingGallery } from "@/flow/ring-images"
 import { FlowStoneGallery } from "@/flow/stone/flow-stone-gallery"
 import { BudgetSection, SizeSection, stoneName } from "@/flow/stone/preferences-page"
@@ -48,17 +48,6 @@ import { RecommendationsSheet } from "./recommendations-sheet"
 
 const COLUMNS = "grid lg:grid-cols-[826fr_606fr] lg:gap-2"
 
-/** The wireframes' trail: the product's own breadcrumb, ending on the picked setting (Home › … › its name). */
-function productCrumbs(settingId: string | null | undefined): Crumb[] {
-  const style = flowSettingStyle(settingId)
-  return [
-    { label: "Home", to: "/shop" },
-    { label: "Engagement Rings", to: PLP_PATH },
-    { label: style.label, to: `${PLP_PATH}/${style.id}` },
-    flowSettingFor(settingId).name,
-  ]
-}
-
 /** Header, the product breadcrumb, then gallery and panel side by side (stacked on phones), footer, mobile bar. */
 function AccordionFrame({ gallery, panel, galleryFull = true }: { gallery: ReactNode; panel: ReactNode; galleryFull?: boolean }) {
   const flow = useFlow()
@@ -72,7 +61,7 @@ function AccordionFrame({ gallery, panel, galleryFull = true }: { gallery: React
       <main className={PAGE_MAX}>
         {flow?.config.crumbs && (
           <div className={COLUMNS}>
-            <Breadcrumb items={productCrumbs(settingId)} className="mx-2 bg-secondary" />
+            <Breadcrumb items={FLOW_CRUMBS.setting(settingId)} className="mx-2 bg-secondary" />
           </div>
         )}
         <div className={COLUMNS}>
@@ -129,7 +118,7 @@ function useGo() {
 export function AccordionSetting() {
   const flow = useFlow()
   const go = useGo()
-  const { settingId, settingMetal, setSettingMetal, shape, setting: built, stone, start } = useRingBuild()
+  const { settingId, settingMetal, setSettingMetal, shape, setting: built, stone, start, setSettingChosen } = useRingBuild()
   // Stone-first (setting removed with a stone already picked): the stone is done, so the setting leads to step 3.
   const stoneFirst = start === "stone"
   const setting = flowSettingFor(settingId)
@@ -140,7 +129,7 @@ export function AccordionSetting() {
   const media = galleryFor(setting, metal, previewShape)
   const total = formatPrice(built.price + (stoneFirst ? stone.price : 0))
 
-  const next = () => (stoneFirst ? go("/finish") : go(flowStonePath("preferences", firstStoneQuery(flow?.config.t2 ?? "B", previewShape))))
+  const next = () => (setSettingChosen(true), stoneFirst ? go("/finish") : go(flowStonePath("preferences", firstStoneQuery(flow?.config.t2 ?? "B", previewShape, built.price))))
 
   return (
     <AccordionFrame
@@ -209,42 +198,26 @@ export function AccordionStone() {
   const recommendations = useLocation().pathname.endsWith("/recommendations")
   const notInTest = useNotInTest()
   const selectDiamond = useFlowSelectDiamond()
-  const { variant, prefs, sim, update, setSize, matching, href, setting } = useFlowStonePrefs()
+  const { variant, prefs, sim, update, setSize, matching, prices, picks: flowPicks, matchedBy, href, setting } = useFlowStonePrefs()
   const { shopBy } = variant
   const set = setting.price
   const r5 = (n: number) => Math.round(n / 5) * 5
   const range = (a: number, b: number) => `${formatPrice(r5(a))} - ${formatPrice(r5(b))}`
-  // Same numbers as the /flow preferences page's Price Explained.
-  const stonePrice =
-    shopBy === "both" && sim.inBudget ? (sim.overlap ? range(sim.overlap.lo - set, sim.overlap.hi - set) : "—") : sim.blocked || !sim.row ? "—" : range(sim.row.min, sim.row.max)
-  const total =
-    sim.pickMode === "size"
-      ? sim.sizeRing
-        ? range(sim.sizeRing.lo, sim.sizeRing.hi)
-        : "—"
-      : shopBy === "budget"
-        ? `${formatPrice(sim.budgetLo)} - ${formatPrice(sim.budgetHi)}`
-        : sim.overlap
-          ? range(sim.overlap.lo, sim.overlap.hi)
-          : "—"
+  // Same numbers as the /flow preferences page's Price Explained: the matching stones, so the sum adds up.
+  const stonePrice = prices ? range(prices.stone.lo, prices.stone.hi) : "—"
+  const total = prices ? range(prices.ring.lo, prices.ring.hi) : "—"
   const size = <SizeSection sim={sim} setSize={setSize} shopBy={shopBy} />
   const budget = <BudgetSection sim={sim} update={update} interactive={shopBy !== "size"} withBand={shopBy === "size"} />
   const shapeLabel = stoneShape(effectiveShape(prefs)).label
 
-  const picks = useMemo(
-    () =>
-      sim.blocked
-        ? []
-        : recommend({ scope: sim.scope, mode: sim.pickMode, size: sim.size, stoneMin: sim.stoneMin, stoneMax: sim.stoneMax }).sort(
-            (a, b) => PICK_ORDER.indexOf(a.kind) - PICK_ORDER.indexOf(b.kind),
-          ),
-    [sim],
-  )
-  // "Natural · Round · Up to $7,000" (the size instead in Carat first).
+  // Matched as View All is (size and budget together where they meet: simulator matchMode).
+  const picks = useMemo(() => [...flowPicks].sort((a, b) => PICK_ORDER.indexOf(a.kind) - PICK_ORDER.indexOf(b.kind)), [flowPicks])
+  // "Natural · Round · 1.00 ct · Up to $7,000": what the picks were matched on (the size alone in Carat first).
   const basis = [
     stoneType(prefs.type).label,
     shapeLabel,
-    shopBy === "size" ? formatSize(sim.size, sim.sizes.unit) : `Up to ${formatPrice(sim.budgetHi)}`,
+    ...(matchedBy !== "budget" ? [formatSize(sim.size, sim.sizes.unit)] : []),
+    ...(matchedBy !== "size" ? [`Up to ${formatPrice(sim.budgetHi)}`] : []),
   ].join(" · ")
 
   return (

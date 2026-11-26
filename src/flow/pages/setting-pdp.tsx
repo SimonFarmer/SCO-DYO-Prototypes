@@ -124,6 +124,7 @@ export function SettingPdp({ variant: variantId, flow }: { variant: SettingPdpVa
         specs={[METALS[metal].label, `Previewing: ${shapeLabel} ∙ ${carat.toFixed(2)} ct`]}
         price={formatPrice(price)}
         showFrom={productDetailsRef}
+        mobileFrom={buyFormRef}
       />
 
       <main>

@@ -44,11 +44,13 @@ const RTS_COPY =
  * Design Your Own / Ready to Ship switch (Figma hero "Fullfilment Filters"): two joined tiles, icon over
  * label. The active tile has the heavy charcoal border; the other drops the edge it shares with it.
  */
-function ModeToggle({ mode }: { mode: Listing["mode"] }) {
+function ModeToggle({ mode, shape }: { mode: Listing["mode"]; shape?: string }) {
   const navigate = useNavigate()
   const flowPath = useFlowPath()
+  // Full flows: the stone shape carries across Design Your Own / Ready to Ship, so switching back keeps it.
+  const flow = useFlow()
   const go = (to: string) => {
-    navigate(flowPath(to))
+    navigate(flowPath(flow && shape ? `${to}?shape=${shape}` : to))
     window.scrollTo({ top: 0 })
   }
   const item = (active: boolean, side: "left" | "right", label: string, Icon: typeof MagicWandIcon, to: string) => (
@@ -331,7 +333,7 @@ export function CollectionHero({ listing }: { listing: Listing }) {
             </div>
           </div>
           <div className="lg:pt-4">
-            <ModeToggle mode={mode} />
+            <ModeToggle mode={mode} shape={listing.filters.shape[0]} />
           </div>
         </div>
 

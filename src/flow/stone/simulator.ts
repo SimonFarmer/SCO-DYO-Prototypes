@@ -10,6 +10,7 @@ import {
   filterStones,
   largestSize,
   nearest,
+  recommend,
   rowAt,
   shapesFor,
   sizeRows,
@@ -18,8 +19,10 @@ import {
   snapSize,
   stockFor,
   STONES,
+  type LooseStone,
   type SizeRow,
   type StoneFilters,
+  type StonePick,
   type StoneScope,
   type StoneTypeId,
 } from "@/data/stones"
@@ -61,7 +64,19 @@ export interface StonePrefs {
 
 export const DEFAULT_PREFS: StonePrefs = { type: "natural", shape: "round", gem: DEFAULT_GEM, carat: 1, mm: 6, budgetLo: 3500, budgetHi: 7000 }
 
-function parse(params: URLSearchParams): StonePrefs {
+/**
+ * The starting ring budget, from the setting's price: Test 2's $3,500 – $7,000 was set for a $690 setting, i.e.
+ * about $2,800 – $6,300 for the stone. The flows keep that stone budget on top of whichever setting was chosen
+ * (Timeless Solitaire still starts at $3,500 – $7,000; a $4,175 Cypress Halo at $7,000 – $10,500), rounded to $100.
+ */
+const DEFAULT_STONE_BUDGET = { lo: 2800, hi: 6300 }
+const round100 = (n: number) => Math.round(n / 100) * 100
+export function defaultBudget(settingPrice: number) {
+  return { budgetLo: round100(settingPrice + DEFAULT_STONE_BUDGET.lo), budgetHi: round100(settingPrice + DEFAULT_STONE_BUDGET.hi) }
+}
+
+function parse(params: URLSearchParams, settingPrice: number): StonePrefs {
+  const budgetDefault = defaultBudget(settingPrice)
   const typeParam = params.get("type")
   const type = STONE_TYPES.some((t) => t.id === typeParam) ? (typeParam as StoneTypeId) : DEFAULT_PREFS.type
   const shapeParam = params.get("shape")
@@ -78,8 +93,8 @@ function parse(params: URLSearchParams): StonePrefs {
     gem,
     carat: ok(c) ? c : DEFAULT_PREFS.carat,
     mm: ok(m) ? m : DEFAULT_PREFS.mm,
-    budgetLo: ok(a) ? a : DEFAULT_PREFS.budgetLo,
-    budgetHi: ok(b) ? Math.max(a, b) : DEFAULT_PREFS.budgetHi,
+    budgetLo: ok(a) ? a : budgetDefault.budgetLo,
+    budgetHi: ok(b) ? Math.max(a, b) : budgetDefault.budgetHi,
   }
 }
 
@@ -201,16 +216,55 @@ export type StoneSim = ReturnType<typeof simulate>
 
 /**
  * The stones that match the preferences: what "View All (N)" counts and what the PLP opens with.
- * Size first: the size's window. Budget first: the stone budget. Size + Budget: both (the size alone when
- * the chosen size is outside the budget).
+ * Everything the shopper set carries over: the size's window and, where the variant asks for one, the
+ * stone budget. Budget first (B) shows the size too ("Preview Size"), so it filters by both. When the two
+ * together match nothing (a size outside the budget), the variant's lead preference alone: the size
+ * (Size first, or Size + Budget out of budget) or the budget (Budget first).
  */
 export function prefsFilters(p: StonePrefs, sim: StoneSim): StoneFilters {
   const f: StoneFilters = { ...emptyStoneFilters(p.type), shapes: [sim.scope.shape], gems: p.type === "gemstone" ? [p.gem] : [] }
   const size = { minSize: Math.max(0, sim.size - sim.sizes.window), maxSize: sim.size + sim.sizes.window }
   const budget = { minPrice: sim.stoneMin, maxPrice: sim.stoneMax }
   if (sim.pickMode === "size") return { ...f, ...size }
-  if (sim.pickMode === "budget") return { ...f, ...budget }
-  return { ...f, ...size, ...budget }
+  const both = { ...f, ...size, ...budget }
+  if (filterStones(both).length > 0) return both
+  return sim.pickMode === "budget" ? { ...f, ...budget } : both
+}
+
+/**
+ * How the stones are matched: the variant's own mode, except Budget first when its size and budget meet
+ * (prefsFilters then filters by both), which matches as Size + Budget. View All, the price summary and the
+ * recommendations all follow it, so the three agree.
+ */
+export function matchMode(sim: StoneSim, filters: StoneFilters): ShopBy {
+  return sim.pickMode === "budget" && filters.minSize != null && filters.minPrice != null ? "both" : sim.pickMode
+}
+
+/**
+ * The recommendations, matched as View All is (matchMode): with Budget first that means near the "Preview Size"
+ * as well as in the budget. Falls back to the variant's own mode when that finds no picks.
+ */
+export function flowPicks(sim: StoneSim, filters: StoneFilters): StonePick[] {
+  if (sim.blocked) return []
+  const ctx = { scope: sim.scope, size: sim.size, stoneMin: sim.stoneMin, stoneMax: sim.stoneMax }
+  const mode = matchMode(sim, filters)
+  const picks = recommend({ ...ctx, mode })
+  return picks.length || mode === sim.pickMode ? picks : recommend({ ...ctx, mode: sim.pickMode })
+}
+
+/**
+ * Price summary ("Price explained"): the stone prices of the stones that match (what View All lists) and the
+ * ring totals they make with the setting, so Setting + Stone always adds up to the Ring Total. Null: no match.
+ */
+export function matchingPrices(matching: LooseStone[], settingPrice: number) {
+  if (!matching.length) return null
+  let lo = Infinity
+  let hi = 0
+  for (const s of matching) {
+    lo = Math.min(lo, s.price)
+    hi = Math.max(hi, s.price)
+  }
+  return { stone: { lo, hi }, ring: { lo: settingPrice + lo, hi: settingPrice + hi } }
 }
 
 export type FlowStoneStep = "preferences" | "recommendations" | "diamonds"
@@ -221,10 +275,13 @@ export function flowStonePath(step: FlowStoneStep, query = "") {
   return `${path}${query}`
 }
 
-/** Entry into the stone step from the Settings PDP: natural diamonds in the shape the shopper came in with. */
-export function firstStoneQuery(variant: StonePreferenceVariant["id"], shape: string | null | undefined) {
+/**
+ * Entry into the stone step from the Settings PDP: natural diamonds in the shape the shopper came in with, and a
+ * starting budget that leaves room for a stone on top of this setting (defaultBudget).
+ */
+export function firstStoneQuery(variant: StonePreferenceVariant["id"], shape: string | null | undefined, settingPrice: number) {
   const s = shape && STONE_SHAPES.some((x) => x.id === shape) ? shape : DEFAULT_PREFS.shape
-  return prefsQuery(variant, { ...DEFAULT_PREFS, shape: s })
+  return prefsQuery(variant, { ...DEFAULT_PREFS, ...defaultBudget(settingPrice), shape: s })
 }
 
 /** Test 2's useStonePrefs for the flow: t2 from the flow config, priced with the build's setting, flow URLs. */
@@ -235,10 +292,14 @@ export function useFlowStonePrefs() {
   const variant = STONE_PREFERENCE_VARIANTS[variantId]
   const [params] = useSearchParams()
   const navigate = useNavigate()
-  const prefs = useMemo(() => parse(params), [params])
+  const prefs = useMemo(() => parse(params, setting.price), [params, setting.price])
   const sim = useMemo(() => simulate(variant.shopBy, prefs, setting.price), [variant.shopBy, prefs, setting.price])
   const filters = useMemo(() => prefsFilters(prefs, sim), [prefs, sim])
   const matching = useMemo(() => (sim.blocked ? [] : filterStones(filters)), [filters, sim.blocked])
+  const prices = useMemo(() => matchingPrices(matching, setting.price), [matching, setting.price])
+  const picks = useMemo(() => flowPicks(sim, filters), [sim, filters])
+  /** Basis line and headings: how the stones were matched (see matchMode). */
+  const matchedBy = matchMode(sim, filters)
 
   // Remembered for the stepper's and summary's "Edit" on the stone, which return to these preferences.
   const query = prefsQuery(variantId, prefs)
@@ -263,5 +324,5 @@ export function useFlowStonePrefs() {
   /** Link to a flow stone step, carrying the current preferences. */
   const href = (step: FlowStoneStep, extra?: Record<string, string>) => inFlow(flowStonePath(step, prefsQuery(variantId, prefs, extra)))
 
-  return { variant, prefs, sim, update, setSize, filters, matching, href, setting }
+  return { variant, prefs, sim, update, setSize, filters, matching, prices, picks, matchedBy, href, setting }
 }

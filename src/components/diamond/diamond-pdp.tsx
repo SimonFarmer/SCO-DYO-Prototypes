@@ -11,7 +11,7 @@ import { Breadcrumb } from "@/components/site/breadcrumb"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { diamondName, type Diamond } from "@/data/diamonds"
-import { useFlow } from "@/flow/flow-context"
+import { storedStoneQuery, useFlow } from "@/flow/flow-context"
 import { FLOW_CRUMBS } from "@/flow/flow-paths"
 import { RECENTLY_VIEWED } from "@/data/products"
 import { formatPrice } from "@/lib/format"
@@ -34,6 +34,8 @@ interface DiamondPdpProps {
 export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false, start = "setting" }: DiamondPdpProps) {
   const flow = useFlow()
   const aboutRef = useRef<HTMLElement>(null)
+  // Full flow, mobile: the sticky bar shows once the buy form (after the gallery) reaches the top.
+  const buyFormRef = useRef<HTMLElement>(null)
   return (
     <div className="min-h-screen bg-background">
       {/* Full flow: live header navigation and the flow breadcrumb; Test 3 keeps them inert. */}
@@ -47,6 +49,7 @@ export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false, s
           specs={[`${diamond.carat.toFixed(2)} ct`, `${diamond.color} Color`, `${diamond.clarity} Clarity`, `${diamond.cut} Cut`]}
           price={formatPrice(diamond.price)}
           showFrom={aboutRef}
+          mobileFrom={buyFormRef}
         />
       )}
       <main>
@@ -54,7 +57,9 @@ export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false, s
         <div className={PAGE_MAX}>
         <div className="grid lg:grid-cols-[826fr_606fr] lg:gap-2">
           {flow ? (
-            flow.config.crumbs && <Breadcrumb items={FLOW_CRUMBS} className="mx-2 bg-secondary" />
+            flow.config.crumbs && (
+              <Breadcrumb items={FLOW_CRUMBS.diamond(`/diamonds${storedStoneQuery(flow.base)}`, diamondName(diamond))} className="mx-2 bg-secondary" />
+            )
           ) : (
             <Breadcrumb items={["Home", "Diamonds", diamondName(diamond)]} className="mx-2 bg-secondary" />
           )}
@@ -63,7 +68,7 @@ export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false, s
           <div className="px-2">
             <DiamondGallery diamond={diamond} />
           </div>
-          <aside className="px-margin pb-8 lg:px-14 lg:pt-5">
+          <aside ref={buyFormRef} className="px-margin pb-8 lg:px-14 lg:pt-5">
             <div className="transition-[top] duration-300 ease-out lg:sticky lg:top-[calc(var(--header-offset)+var(--sticky-bar-offset,0px)+--spacing(5))]">
               <DiamondBuyForm
                 diamond={diamond}

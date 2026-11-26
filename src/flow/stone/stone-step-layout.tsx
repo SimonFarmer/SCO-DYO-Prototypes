@@ -32,7 +32,7 @@ export function FlowStoneStepLayout({
   children: ReactNode
 }) {
   const flow = useFlow()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   useEffect(() => {
     window.scrollTo({ top: 0 })
   }, [pathname])
@@ -44,7 +44,14 @@ export function FlowStoneStepLayout({
       <main className={PAGE_MAX}>
         {flow?.config.crumbs && (
           <div className={COLUMNS}>
-            <Breadcrumb items={FLOW_CRUMBS} className="mx-2 bg-secondary" />
+            <Breadcrumb
+              items={
+                pathname.endsWith("/recommendations")
+                  ? FLOW_CRUMBS.recommendations(`${pathname.replace(/\/recommendations$/, "")}${search}`)
+                  : FLOW_CRUMBS.stone
+              }
+              className="mx-2 bg-secondary"
+            />
           </div>
         )}
         <div className={COLUMNS}>

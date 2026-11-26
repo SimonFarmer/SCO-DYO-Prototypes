@@ -1,7 +1,9 @@
 import { Fragment, useState } from "react"
+import { useNavigate } from "react-router"
 import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { useFlow } from "@/flow/flow-context"
+import { FLOW_ROUTES } from "@/flow/flow-paths"
 import { formatPrice } from "@/lib/format"
 import { cn, PAGE_MAX } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
@@ -91,7 +93,8 @@ export function DyoStepper({
   /** Cap the desktop bar's contents at the page max width (1680px); the bar itself stays full width. */
   contained?: boolean
 }) {
-  const { setting, stone, total, start: buildStart } = useRingBuild()
+  const { setting, stone, total, start: buildStart, chosen: built, ringSize } = useRingBuild()
+  const navigate = useNavigate()
   const notInTest = useNotInTest()
   // Full flow: the name opens the chosen setting/stone, Remove starts the step over. In the tests View/Edit stay inert.
   const flow = useFlow()
@@ -103,8 +106,21 @@ export function DyoStepper({
     start = "stone"
   }
 
-  const stateOf = (n: StepNumber) => (n < current ? "done" : n === current ? "current" : "upcoming")
   const order = ORDER[start]
+  // The tests mark steps by position. The full flows mark every step that already holds a choice as done, so going
+  // back a step (Edit Setting from the Review, the diamonds PLP) still shows the stone and finishing as done.
+  const stateOf = (n: StepNumber) =>
+    n === current ? "current" : n < current || (flow && built[order[n - 1]]) ? "done" : "upcoming"
+  // Full flows: the current step shows its choice too when it already has one (back on the diamonds PLP, the stone).
+  const showsChoice = (n: StepNumber) => {
+    const kind = order[n - 1]
+    return kind !== "finishing" && (stateOf(n) === "done" || (!!flow && built[kind]))
+  }
+  const toFinishing = () => {
+    if (!flow) return
+    navigate(flow.path(FLOW_ROUTES.finish))
+    window.scrollTo({ top: 0 })
+  }
   const numbered = order.map((kind, i) => ({ kind, n: (i + 1) as StepNumber }))
   const chosen = {
     setting: { price: setting.price, detail: setting.name, lines: [setting.name, setting.metal] },
@@ -128,7 +144,7 @@ export function DyoStepper({
                 {step.n > 1 && <li aria-hidden className="w-px self-stretch bg-muted" />}
                 <li className="flex min-w-0 flex-1 items-center gap-3" aria-current={state === "current" ? "step" : undefined}>
                   <StepMarker n={step.n} state={state} shape="circle" />
-                  {state === "done" && kind !== "finishing" && flow ? (
+                  {showsChoice(step.n) && flow ? (
                     // Full flow: the chosen item's name opens it (was "View"), and "Remove" (was "Edit")
                     // starts that step's choice over.
                     <div className="flex min-w-0 flex-col gap-1">
@@ -137,7 +153,7 @@ export function DyoStepper({
                           <span>{step.label}:</span>
                           <span>{formatPrice(step.price)}</span>
                         </span>
-                        <button type="button" className="cursor-pointer underline" onClick={() => flow.removeStep(kind as "setting" | "stone")}>
+                        <button type="button" className="cursor-pointer type-label-xs underline" onClick={() => flow.removeStep(kind as "setting" | "stone")}>
                           Remove
                         </button>
                       </div>
@@ -164,6 +180,18 @@ export function DyoStepper({
                         </button>
                       </div>
                       <p className="truncate type-caption font-medium text-primary">{step.detail}</p>
+                    </div>
+                  ) : state === "done" && kind === "finishing" && flow ? (
+                    // Full flow, step 3 already done (a size chosen) while on an earlier step: back to it.
+                    <div className="flex min-w-0 flex-col gap-0.75">
+                      <span className="truncate type-label-xs text-primary">{step.label}</span>
+                      <button
+                        type="button"
+                        onClick={toFinishing}
+                        className="cursor-pointer truncate text-left type-caption font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        {`Size ${ringSize} · ${formatPrice(total)}`}
+                      </button>
                     </div>
                   ) : (
                     // Current / upcoming step: title + description, no price.
@@ -216,7 +244,7 @@ export function DyoStepper({
             {numbered.map(({ kind, n }) =>
               kind === "finishing"
                 ? { n, kind, label: STEP_LABEL[kind], lines: [STEP_DESCRIPTION[kind]], price: showTotal ? `Total: ${formatPrice(total)}` : "" }
-                : stateOf(n) === "done"
+                : showsChoice(n)
                   ? { n, kind, label: STEP_LABEL[kind], lines: chosen[kind].lines, price: formatPrice(chosen[kind].price) }
                   : { n, kind, label: STEP_LABEL[kind], lines: [STEP_DESCRIPTION[kind]], price: "" },
             ).map((step, i, all) => (
@@ -230,7 +258,7 @@ export function DyoStepper({
                   <span className="type-label-xs text-muted-foreground">{step.label}</span>
                   {step.lines.map((line, li) =>
                     // Full flow: a done step's name opens the chosen setting or stone.
-                    flow && li === 0 && step.n < current && step.kind !== "finishing" ? (
+                    flow && li === 0 && showsChoice(step.n) ? (
                       <button
                         key={line}
                         type="button"
@@ -250,7 +278,7 @@ export function DyoStepper({
                   )}
                   {step.price && <span className="text-xs-2 leading-4 font-semibold text-primary">{step.price}</span>}
                 </div>
-                {step.n < current && (
+                {(flow ? showsChoice(step.n) : stateOf(step.n) === "done") && (
                   <button
                     type="button"
                     onClick={() => {

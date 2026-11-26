@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { DELIVERY } from "@/data/dyo"
+import { useFlowDelivery } from "@/flow/delivery"
 
 /** Primary CTA row + secondary actions (Figma buy form). Only `onAddToBag` is live. */
 export function BuyActions({ onAddToBag, addDisabled }: { onAddToBag: () => void; addDisabled?: boolean }) {
@@ -69,11 +70,16 @@ export function Assurances() {
 
 export function DeliveryOptions() {
   const notInTest = useNotInTest()
+  // Full flows: the ring's own dates and the header's store (flow/delivery.ts); Test 4 keeps its Figma copy.
+  const flowDates = useFlowDelivery()
+  const shipBy = flowDates ? `By ${flowDates.shipBy}` : DELIVERY.shipBy
+  const pickupStore = flowDates?.pickupStore ?? DELIVERY.pickupStore
+  const pickupReady = flowDates ? `Ready ${flowDates.pickupReady}` : DELIVERY.pickupReady
   return (
     <div className="border border-border-subtle">
       <div className="flex items-center justify-between gap-3 p-4">
         <span className="type-label-xs text-primary">Made for you · free shipping</span>
-        <span className="type-h5 text-primary">{DELIVERY.shipBy}</span>
+        <span className="type-h5 text-primary">{shipBy}</span>
       </div>
       <button
         type="button"
@@ -94,9 +100,9 @@ export function DeliveryOptions() {
         <span className="flex flex-1 flex-col gap-2">
           <span className="type-label-xs text-primary">Pick up in store</span>
           <span className="type-caption font-medium">
-            <span className="text-primary underline">{DELIVERY.pickupStore}</span>
+            <span className="text-primary underline">{pickupStore}</span>
             <span className="text-primary"> - </span>
-            <span className="text-muted-foreground">{DELIVERY.pickupReady}</span>
+            <span className="text-muted-foreground">{pickupReady}</span>
           </span>
         </span>
         <CaretRightIcon className="size-4 text-primary" />

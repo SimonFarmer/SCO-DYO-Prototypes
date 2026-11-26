@@ -11,6 +11,7 @@ import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { filterCount } from "@/data/plp"
+import { ShapeChangeModal } from "@/flow/shape-change-modal"
 import { cn, PAGE_MAX } from "@/lib/utils"
 
 /**
@@ -69,6 +70,7 @@ export function EngagementRingPlp() {
       <SiteFooter />
       <MobileBottomNav />
       <MobileFilterDrawer listing={listing} open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <ShapeChangeModal guard={listing.shapeGuard} />
     </div>
   )
 }

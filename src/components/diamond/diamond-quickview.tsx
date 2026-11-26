@@ -12,6 +12,7 @@ import { DELIVERY } from "@/data/dyo"
 import { formatPrice } from "@/lib/format"
 import { useFlow } from "@/flow/flow-context"
 import { useRingBuild } from "@/state/ring-build"
+import { useFlowDelivery } from "@/flow/delivery"
 
 interface DiamondQuickviewProps {
   diamond: Diamond | null
@@ -34,6 +35,7 @@ export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetail
   const { setting } = useRingBuild()
   // The full flows drop the overflow menu: selecting the diamond is the only action there.
   const flow = useFlow()
+  const flowDates = useFlowDelivery()
   return (
     <Dialog open={diamond !== null} onOpenChange={onOpenChange}>
       {/* Figma: 920px wide dialog, 32px padding and gap. */}
@@ -113,7 +115,7 @@ export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetail
                 </Button>
               )}
               <p className="text-xs leading-none text-muted-foreground">
-                Order now and it ships {DELIVERY.shipBy.replace("By", "by")}.
+                Order now and it ships {flowDates ? `by ${flowDates.shipBy}` : DELIVERY.shipBy.replace("By", "by")}.
               </p>
               <div className="flex flex-col items-center gap-4">
                 <div className="flex w-full gap-2">

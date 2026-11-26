@@ -3,6 +3,7 @@ import { useLocation } from "react-router"
 import {
   CROWNS,
   DEFAULT_RING_SIZE,
+  crownHolds,
   ENGRAVING,
   SETTING,
   STONE,
@@ -40,6 +41,11 @@ interface BuildState {
    * the stone becomes step 1 and the setting step 2 (none = setting first).
    */
   start?: "setting" | "stone" | null
+  /**
+   * Full flow only: the setting step is done ("Select this Setting"), so the stepper shows it as chosen even from
+   * an earlier page. Cleared by the stepper's Remove. Missing (older sessions): taken as done once a stone is picked.
+   */
+  settingChosen?: boolean | null
 }
 
 export interface LineItem {
@@ -52,6 +58,10 @@ interface RingBuild extends BuildState {
   stone: Stone
   /** A stone has been picked (otherwise `stone` is the pre-chosen fallback). */
   hasStone: boolean
+  /** Full flow: which steps hold a choice, whatever page the shopper is on (the stepper's done steps). */
+  chosen: { setting: boolean; stone: boolean; finishing: boolean }
+  /** Full flow: mark the setting step done or not (see `settingChosen`). */
+  setSettingChosen: (chosen: boolean) => void
   crown: Crown | null
   engravingStyle: EngravingStyle | null
   band: WeddingBand | null
@@ -73,6 +83,8 @@ interface RingBuild extends BuildState {
   setShape: (shape: string | null) => void
   /** Full flow: the step order (see `start`). */
   setStart: (start: "setting" | "stone") => void
+  /** Full flow: drop the chosen stone (and the stone-first order it set), e.g. for a setting in another shape. */
+  clearStone: () => void
   reset: () => void
   /** Clears every build (used when launching a prototype from the index). */
   resetAll: () => void
@@ -163,12 +175,17 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
   const value = useMemo<RingBuild>(() => {
     const update = (patch: Partial<BuildState>) => setBuilds((b) => ({ ...b, [key]: { ...b[key], ...patch } }))
     const stone = state.stone ?? STONE
-    const crown = CROWNS.find((c) => c.id === state.crownId) ?? null
+    const isFlow = key === "FLOW" || key === "FLOWA"
+    const pickedCrown = CROWNS.find((c) => c.id === state.crownId) ?? null
+    // Full flows: the crown is sized to the shopper's own stone.
+    const crown = pickedCrown && isFlow ? { ...pickedCrown, holds: crownHolds(stone) } : pickedCrown
     const styleOf = (e: Engraving | null) => (e ? (ENGRAVING.styles.find((s) => s.id === e.styleId) ?? null) : null)
     const engravingStyle = styleOf(state.engraving)
-    const band = WEDDING_BANDS.find((b) => b.id === state.bandId) ?? null
+    const setting = isFlow ? flowSetting(state.settingId, state.settingMetal) : SETTING
+    const pickedBand = WEDDING_BANDS.find((b) => b.id === state.bandId) ?? null
+    // Full flows: the band is matched to the engagement ring's metal (as the band sheet says).
+    const band = pickedBand && isFlow ? { ...pickedBand, metal: setting.metal } : pickedBand
     const bandEngraving = band ? state.bandEngraving : null
-    const setting = key === "FLOW" || key === "FLOWA" ? flowSetting(state.settingId, state.settingMetal) : SETTING
     const lineItems: LineItem[] = [
       { kind: "setting", price: setting.price },
       { kind: "stone", price: stone.price },
@@ -182,6 +199,13 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
       setting,
       stone,
       hasStone: state.stone != null,
+      chosen: (() => {
+        const settingDone = state.settingChosen ?? state.stone != null
+        const stoneDone = state.stone != null
+        // Step 3 counts once the ring has its size (its one required choice) on top of a setting and a stone.
+        return { setting: settingDone, stone: stoneDone, finishing: settingDone && stoneDone && state.ringSize != null }
+      })(),
+      setSettingChosen: (settingChosen) => update({ settingChosen }),
       crown,
       engravingStyle,
       bandEngraving,
@@ -199,6 +223,7 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
       setSettingMetal: (settingMetal) => update({ settingMetal }),
       setShape: (shape) => update({ shape }),
       setStart: (start) => update({ start }),
+      clearStone: () => update({ stone: null, start: null }),
       reset: () => update(INITIAL[key]),
       resetAll: () => setBuilds(INITIAL),
     }
