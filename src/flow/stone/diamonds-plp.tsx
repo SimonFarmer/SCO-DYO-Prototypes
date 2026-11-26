@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router"
+import { CaretLeftIcon } from "@phosphor-icons/react"
 import { DiamondGlpView } from "@/components/diamond/diamond-glp"
 import { FilterSection } from "@/components/diamond/diamond-filters"
 import { DiamondQuickview } from "@/components/diamond/diamond-quickview"
 import {
   DIAMOND_COLOR_BANDS,
-  DIAMOND_EXPLORE,
+  DIAMOND_EXPLORE_WITH_PRESETS,
   NATURAL_GLP,
   STONE_TYPE_OPTIONS,
   type AppliedChip,
@@ -14,6 +15,7 @@ import {
 import { GLP_PAGE_SIZE, type DiamondListing, type GlpSort } from "@/components/diamond/use-diamond-listing"
 import { DyoStepper } from "@/components/dyo/dyo-stepper"
 import { useNotInTest } from "@/components/prototype/not-in-test"
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { CutGrade, Shape } from "@/data/diamonds"
 import {
@@ -126,7 +128,7 @@ function catalogFor(type: StoneTypeId, back: GlpCatalog["hero"]["back"], onType:
   }
   return {
     hero: { title: stoneType(type).plpLabel, intro: INTRO[type], back, type: { value: type, options: STONE_TYPE_OPTIONS, onChange: (t) => onType(t as StoneTypeId) } },
-    explore: gem ? GEM_EXPLORE : DIAMOND_EXPLORE,
+    explore: gem ? GEM_EXPLORE : DIAMOND_EXPLORE_WITH_PRESETS,
     priceLabel: gem ? "Gemstone Price" : "Diamond Price",
     priceBounds,
     size: gem
@@ -238,6 +240,7 @@ export function FlowDiamondsPlp() {
     () => ({
       label: from === "recs" ? "Back to your recommendations" : "Back to stone preferences",
       onClick: () => navigate(href(from === "recs" ? "recommendations" : "preferences")),
+      inBar: true,
     }),
     [from, navigate, href],
   )
@@ -298,6 +301,7 @@ export function FlowDiamondsPlp() {
           return s ? stoneTitle(s) : d.id
         }}
         onOpen={(d) => (opensQuickview ? setQuickview(byId.get(d.id) ?? null) : toPdp(d.id))}
+        stickyBar={<BackBar label={back.label} onBack={back.onClick} />}
       />
       {/* The GLP's Quickview: selecting puts the stone in the build; Full Details opens the Diamond PDP. */}
       <DiamondQuickview
@@ -318,5 +322,28 @@ export function FlowDiamondsPlp() {
         }}
       />
     </div>
+  )
+}
+
+/**
+ * Full flows: the way back from the listing, at the top of the hero (where the setting PLP has its
+ * breadcrumb). On desktop it stays under the header as the results scroll; on phones the stepper bar takes
+ * that spot, so it stays at the top of the hero. Serves both ways in: "View all stones" on the stone step
+ * (back to stone preferences) and on the recommendations (back to them).
+ */
+function BackBar({ label, onBack }: { label: string; onBack: () => void }) {
+  return (
+    <>
+      {/* 8px of banner above the 40px bar puts the link where the setting PLP has its breadcrumb (20px under
+          the header), while the bar itself keeps the link centred when it sticks under the header. */}
+      <div aria-hidden className="h-2 bg-secondary" />
+      <div className="z-20 bg-secondary transition-[top] duration-300 ease-out lg:sticky lg:top-(--header-offset)">
+        <div className="flex h-10 items-center px-page">
+          <Button variant="link" className="h-auto gap-1 px-0 py-0" onClick={onBack}>
+            <CaretLeftIcon /> {label}
+          </Button>
+        </div>
+      </div>
+    </>
   )
 }

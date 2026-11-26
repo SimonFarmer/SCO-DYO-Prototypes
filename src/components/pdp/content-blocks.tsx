@@ -94,6 +94,9 @@ interface FeatureBlockProps {
   title?: string
   image?: string
   imageAlt?: string
+  body?: string
+  /** CTA label and what it does (defaults to the inert diamond guide). */
+  cta?: { label: string; onClick: () => void }
 }
 
 /** Image + copy feature with a “Read The Guide” CTA. Defaults are the Settings PDP copy. */
@@ -102,6 +105,8 @@ export function FeatureBlock({
   title = "Our Diamonds & Gemstones",
   image = "/images/feature-block/diamonds-loupe.jpg",
   imageAlt = "Diamonds under a jeweler's loupe",
+  body = "From lab grown to natural, the 4Cs to certification — everything you need to shop with confidence.",
+  cta,
 }: FeatureBlockProps = {}) {
   const notInTest = useNotInTest()
   return (
@@ -114,12 +119,10 @@ export function FeatureBlock({
               <p className="type-label-xs font-semibold">{eyebrow}</p>
               <h2 className="type-h3 font-medium">{title}</h2>
             </div>
-            <p className="text-base">
-              From lab grown to natural, the 4Cs to certification — everything you need to shop with confidence.
-            </p>
+            <p className="text-base">{body}</p>
           </div>
-          <Button className="w-fit px-14" onClick={() => notInTest("The diamond guide")}>
-            Read The Guide
+          <Button className="w-fit px-14" onClick={cta?.onClick ?? (() => notInTest("The diamond guide"))}>
+            {cta?.label ?? "Read The Guide"}
           </Button>
         </div>
       </div>

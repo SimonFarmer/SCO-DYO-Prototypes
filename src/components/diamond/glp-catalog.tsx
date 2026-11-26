@@ -2,7 +2,8 @@ import { createContext, useContext, type ReactNode } from "react"
 import { CLARITY_GRADES, COLOR_GRADES, CUT_GRADES } from "@/data/diamonds"
 import { CARAT_BOUNDS, NO_FILTERS, PRICE_BOUNDS, appliedFilters, type DiamondFilterState } from "@/lib/diamond-filters"
 
-export type ExploreKey = "shape" | "cut" | "clarity" | "color"
+/** `presets`: "What Matters Most" (the full flows only), the sidebar's presets as tiles. */
+export type ExploreKey = "shape" | "presets" | "cut" | "clarity" | "color"
 
 export interface ExploreTab {
   key: ExploreKey
@@ -26,8 +27,8 @@ export interface GlpCatalog {
   hero: {
     title: string
     intro: string
-    /** "Back to stone preferences" */
-    back: { label: string; onClick?: () => void }
+    /** "Back to stone preferences". `inBar`: the page shows it in its own sticky bar instead (the full flows), so the hero leaves it out. */
+    back: { label: string; onClick?: () => void; inBar?: boolean }
     /** Natural | Lab-Grown | Gemstones. Without `onChange`, only Natural is live (other types say "not part of this test"). */
     type: { value: string; options: { id: string; label: string }[]; onChange?: (id: string) => void }
   }
@@ -70,6 +71,16 @@ export const DIAMOND_EXPLORE: ExploreTab[] = [
   { key: "cut", label: "Cut", copy: "Cut determines how brilliantly a diamond reflects light, creating its sparkle and fire.", learnMore: true },
   { key: "clarity", label: "Clarity", copy: "Clarity measures visible inclusions on a scale from IF (highest) to I3 (lowest).", learnMore: true },
   { key: "color", label: "Color", copy: "Colour Grade helps compare diamonds from D (brightest white) to M (warmest tone).", learnMore: true },
+]
+
+/**
+ * The full flows' Explore tabs for diamonds: Shape and "What Matters Most" (the sidebar's presets as
+ * tiles). The hero keeps to the two plain-language decisions, as the setting PLP's Style | Shape; the
+ * technical grades (Cut, Clarity, Color) stay in the sidebar, where a preset can be fine-tuned.
+ */
+export const DIAMOND_EXPLORE_WITH_PRESETS: ExploreTab[] = [
+  DIAMOND_EXPLORE[0],
+  { key: "presets", label: "What Matters Most", copy: "Pick a priority and we’ll set Cut, Color and Clarity for you.", learnMore: false },
 ]
 
 /** Color bands under the color scale (Figma: Faint Yellow | Near Colorless | Colorless). */

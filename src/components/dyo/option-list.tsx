@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { formatPrice } from "@/lib/format"
 
@@ -6,11 +7,14 @@ export function OptionPreview({
   images,
   caption,
   note,
+  empty,
 }: {
   images: { src: string; alt: string }[]
   caption: string
   /** Supporting line under the caption. */
   note?: string
+  /** Fills the second tile while nothing is chosen yet, so the preview has no blank half. */
+  empty?: ReactNode
 }) {
   return (
     <div className="flex flex-col gap-3 border-b border-muted px-10 py-6 max-lg:px-margin">
@@ -23,6 +27,11 @@ export function OptionPreview({
             className="aspect-square w-full bg-secondary object-contain mix-blend-multiply"
           />
         ))}
+        {empty && images.length < 2 && (
+          <div className="flex aspect-square w-full flex-col items-center justify-center gap-2 border border-dashed border-input bg-secondary px-4 text-center">
+            {empty}
+          </div>
+        )}
       </div>
       <div className="flex flex-col gap-1">
         <p className="type-label-xs text-primary" aria-live="polite">{caption}</p>
@@ -48,7 +57,8 @@ export function OptionList({
   options,
 }: {
   label: string
-  value: string
+  /** null: nothing chosen yet */
+  value: string | null
   onChange: (id: string) => void
   options: ListOption[]
 }) {

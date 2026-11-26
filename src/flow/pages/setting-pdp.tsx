@@ -30,6 +30,8 @@ import {
   type Setting,
 } from "@/data/products"
 import { useElementHeight } from "@/lib/hooks"
+import { useNotInTest } from "@/components/prototype/not-in-test"
+import { useStepNumber } from "@/flow/flow-context"
 import { cn, PAGE_MAX } from "@/lib/utils"
 import { SETTING_PDP_VARIANTS, type SettingPdpVariant } from "@/pages/test-1/variants"
 
@@ -55,6 +57,9 @@ export interface SettingPdpFlow {
  */
 export function SettingPdp({ variant: variantId, flow }: { variant: SettingPdpVariant["id"]; flow: SettingPdpFlow }) {
   const variant = SETTING_PDP_VARIANTS[variantId]
+  const notInTest = useNotInTest()
+  // Stone-first (setting removed with a stone picked): the setting is step 2 and the next step is step 3.
+  const stoneFirst = useStepNumber("setting") === 2
 
   const setting = flow.setting
   const metal = flow.metal
@@ -192,7 +197,19 @@ export function SettingPdp({ variant: variantId, flow }: { variant: SettingPdpVa
         <ProductCarousel title="Matching Wedding Bands" products={MATCHING_BANDS} className="pt-0" contained />
         <ProductDetailsBlock ref={productDetailsRef} setting={setting} metal={metal} />
         <ValuePropsBlock />
-        <FeatureBlock />
+        {stoneFirst ? (
+          // The stone is already chosen, so "Next" points at Finishing Touches instead of the diamond guide.
+          <FeatureBlock
+            eyebrow="Next: Step 3"
+            title="Finishing Touches"
+            body="Choose your ring size, add an engraving or upgrade your crown — the final details that make your ring yours."
+            image="/images/finishing/hero.jpg"
+            imageAlt="Solitaire engagement ring in yellow gold with a round diamond"
+            cta={{ label: "Read The Guide", onClick: () => notInTest("The finishing touches guide") }}
+          />
+        ) : (
+          <FeatureBlock />
+        )}
         <UgcBlock />
         <ReviewsBlock />
         <ProductCarousel

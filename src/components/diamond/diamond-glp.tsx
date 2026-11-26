@@ -105,6 +105,7 @@ export function DiamondGlpView({
   stepper,
   catalog = NATURAL_GLP,
   tileTitle,
+  stickyBar,
 }: {
   listing: DiamondListing
   onOpen: (d: Diamond) => void
@@ -112,6 +113,8 @@ export function DiamondGlpView({
   stepper: ReactNode
   catalog?: GlpCatalog
   tileTitle?: (d: Diamond) => string
+  /** A bar over the top of the hero that stays on screen while the results scroll (the full flows' way back). */
+  stickyBar?: ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -134,6 +137,7 @@ export function DiamondGlpView({
     <div className="min-h-svh bg-background">
       <SiteHeader navigation contained />
       <main>
+        {stickyBar}
         <GlpHero listing={listing} />
         {stepper}
 

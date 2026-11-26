@@ -7,7 +7,7 @@ import { useGlpCatalog, type ExploreKey, type ExploreTab } from "@/components/di
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { CUT_GRADES, SHAPES, shapeIcon, type CutGrade, type Shape } from "@/data/diamonds"
-import type { DiamondFilterState } from "@/lib/diamond-filters"
+import { PRESETS, type DiamondFilterState, type Preset } from "@/lib/diamond-filters"
 import { useScrollOverflow } from "@/lib/hooks"
 import { scrollAfterUnlock, scrollToResults } from "@/lib/scroll-to-results"
 import { cn } from "@/lib/utils"
@@ -19,6 +19,7 @@ const cutImage = (cut: CutGrade) => `/images/diamonds/cut/${cut.toLowerCase().re
 /** Is the Explore facet narrowed? (drives the mobile pill's selected state and count) */
 function facetCount(f: DiamondFilterState, key: ExploreKey, none: DiamondFilterState) {
   if (key === "shape") return f.shapes.length
+  if (key === "presets") return f.preset ? 1 : 0
   if (key === "cut") return f.cuts.length
   const full = none[key]
   return f[key][0] !== full[0] || f[key][1] !== full[1] ? 1 : 0
@@ -69,6 +70,81 @@ function CutTile({ cut, hint, selected, onClick, className }: { cut: CutGrade; h
     </button>
   )
 }
+
+/**
+ * Each priority's profile, to compare them before choosing (1–5, judged from each preset's grades in
+ * PRESETS): how much sparkle, how white, how much stone for the budget.
+ */
+const PRESET_PROFILE: Record<Preset, { sparkle: number; whiteness: number; value: number }> = {
+  brilliant: { sparkle: 5, whiteness: 3, value: 3 },
+  balance: { sparkle: 4, whiteness: 2, value: 5 },
+  color: { sparkle: 4, whiteness: 5, value: 2 },
+}
+
+/** A 1–5 meter: five short segments, filled up to the value. */
+function Meter({ label, value }: { label: string; value: number }) {
+  return (
+    <span className="grid grid-cols-[4.25rem_1fr] items-center gap-1.5 text-left">
+      <span className="text-xs leading-4 text-muted-foreground">{label}</span>
+      <span className="flex gap-0.5" role="img" aria-label={`${label}: ${value} of 5`}>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <span key={i} className={cn("h-1 flex-1", i <= value ? "bg-primary" : "bg-border-subtle")} />
+        ))}
+      </span>
+    </span>
+  )
+}
+
+/**
+ * "What Matters Most" tile, in the page's square language (as the Shape and Cut tiles): name and hint,
+ * a hairline, then the profile across the tile. Selected: the dark border, as every Explore tile. `row`
+ * (the phone drawer): name and profile side by side.
+ */
+function PresetTile({ preset, selected, onClick, row, className }: { preset: Preset; selected: boolean; onClick: () => void; row?: boolean; className?: string }) {
+  const p = PRESETS[preset]
+  const profile = PRESET_PROFILE[preset]
+  const name = (
+    <span className="flex min-w-0 flex-1 flex-col gap-1">
+      <span className="text-xxs leading-3 font-semibold tracking-[1px] text-primary uppercase">{p.label}</span>
+      <span className="text-xs leading-4 text-muted-foreground">{p.hint}</span>
+    </span>
+  )
+  const meters = (
+    <span className="flex flex-col gap-1">
+      <Meter label="Sparkle" value={profile.sparkle} />
+      <Meter label="Whiteness" value={profile.whiteness} />
+      <Meter label="Value" value={profile.value} />
+    </span>
+  )
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={cn(
+        "flex shrink-0 cursor-pointer border bg-background text-left hover:border-primary",
+        row ? "items-center gap-3 p-3" : "flex-col gap-4 p-5",
+        selected ? "border-primary" : "border-border-subtle",
+        className,
+      )}
+    >
+      {row ? (
+        <>
+          {name}
+          <span className="w-32 shrink-0">{meters}</span>
+        </>
+      ) : (
+        <>
+          {name}
+          {/* The profile spans the tile, so it grows with the tile on wider screens. */}
+          <span className="border-t border-border-subtle pt-4">{meters}</span>
+        </>
+      )}
+    </button>
+  )
+}
+
+const PRESET_ORDER: Preset[] = ["brilliant", "balance", "color"]
 
 /* ───────────────────────── Panels ───────────────────────── */
 
@@ -130,6 +206,21 @@ function ExplorePanel({
       />
     ))
     return layout === "rail" ? <TileRail gap="gap-1">{tiles}</TileRail> : <div className="grid grid-cols-3 gap-2">{tiles}</div>
+  }
+  if (tab === "presets") {
+    // Same as the sidebar: a preset sets Cut, Color and Clarity; picking it again goes back to every grade.
+    const choose = (key: Preset) =>
+      pick(
+        filters.preset === key
+          ? { ...filters, preset: null, cuts: catalog.noFilters.cuts, color: catalog.noFilters.color, clarity: catalog.noFilters.clarity }
+          : { ...filters, preset: key, ...PRESETS[key].set },
+      )
+    const rail = layout === "rail"
+    const tiles = PRESET_ORDER.map((key) => (
+      <PresetTile key={key} preset={key} selected={filters.preset === key} onClick={() => choose(key)} row={!rail} className="w-full min-w-0" />
+    ))
+    // Desktop: the three tiles share the panel's full width.
+    return <div className={rail ? "grid grid-cols-3 gap-1" : "flex flex-col gap-2"}>{tiles}</div>
   }
   if (tab === "cut") {
     const tiles = CUT_ORDER.map((c) => (
@@ -330,19 +421,22 @@ export function GlpHero({ listing }: { listing: DiamondListing }) {
   const { hero } = useGlpCatalog()
   const [readMore, setReadMore] = useState(false)
   const [drawer, setDrawer] = useState<ExploreKey | null>(null)
+  // The page's own back target first (Test 2's PLP, and the flow's copy of it); then, in the full flow,
+  // the shopper's stone preferences; elsewhere it isn't part of the test.
+  const goBack = () => (hero.back.onClick ? hero.back.onClick() : flow ? flow.goToStep("stone", "edit") : notInTest("Stone preferences"))
 
   return (
     <section className="flex flex-col gap-8 bg-linear-to-b from-secondary from-32% to-secondary/0 px-page pt-5 pb-8 lg:gap-5 lg:bg-secondary lg:bg-none lg:pb-10">
-      <button
-        type="button"
-        // The page's own back target first (Test 2's PLP, and the flow's copy of it); then, in the full flow,
-        // the shopper's stone preferences; elsewhere it isn't part of the test.
-        onClick={() => (hero.back.onClick ? hero.back.onClick() : flow ? flow.goToStep("stone", "edit") : notInTest("Stone preferences"))}
-        className="flex cursor-pointer items-center gap-1 self-start type-caption text-muted-foreground hover:text-primary"
-      >
-        <CaretLeftIcon className="size-4" />
-        {hero.back.label}
-      </button>
+      {!hero.back.inBar && (
+        <button
+          type="button"
+          onClick={goBack}
+          className="flex cursor-pointer items-center gap-1 self-start type-caption text-muted-foreground hover:text-primary"
+        >
+          <CaretLeftIcon className="size-4" />
+          {hero.back.label}
+        </button>
+      )}
 
       <div className="flex flex-col lg:flex-row lg:gap-16">
         <div className="flex flex-col gap-6 lg:w-guided-intent lg:shrink-0 lg:gap-8 lg:border-r lg:border-border-subtle lg:pr-16 lg:pb-7">

@@ -1,19 +1,18 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useLocation, useNavigate } from "react-router"
-import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react"
-import { useFlow } from "@/flow/flow-context"
-import { findFlowDiamond } from "@/flow/stone/find-diamond"
-import { formatPrice } from "@/lib/format"
+import { CaretDownIcon, CaretUpIcon, InfoIcon } from "@phosphor-icons/react"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CompactSections } from "@/components/stones/preference-parts"
+import { useFlow } from "@/flow/flow-context"
 import { cn } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
 
 /*
- * Accordion steps flow · the "Design Your Ring" panel (Lucid "Alternate UX – Accordion steps", wireframes for
- * Setting PDP, Find your Stone, Recommendations, Finishing Touches and Review). One box holds the three steps:
- * a finished step collapses to its summary with Edit, the current step is open with its content, the next
- * steps wait closed; the ring's running total closes the box. Built from the design tokens and the type
- * utilities only (wireframes, no hi-fi yet).
+ * Accordion steps flow · the "Design Your Own Ring" panel (Figma "Exploration — Accordion customiser v2",
+ * 7541:332655). The title with the running ring total, then the three steps as rows: a numbered circle, the
+ * step's name and a one-line summary, a caret. The open step's content sits under its row, indented to the
+ * name; a price box (the "Price Explained" breakdown) follows the steps.
  */
 
 export type StepKey = "setting" | "stone" | "finishing"
@@ -25,122 +24,149 @@ export type StepKey = "setting" | "stone" | "finishing"
 let lastPanelPath: string | null = null
 let panelLeftAt = 0
 
-/** Each step's header: what to do while it's open or ahead ("Select your setting"), what was chosen once done. */
-const STEPS: { key: StepKey; n: 1 | 2 | 3; label: string; done: string }[] = [
-  { key: "setting", n: 1, label: "Select your setting", done: "Your setting" },
-  { key: "stone", n: 2, label: "Find your perfect stone", done: "Your stone" },
-  { key: "finishing", n: 3, label: "Finishing Touches", done: "Your finishing touches" },
-]
+const STEP_NAMES: Record<StepKey, string> = { setting: "Setting", stone: "Stone", finishing: "Finishing Touches" }
 
-/** Step marker: done = filled with a check; current = filled with the number; upcoming = outlined number. */
-function Marker({ n, state }: { n: 1 | 2 | 3; state: "done" | "current" | "upcoming" }) {
+/**
+ * The journey's step order: setting first, or stone first once the setting was removed with a stone already
+ * picked (the stone becomes step 1 and the setting step 2).
+ */
+function stepsFor(start: "setting" | "stone" | null | undefined) {
+  const order: StepKey[] = start === "stone" ? ["stone", "setting", "finishing"] : ["setting", "stone", "finishing"]
+  return order.map((key, i) => ({ key, n: i + 1, name: STEP_NAMES[key] }))
+}
+
+/** The one-line summary under each step's name (Figma 7549:388516): the choice once made, otherwise what the step does. */
+function useStepSummaries(done: (key: StepKey) => boolean): Record<StepKey, string> {
+  const { setting, stone, ringSize, engraving, crown, band } = useRingBuild()
+  const finishing = [
+    ringSize && `Size ${ringSize}`,
+    engraving && `Engraving: “${engraving.text}”`,
+    crown && crown.name,
+    band && band.name,
+  ].filter(Boolean)
+  return {
+    setting: `${setting.name.replace(/ Engagement Ring$/, "")} · ${setting.metal}`,
+    stone: done("stone") ? `${stone.title} · ${stone.color} · ${stone.clarity} · ${stone.cut}` : "Tell us what you're looking for and we'll recommend stones",
+    finishing: done("finishing") && finishing.length ? finishing.join(" · ") : "Size, personalize & review",
+  }
+}
+
+/** A price line in the box: the label in caps, the choice and its price under it (Figma 7549:388533). */
+export interface PriceLine {
+  label: string
+  desc: ReactNode
+  value?: string
+}
+
+/** The price breakdown (Figma "Price Explained — Popover", 7549:388533): lines, a rule, the ring total. */
+export function PriceBox({ lines, total, className }: { lines: PriceLine[]; total: string; className?: string }) {
+  return (
+    <div className={cn("flex flex-col gap-3 bg-bg-input-50 p-4 text-primary", className)} aria-live="polite">
+      {lines.map((l) => (
+        <div key={l.label} className="flex flex-col gap-0.75">
+          <p className="type-label-xs">{l.label}</p>
+          <div className="flex items-start gap-2 type-caption">
+            <p className="min-w-0 flex-1 tracking-[0.12px]">{l.desc}</p>
+            {l.value && <p className="shrink-0 text-right font-semibold whitespace-nowrap">{l.value}</p>}
+          </div>
+        </div>
+      ))}
+      <div className="h-px bg-input" />
+      <div className="flex items-start justify-between gap-2 text-sm leading-5 font-semibold">
+        <p>Ring Total:</p>
+        <p className="whitespace-nowrap">{total}</p>
+      </div>
+    </div>
+  )
+}
+
+/** Numbered circle: the open step's is drawn heavier (Figma 7549:387038). */
+function StepNumber({ n, open }: { n: number; open: boolean }) {
   return (
     <span
-      className={cn(
-        "flex size-8 shrink-0 items-center justify-center rounded-full type-label-xs",
-        state === "upcoming" ? "border border-border-subtle bg-background text-primary" : "bg-primary text-primary-foreground",
-      )}
       aria-hidden
+      className={cn(
+        "flex size-8 shrink-0 items-center justify-center rounded-full text-[13px] leading-4 font-semibold tracking-[1px] text-primary",
+        open ? "border-2 border-primary" : "border border-input",
+      )}
     >
-      {state === "done" ? <CheckIcon className="size-3.5" weight="bold" /> : n}
+      {n}
     </span>
   )
 }
 
-/** Header row (Figma 8224:180625): marker, the step in caps, the caret on the right. */
-function StepHeader({ n, state, label }: { n: 1 | 2 | 3; state: "done" | "current" | "upcoming"; label: string }) {
-  return (
-    <div className="flex items-center gap-4">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <Marker n={n} state={state} />
-        <p className="type-label-xs text-primary">{label}</p>
-      </div>
-      <CaretDownIcon className="size-6 shrink-0 text-primary" aria-hidden />
-    </div>
+/**
+ * A step's row: number, name and summary, caret (up while open). With `onOpen` (a finished step) the row is a
+ * button that opens the step again; `aside` sits before the caret (the "Remove" link).
+ */
+function StepRow({ n, name, summary, open, onOpen, aside }: { n: number; name: string; summary: string; open: boolean; onOpen?: () => void; aside?: ReactNode }) {
+  const Caret = open ? CaretUpIcon : CaretDownIcon
+  // A finished step's name and choice underline on hover (with the row's tint), so it reads as clickable.
+  const hover = onOpen ? "underline-offset-4 decoration-1 group-hover/row:underline" : undefined
+  const body = (
+    <>
+      <StepNumber n={n} open={open} />
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className={cn("text-base leading-6 font-semibold text-primary", hover)}>{name}</span>
+        <span className={cn("text-xs leading-4 font-medium text-muted-foreground", hover)}>{summary}</span>
+      </span>
+    </>
   )
-}
-
-/** A summary line in a finished step: thumbnail (or a short token such as the ring size), name, details. */
-export function SummaryItem({ thumb, token, title, detail }: { thumb?: string; token?: string; title: string; detail: string }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex size-13 shrink-0 items-center justify-center overflow-hidden bg-secondary">
-        {thumb ? <img src={thumb} alt="" className="size-full object-cover" /> : <span className="text-xs font-semibold text-primary">{token}</span>}
-      </div>
-      <div className="flex min-w-0 flex-col gap-1">
-        <p className="text-sm leading-5 font-semibold text-primary">{title}</p>
-        <p className="type-caption text-muted-foreground">{detail}</p>
-      </div>
-    </div>
-  )
-}
-
-function EditLink({ onClick, label }: { onClick: () => void; label: string }) {
-  return (
-    <button type="button" onClick={onClick} aria-label={`Edit ${label}`} className="shrink-0 cursor-pointer type-label-xs text-primary underline">
-      Edit
-    </button>
-  )
-}
-
-/** What a finished step shows: the choice made in it. */
-function DoneSummary({ step }: { step: StepKey }) {
-  const { setting, stone, ringSize, engraving, engravingStyle, crown, band, bandEngraving } = useRingBuild()
-  if (step === "setting") return <SummaryItem thumb={setting.image} title={setting.name} detail={`${setting.metal} · ${formatPrice(setting.price)}`} />
-  if (step === "stone") {
-    const photo = findFlowDiamond(stone.id)?.image
-    return <SummaryItem thumb={photo} token="◇" title={stone.title} detail={`${stone.clarity} · ${stone.color} · ${stone.cut} · ${formatPrice(stone.price)}`} />
-  }
-  return (
-    <div className="flex flex-col gap-4">
-      <SummaryItem token={ringSize ?? "—"} title={ringSize ? `Ring size ${ringSize}` : "Ring size not selected"} detail="Resizing is free, for life" />
-      {engraving && (
-        <SummaryItem token="Abc" title={`Engraving: “${engraving.text}”`} detail={`${engravingStyle?.name ?? "Engraving"} · inside the band · ${formatPrice(60)}`} />
+    <div className="flex items-center gap-4 text-left">
+      {onOpen ? (
+        <button type="button" onClick={onOpen} aria-label={`${name}: ${summary}. Change`} className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left">
+          {body}
+        </button>
+      ) : (
+        <div className="flex min-w-0 flex-1 items-center gap-3">{body}</div>
       )}
-      {crown && <SummaryItem thumb={crown.image} title={crown.name} detail={`${crown.holds} · ${formatPrice(crown.price)}`} />}
-      {band && <SummaryItem thumb={band.image} title={band.name} detail={`${band.metal} · ${formatPrice(band.price)}${bandEngraving ? " · engraved" : ""}`} />}
-    </div>
-  )
-}
-
-/** Ring Summary under the steps (Figma 8224:180625): price lines, divider, the total. */
-export function PanelTotals({ rows, totalLabel, total }: { rows: { label: string; value: string }[]; totalLabel: string; total: string }) {
-  return (
-    <div className="flex flex-col gap-4 bg-bg-input-50 p-4" aria-live="polite">
-      <h2 className="type-h4 text-primary">Ring Summary</h2>
-      <div className="flex flex-col gap-3">
-        {rows.map((r) => (
-          <div key={r.label} className="flex items-start justify-between gap-4">
-            <span className="text-xs leading-4 font-medium text-primary">{r.label}</span>
-            <span className="text-sm leading-none font-semibold whitespace-nowrap text-muted-foreground">{r.value}</span>
-          </div>
-        ))}
-      </div>
-      <div className="h-px bg-border-subtle" />
-      <div className="flex items-start justify-between gap-4 text-base leading-6 font-semibold text-primary">
-        <span>{totalLabel}:</span>
-        <span className="whitespace-nowrap">{total}</span>
-      </div>
+      {aside}
+      {onOpen ? (
+        <button type="button" onClick={onOpen} tabIndex={-1} aria-hidden className="shrink-0 cursor-pointer">
+          <Caret className="size-6 text-primary" />
+        </button>
+      ) : (
+        <Caret className="size-6 shrink-0 text-primary" aria-hidden />
+      )}
     </div>
   )
 }
 
 /**
- * The panel. `current` is the open step ("review" = every step finished, as on Review Your Ring); `children`
- * is the open step's content; `summary` follows the box (the Ring Summary); `footer` closes the box (the
- * review's total and actions).
+ * The panel. `current` is the open step ("review" = every step finished and closed); `children` is the open
+ * step's content; `lines` and `total` fill the price box (and the "Price explained" popover); `ringTotal` is the
+ * header's figure; `footer` follows the price box (the review's actions).
  */
-export function BuildPanel({ current, children, summary, footer }: { current: StepKey | "review"; children?: ReactNode; summary?: ReactNode; footer?: ReactNode }) {
+export function BuildPanel({
+  current,
+  ringTotal,
+  lines,
+  total,
+  children,
+  footer,
+}: {
+  current: StepKey | "review"
+  ringTotal: string
+  lines: PriceLine[]
+  total: string
+  children?: ReactNode
+  footer?: ReactNode
+}) {
   const flow = useFlow()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  // The recommendations modal opens over the stone step: same step, so no scroll or re-animation behind it.
+  const pathname = useLocation().pathname.replace(/\/recommendations$/, "")
+  const { start } = useRingBuild()
+  const steps = stepsFor(start)
+  const index = current === "review" ? steps.length : steps.findIndex((s) => s.key === current)
+  const isDone = (key: StepKey) => steps.findIndex((s) => s.key === key) < index
+  const summaries = useStepSummaries(isDone)
   const sectionRef = useRef<HTMLElement>(null)
   const currentRef = useRef<HTMLLIElement>(null)
-  const index = current === "review" ? 3 : STEPS.findIndex((s) => s.key === current)
-  const isReview = current === "review"
-  // Moving between steps (or from preferences to recommendations) brings the open step into view, smoothly:
-  // the panel sits under the gallery on phones and holds finished steps above on desktop. Skipped when the
-  // step's heading is already in the upper half of the screen.
+
+  // Moving between steps brings the open step into view, smoothly (the panel sits under the gallery on phones).
+  // Skipped when the step's row is already in the upper half of the screen.
   useEffect(() => {
     const prev = lastPanelPath
     lastPanelPath = pathname
@@ -166,7 +192,7 @@ export function BuildPanel({ current, children, summary, footer }: { current: St
     [],
   )
 
-  // Whether the open step's sticky title is pinned: it sits at the header offset while its step's top has
+  // Whether the open step's sticky row is pinned: it sits at the header offset while its step's top has
   // scrolled above it.
   const headRef = useRef<HTMLDivElement>(null)
   const [stuck, setStuck] = useState(false)
@@ -184,7 +210,7 @@ export function BuildPanel({ current, children, summary, footer }: { current: St
       if (!frame) frame = requestAnimationFrame(check)
     }
     check()
-    // The site header showing or hiding moves the title (its `top` eases), so check again once that settles.
+    // The site header showing or hiding moves the row (its `top` eases), so check again once that settles.
     const head = headRef.current
     window.addEventListener("scroll", onScroll, { passive: true })
     window.addEventListener("resize", onScroll)
@@ -197,73 +223,107 @@ export function BuildPanel({ current, children, summary, footer }: { current: St
     }
   }, [current])
 
-  const edit = (step: StepKey) => {
+  /** A closed step's row opens that step again: the setting and the stone go back to their step, finishing to step 3. */
+  const reopen = (step: StepKey) => {
     if (!flow) return
     if (step === "finishing") {
       navigate(flow.path("/finish"))
       window.scrollTo({ top: 0 })
-    }
-    else flow.goToStep(step, "edit")
+    } else flow.goToStep(step, "edit")
   }
 
   return (
-    <section ref={sectionRef} aria-label="Design your ring" className="flex scroll-mt-4 flex-col gap-6">
-      <div className="flex items-baseline justify-between gap-4">
-        <h1 className="type-h3 text-primary">{isReview ? "Review Your Ring" : "Design Your Ring"}</h1>
-        <p className="shrink-0 type-label-xs whitespace-nowrap text-primary">{isReview ? "All 3 steps complete" : `Step ${index + 1} of 3`}</p>
+    <section ref={sectionRef} aria-label="Design your own ring" className="flex scroll-mt-4 flex-col gap-8">
+      {/* Title and running total (Figma 7541:341919). */}
+      <div className="flex flex-col gap-4 text-primary">
+        <h1 className="type-h2">Design Your Own Ring</h1>
+        <div className="flex flex-wrap items-baseline gap-2">
+          <p className="text-lg leading-7 font-semibold">Ring Total: {ringTotal}</p>
+          <span className="text-sm leading-none font-medium text-muted-foreground" aria-hidden>
+            ∙
+          </span>
+          <Popover>
+            <PopoverTrigger openOnHover delay={100} render={<Button variant="link" className="h-auto gap-0.5 px-0" />}>
+              Price explained
+              <InfoIcon />
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-80 p-0">
+              <PriceBox lines={lines} total={total} className="bg-popover" />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
-      {/* On phones the steps run edge to edge (rules and tints full width, content on the page margin), so
-          the open step gets the screen's width; from lg they sit in a bordered box. */}
-      <ol className="-mx-margin flex flex-col border-t border-border-subtle lg:mx-0 lg:border">
-        {STEPS.map((s, i) => {
-          const state = i < index ? "done" : i === index ? "current" : "upcoming"
-          return (
-            <li
-              key={s.key}
-              ref={state === "current" ? currentRef : undefined}
-              className={cn("border-b border-border-subtle", !footer && "last:border-b-0", state === "upcoming" && "bg-bg-input-50")}
-              aria-current={state === "current" ? "step" : undefined}
-            >
-              {state === "done" ? (
-                // A step just finished settles into its summary, with Edit beside it.
-                <div className="flex flex-col gap-4 px-margin py-6 animate-in fade-in duration-300 motion-reduce:animate-none lg:p-6">
-                  <StepHeader n={s.n} state="done" label={s.done} />
-                  <div className="flex items-start justify-between gap-4">
-                    <DoneSummary step={s.key} />
-                    <EditLink onClick={() => edit(s.key)} label={s.done.replace(/^Your /, "")} />
+
+      <div className="flex flex-col gap-8">
+        <ol className="flex flex-col">
+          {steps.map((s) => {
+            const open = s.key === current
+            const done = isDone(s.key)
+            const summary = summaries[s.key]
+            return (
+              <li
+                key={s.key}
+                ref={open ? currentRef : undefined}
+                className="border-b border-muted first:border-t"
+                aria-current={open ? "step" : undefined}
+              >
+                {open ? (
+                  <div className="flex flex-col pb-4">
+                    {/* The open step's row stays pinned under the site header while its content scrolls past, until
+                        the step ends; a hairline shadow shows once it is stuck. */}
+                    <div
+                      ref={headRef}
+                      className={cn(
+                        "sticky top-(--header-offset) z-10 -mx-margin bg-background px-margin py-5 transition-[top,box-shadow] duration-300 ease-out lg:-mx-2 lg:px-2",
+                        stuck && "shadow-2xs",
+                      )}
+                    >
+                      <StepRow n={s.n} name={s.name} summary={summary} open />
+                    </div>
+                    {/* Indented to the step's name on desktop (Figma 7549:387046: 44px; phones keep the full width); eases in, keyed by page. */}
+                    <div
+                      key={pathname}
+                      className="flex flex-col gap-8 pt-3 lg:pl-11 animate-in fade-in slide-in-from-top-2 duration-300 ease-out motion-reduce:animate-none"
+                    >
+                      <CompactSections.Provider value={true}>{children}</CompactSections.Provider>
+                    </div>
                   </div>
-                </div>
-              ) : state === "current" ? (
-                <div className="flex flex-col px-margin pb-6 lg:px-6">
-                  {/* The open step's title stays pinned under the site header while its content scrolls past,
-                      until the step ends; a hairline shadow shows once it is stuck. */}
-                  <div
-                    ref={headRef}
-                    className={cn(
-                      "sticky top-(--header-offset) z-10 -mx-margin bg-background px-margin pt-6 pb-4 lg:-mx-6 lg:px-6 transition-[top,box-shadow] duration-300 ease-out",
-                      stuck && "shadow-2xs",
-                    )}
-                  >
-                    <StepHeader n={s.n} state="current" label={s.label} />
+                ) : done && flow ? (
+                  // A finished step: its row opens it again; the setting and the stone can also be removed.
+                  <div className="group/row -mx-2 px-2 py-5 transition-colors duration-150 hover:bg-bg-input-50">
+                    <StepRow
+                      n={s.n}
+                      name={s.name}
+                      summary={summary}
+                      open={false}
+                      onOpen={() => reopen(s.key)}
+                      aside={
+                        s.key !== "finishing" && (
+                          <button
+                            type="button"
+                            onClick={() => flow.removeStep(s.key as "setting" | "stone")}
+                            aria-label={`Remove ${s.name.toLowerCase()}`}
+                            className="shrink-0 cursor-pointer type-label-xs text-primary underline"
+                          >
+                            Remove
+                          </button>
+                        )
+                      }
+                    />
                   </div>
-                  {/* The open step's content eases in (keyed by page, so 2a → 2b animates too). */}
-                  <div key={pathname} className="flex flex-col gap-6 animate-in fade-in slide-in-from-top-2 duration-300 ease-out motion-reduce:animate-none">
-                    <CompactSections.Provider value={true}>{children}</CompactSections.Provider>
+                ) : (
+                  // Later steps open once the current one is done.
+                  <div className="py-5" aria-disabled>
+                    <StepRow n={s.n} name={s.name} summary={summary} open={false} />
                   </div>
-                </div>
-              ) : (
-                // Later steps open once the current one is done.
-                <div className="px-margin py-4 lg:px-6" aria-disabled>
-                  <StepHeader n={s.n} state="upcoming" label={s.label} />
-                </div>
-              )}
-            </li>
-          )
-        })}
-      </ol>
-      {/* The box continues around the review's total and actions; the Ring Summary sits under it. */}
-      {footer && <div className="-mx-margin -mt-6 border-b border-border-subtle lg:mx-0 lg:border-x">{footer}</div>}
-      {summary}
+                )}
+              </li>
+            )
+          })}
+        </ol>
+        <PriceBox lines={lines} total={total} />
+        {footer}
+      </div>
     </section>
   )
 }

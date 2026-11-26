@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { diamondTitle, type Diamond } from "@/data/diamonds"
 import { DELIVERY } from "@/data/dyo"
 import { formatPrice } from "@/lib/format"
+import { useFlow } from "@/flow/flow-context"
 import { useRingBuild } from "@/state/ring-build"
 
 interface DiamondQuickviewProps {
@@ -31,6 +32,8 @@ interface DiamondQuickviewProps {
 export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetails, showRingTotal = true, title, noun = "Diamond", certificate = "GIA certificate" }: DiamondQuickviewProps) {
   const notInTest = useNotInTest()
   const { setting } = useRingBuild()
+  // The full flows drop the overflow menu: selecting the diamond is the only action there.
+  const flow = useFlow()
   return (
     <Dialog open={diamond !== null} onOpenChange={onOpenChange}>
       {/* Figma: 920px wide dialog, 32px padding and gap. */}
@@ -117,16 +120,18 @@ export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetail
                   <Button className="flex-1" onClick={() => onSelect(diamond)}>
                     Select this {noun}
                   </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger render={<Button variant="outline" size="icon" aria-label="More options" />}>
-                      <EllipsisVertical />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem onClick={() => notInTest("Adding to a ring")}>Add to a ring</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => notInTest("Adding to a pendant")}>Add to a pendant</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => notInTest("Adding a loose stone to bag")}>Add loose stone to bag</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {!flow && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger render={<Button variant="outline" size="icon" aria-label="More options" />}>
+                        <EllipsisVertical />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={() => notInTest("Adding to a ring")}>Add to a ring</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => notInTest("Adding to a pendant")}>Add to a pendant</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => notInTest("Adding a loose stone to bag")}>Add loose stone to bag</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
                 <Button variant="link" className="h-auto px-0 py-2" onClick={() => onViewDetails(diamond)}>
                   View Full Details
