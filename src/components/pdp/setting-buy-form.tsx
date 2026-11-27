@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { PriceExplainedPopover } from "@/components/shared/price-explained-popover"
 import { Separator } from "@/components/ui/separator"
 import { METALS, descriptionFor, type MetalId, type Setting } from "@/data/products"
 import { formatPrice } from "@/lib/format"
@@ -124,29 +124,20 @@ export function MetalSelector({
   )
 }
 
-/** “Price explained” popover on the Settings PDP — opens on hover, click/tap still works (Figma 7342:118262). */
-export function PriceExplained({ price }: { price: number }) {
-  const rows = [
-    { label: "Setting, incl. accent stones", value: formatPrice(price) },
-    { label: "Center stone", value: "Chosen in step 2" },
-  ]
+/**
+ * “Price explained” on the Settings PDP (Figma 7342:118262), in the Diamond Quickview's popover style: the setting,
+ * the center stone still to choose, and the ring total so far.
+ */
+export function PriceExplained({ name, price }: { name: string; price: number }) {
   return (
-    <Popover>
-      <PopoverTrigger openOnHover delay={100} render={<Button variant="link" className="h-auto gap-0.5 px-0" />}>
-        Price explained
-        <Info />
-      </PopoverTrigger>
-      {/* Figma: 302px wide, left-aligned under the price row — closest width token is w-80 (320px). */}
-      <PopoverContent align="start" className="flex w-80 flex-col gap-2 text-xs leading-4 text-muted-foreground">
-        {rows.map((row) => (
-          <div key={row.label} className="flex items-start justify-between gap-2">
-            <p>{row.label}</p>
-            <p className="font-semibold">{row.value}</p>
-          </div>
-        ))}
-        <p>Your ring total updates once you choose a center stone.</p>
-      </PopoverContent>
-    </Popover>
+    <PriceExplainedPopover
+      align="start"
+      rows={[
+        { label: "Setting", name: `${name}, incl. accent stones`, price: formatPrice(price) },
+        { label: "Stone", name: "Your center stone, chosen in the next step" },
+      ]}
+      total={`${formatPrice(price)} + stone`}
+    />
   )
 }
 
@@ -304,7 +295,7 @@ export function SettingBuyForm({
               <span className="text-sm leading-none font-medium text-muted-foreground" aria-hidden>
                 ∙
               </span>
-              <PriceExplained price={variant.price} />
+              <PriceExplained name={setting.name} price={variant.price} />
             </div>
           </div>
           {teaser ? (

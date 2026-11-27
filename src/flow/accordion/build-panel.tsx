@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useLocation, useNavigate } from "react-router"
-import { CaretDownIcon, CaretUpIcon, InfoIcon } from "@phosphor-icons/react"
-import { Button } from "@/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { CaretDownIcon, CaretUpIcon } from "@phosphor-icons/react"
+import { PriceExplainedPopover } from "@/components/shared/price-explained-popover"
 import { CompactSections } from "@/components/stones/preference-parts"
 import { useFlow } from "@/flow/flow-context"
 import { cn } from "@/lib/utils"
@@ -243,15 +242,11 @@ export function BuildPanel({
           <span className="text-sm leading-none font-medium text-muted-foreground" aria-hidden>
             ∙
           </span>
-          <Popover>
-            <PopoverTrigger openOnHover delay={100} render={<Button variant="link" className="h-auto gap-0.5 px-0" />}>
-              Price explained
-              <InfoIcon />
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-80 p-0">
-              <PriceBox lines={lines} total={total} className="bg-popover" />
-            </PopoverContent>
-          </Popover>
+          <PriceExplainedPopover
+            align="start"
+            rows={lines.map((l) => ({ label: l.label, name: l.desc, price: l.value }))}
+            total={total}
+          />
         </div>
       </div>
 
