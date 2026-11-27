@@ -23,12 +23,13 @@ import { CLASSIC_CROWN, ENGRAVING, type GalleryImage } from "@/data/dyo"
 import { SHAPES } from "@/data/plp"
 import { flowMetalFor, flowSettingFor } from "@/data/flow-settings"
 import { galleryFor } from "@/data/products"
-import { formatSize, shapesFor, stoneShape, stoneType, toQuickviewDiamond, type StonePick } from "@/data/stones"
+import { formatSize, shapesFor, stoneShape, stoneTitle, stoneType, toQuickviewDiamond, type StonePick } from "@/data/stones"
 import { useFlow } from "@/flow/flow-context"
 import { FLOW_CRUMBS, FLOW_ROUTES } from "@/flow/flow-paths"
 import { useFlowRingGallery } from "@/flow/ring-images"
 import { FlowStoneGallery } from "@/flow/stone/flow-stone-gallery"
 import { BudgetSection, SizeSection, stoneName } from "@/flow/stone/preferences-page"
+import { Basis, picksHeading } from "@/flow/stone/recommendations-page"
 import { firstStoneQuery, flowStonePath, effectiveShape, useFlowStonePrefs } from "@/flow/stone/simulator"
 import { useFlowSelectDiamond } from "@/flow/stone/use-flow-stone"
 import { settingTaskEnd, useStudyAddToBag, useStudyViewAll } from "@/flow/study/study"
@@ -37,6 +38,7 @@ import { useElementHeight } from "@/lib/hooks"
 import { cn, PAGE_MAX } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
 import { BuildPanel, type PriceLine } from "./build-panel"
+import { InlineRecommendations } from "./inline-recommendations"
 import { RecommendationsSheet } from "./recommendations-sheet"
 
 /*
@@ -229,19 +231,31 @@ export function AccordionStone() {
     ...(matchedBy !== "size" ? [`Up to ${formatPrice(sim.budgetHi)}`] : []),
   ].join(" · ")
 
+  // The full-flow study shows the recommendations in the stone step itself, as stacked tiles (the step-by-step
+  // flow's page, Test 2's tiles) rather than in the drawer. The first pick starts selected, as on that page.
+  const inline = flow?.study != null
+  const [chosenKind, setChosenKind] = useState<StonePick["kind"] | null>(null)
+  const [wasRecs, setWasRecs] = useState(recommendations)
+  if (wasRecs !== recommendations) {
+    setWasRecs(recommendations)
+    if (recommendations) setChosenKind(null)
+  }
+  const chosenPick = inline && recommendations ? (picks.find((p) => p.kind === chosenKind) ?? picks[0] ?? null) : null
+  const ringTotal = chosenPick ? formatPrice(set + chosenPick.stone.price) : total
+
   return (
     <AccordionFrame
       galleryFull={false}
       // 8px side gutter, lined up with the breadcrumb (as the /flow stone step).
-      gallery={<div className="px-2"><FlowStoneGallery shape={effectiveShape(prefs)} size={sim.size} mode="preview" /></div>}
+      gallery={<div className="px-2"><FlowStoneGallery shape={effectiveShape(prefs)} size={chosenPick?.stone.size ?? sim.size} mode="preview" /></div>}
       panel={
         <div className="flex flex-col gap-6" data-variant={variant.id}>
           <BuildPanel
             current="stone"
-            ringTotal={total}
+            ringTotal={ringTotal}
             lines={[
               { label: "Setting", desc: setting.name, value: formatPrice(set) },
-              {
+              chosenPick ? { label: "Stone", desc: stoneTitle(chosenPick.stone), value: formatPrice(chosenPick.stone.price) } : {
                 label: "Stone",
                 desc: (
                   <>
@@ -251,64 +265,88 @@ export function AccordionStone() {
                 value: stonePrice,
               },
             ]}
-            total={total}
+            total={ringTotal}
           >
-            {/* This flow carries natural diamonds only for now. */}
-            <StoneTypeToggle value={prefs.type} onChange={(type) => (type === "natural" ? update({ type }) : notInTest("Lab-grown diamonds and gemstones"))} />
-            <ShapeSelector value={sim.scope.shape} onChange={(shape) => update({ shape })} offered={shapesFor(prefs.type, prefs.gem)} />
-            {shopBy === "size" ? (
-              <>
-                {size}
-                {budget}
-              </>
+            {inline && recommendations ? (
+              <InlineRecommendations
+                picks={picks}
+                selected={chosenPick}
+                onChoose={setChosenKind}
+                heading={picksHeading(prefs.type, effectiveShape(prefs), prefs.gem)}
+                basis={<Basis shopBy={matchedBy} sim={sim} />}
+                bySize={matchedBy === "size" || !sim.inBudget}
+                onEditPreferences={() => navigate(href("preferences"))}
+                onSelect={(p) => selectDiamond(toQuickviewDiamond(p.stone))}
+                onFullDetails={(p) => {
+                  navigate(flow ? flow.path(FLOW_ROUTES.diamond(p.stone.id)) : FLOW_ROUTES.diamond(p.stone.id))
+                  window.scrollTo({ top: 0 })
+                }}
+                viewAll={
+                  <Button
+                    variant="outline"
+                    className={cn("w-full", viewAll.unavailable && "opacity-50")}
+                    aria-disabled={viewAll.unavailable || undefined}
+                    onClick={viewAll.guard(() => navigate(href("diamonds", { from: "recs" })))}
+                  >
+                    View all {shapeLabel} stones ({matching.length.toLocaleString("en-US")})
+                  </Button>
+                }
+              />
             ) : (
               <>
-                {budget}
-                {size}
+                {/* This flow carries natural diamonds only for now. */}
+                <StoneTypeToggle value={prefs.type} onChange={(type) => (type === "natural" ? update({ type }) : notInTest("Lab-grown diamonds and gemstones"))} />
+                <ShapeSelector value={sim.scope.shape} onChange={(shape) => update({ shape })} offered={shapesFor(prefs.type, prefs.gem)} />
+                {shopBy === "size" ? (
+                  <>
+                    {size}
+                    {budget}
+                  </>
+                ) : (
+                  <>
+                    {budget}
+                    {size}
+                  </>
+                )}
+                <div className="flex flex-col gap-2">
+                  {sim.blocked && (
+                    <p className="pb-2 text-xs leading-4 text-muted-foreground">
+                      {shopBy !== "budget" ? "No stones are available at this size right now. Choose a different size to continue." : "No stones in this budget right now. Widen your budget to continue."}
+                    </p>
+                  )}
+                  <Button className="w-full" onClick={() => navigate(href("recommendations"))} disabled={sim.blocked || matching.length === 0}>
+                    View Recommended Stones
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className={cn("w-full", viewAll.unavailable && "opacity-50")}
+                    aria-disabled={viewAll.unavailable || undefined}
+                    onClick={viewAll.guard(() => navigate(href("diamonds", { from: "prefs" })))}
+                    disabled={sim.blocked}
+                  >
+                    View all {shapeLabel} stones ({matching.length.toLocaleString("en-US")})
+                  </Button>
+                </div>
               </>
             )}
-            <div className="flex flex-col gap-2">
-              {sim.blocked && (
-                <p className="pb-2 text-xs leading-4 text-muted-foreground">
-                  {shopBy !== "budget" ? "No stones are available at this size right now. Choose a different size to continue." : "No stones in this budget right now. Widen your budget to continue."}
-                </p>
-              )}
-              <Button className="w-full" onClick={() => navigate(href("recommendations"))} disabled={sim.blocked || matching.length === 0}>
-                View Recommended Stones
-              </Button>
-              <Button
-                variant="outline"
-                className={cn("w-full", viewAll.unavailable && "opacity-50")}
-                aria-disabled={viewAll.unavailable || undefined}
-                onClick={viewAll.guard(() => navigate(href("diamonds", { from: "prefs" })))}
-                disabled={sim.blocked}
-              >
-                View all {shapeLabel} stones ({matching.length.toLocaleString("en-US")})
-              </Button>
-            </div>
           </BuildPanel>
           <SaveAndHint />
           <ChatLink />
-          <RecommendationsSheet
-            open={recommendations}
-            onClose={() => navigate(href("preferences"))}
-            picks={picks}
-            basis={basis}
-            bySize={shopBy === "size" || !sim.inBudget}
-            settingPrice={set}
-            stoneCount={matching.length}
-            onEditPreferences={() => navigate(href("preferences"))}
-            onSelect={(p) => selectDiamond(toQuickviewDiamond(p.stone))}
-            onViewAll={viewAll.guard(() => navigate(href("diamonds", { from: "recs" })))}
-            viewAllUnavailable={viewAll.unavailable}
-            // The study names the shape, as the panel's button does (and the Part 3 guide quotes it).
-            viewAllLabel={flow?.study ? `View all ${shapeLabel} stones` : undefined}
-            aligned={flow?.study != null}
-            onFullDetails={(p) => {
-              navigate(flow ? flow.path(FLOW_ROUTES.diamond(p.stone.id)) : FLOW_ROUTES.diamond(p.stone.id))
-              window.scrollTo({ top: 0 })
-            }}
-          />
+          {!inline && (
+            <RecommendationsSheet
+              open={recommendations}
+              onClose={() => navigate(href("preferences"))}
+              picks={picks}
+              basis={basis}
+              bySize={shopBy === "size" || !sim.inBudget}
+              settingPrice={set}
+              stoneCount={matching.length}
+              onEditPreferences={() => navigate(href("preferences"))}
+              onSelect={(p) => selectDiamond(toQuickviewDiamond(p.stone))}
+              onViewAll={viewAll.guard(() => navigate(href("diamonds", { from: "recs" })))}
+              viewAllUnavailable={viewAll.unavailable}
+            />
+          )}
         </div>
       }
     />
