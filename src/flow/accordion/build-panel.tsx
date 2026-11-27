@@ -390,13 +390,14 @@ export function BuildPanel({
               >
                 {open ? (
                   <div className="flex flex-col pb-4">
-                    {/* The open step's row stays pinned under the site header while its content scrolls past, until
-                        the step ends; a hairline shadow shows once it is stuck. */}
+                    {/* Desktop: the open step's row stays pinned under the site header while its content scrolls past,
+                        until the step ends; a hairline shadow shows once it is stuck. Phones: it scrolls with the page
+                        (the sticky preview bar takes the top there). */}
                     <div
                       ref={headRef}
                       className={cn(
-                        "sticky top-(--header-offset) z-10 -mx-margin bg-background px-margin py-5 transition-[top,box-shadow] duration-300 ease-out lg:-mx-2 lg:px-2",
-                        stuck && "shadow-2xs",
+                        "-mx-margin bg-background px-margin py-5 lg:sticky lg:top-(--header-offset) lg:z-10 lg:-mx-2 lg:px-2 lg:transition-[top,box-shadow] lg:duration-300 lg:ease-out",
+                        stuck && "lg:shadow-2xs",
                       )}
                     >
                       {row({ open: true })}

@@ -165,6 +165,83 @@ export function DyoStepper({
     finishing: { price: 0, detail: "", lines: [] as string[] },
   }
 
+  /** A step's text: its choice with price and Remove, or its title and description. Shared by the desktop bar and the study's mobile accordion. */
+  const stepBody = (kind: StepKind, n: StepNumber, close?: () => void) => {
+    const step = { n, label: STEP_LABEL[kind], ...chosen[kind] }
+    const state = stateOf(n)
+    return (
+      showsChoice(step.n) && flow ? (
+        // Full flow: the chosen item's name opens it (was "View"), and "Remove" (was "Edit")
+        // starts that step's choice over.
+        <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex items-center gap-3 type-label-xs text-primary">
+            <span className="flex gap-2">
+              <span>{step.label}:</span>
+              <span>{formatPrice(step.price)}</span>
+            </span>
+            <button
+              type="button"
+              className="cursor-pointer type-label-xs underline"
+              onClick={() => {
+                close?.()
+                flow.removeStep(kind as "setting" | "stone")
+              }}
+            >
+              Remove
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              close?.()
+              flow.goToStep(kind as "setting" | "stone", "view")
+            }}
+            className="cursor-pointer truncate text-left type-caption font-medium text-primary underline-offset-2 hover:underline"
+          >
+            {step.detail}
+          </button>
+        </div>
+      ) : state === "done" && kind !== "finishing" ? (
+        <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex items-center gap-3 type-label-xs text-primary">
+            <span className="flex gap-2">
+              <span>{step.label}:</span>
+              <span>{formatPrice(step.price)}</span>
+            </span>
+            <button type="button" className="cursor-pointer underline" onClick={() => (flow ? flow.goToStep(kind as "setting" | "stone", "view") : notInTest("Viewing a previous step"))}>
+              View
+            </button>
+            <button type="button" className="cursor-pointer underline" onClick={() => (flow ? flow.goToStep(kind as "setting" | "stone", "edit") : notInTest("Editing a previous step"))}>
+              Edit
+            </button>
+          </div>
+          <p className="truncate type-caption font-medium text-primary">{step.detail}</p>
+        </div>
+      ) : state === "done" && kind === "finishing" && flow ? (
+        // Full flow, step 3 already done (a size chosen) while on an earlier step: back to it.
+        <div className="flex min-w-0 flex-col gap-0.75">
+          <span className="truncate type-label-xs text-primary">{step.label}</span>
+          <button
+            type="button"
+            onClick={() => {
+              close?.()
+              toFinishing()
+            }}
+            className="cursor-pointer truncate text-left type-caption font-medium text-primary underline-offset-2 hover:underline"
+          >
+            {`Size ${ringSize} · ${formatPrice(total)}`}
+          </button>
+        </div>
+      ) : (
+        // Current / upcoming step: title + description, no price.
+        <div className="flex min-w-0 flex-col gap-0.75">
+          <span className="truncate type-label-xs text-primary">{columns && kind === "setting" ? "Your Setting" : step.label}</span>
+          <span className="truncate type-caption text-muted-foreground">{STEP_DESCRIPTION[kind]}</span>
+        </div>
+      )
+    )
+  }
+
   return (
     <>
       {/* Desktop bar (Figma 7336:177134): title column, then three equal steps split by dividers,
@@ -194,62 +271,7 @@ export function DyoStepper({
                   aria-current={state === "current" ? "step" : undefined}
                 >
                   <StepMarker n={step.n} state={state} shape="circle" outline={columns} />
-                  {showsChoice(step.n) && flow ? (
-                    // Full flow: the chosen item's name opens it (was "View"), and "Remove" (was "Edit")
-                    // starts that step's choice over.
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <div className="flex items-center gap-3 type-label-xs text-primary">
-                        <span className="flex gap-2">
-                          <span>{step.label}:</span>
-                          <span>{formatPrice(step.price)}</span>
-                        </span>
-                        <button type="button" className="cursor-pointer type-label-xs underline" onClick={() => flow.removeStep(kind as "setting" | "stone")}>
-                          Remove
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => flow.goToStep(kind as "setting" | "stone", "view")}
-                        className="cursor-pointer truncate text-left type-caption font-medium text-primary underline-offset-2 hover:underline"
-                      >
-                        {step.detail}
-                      </button>
-                    </div>
-                  ) : state === "done" && kind !== "finishing" ? (
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <div className="flex items-center gap-3 type-label-xs text-primary">
-                        <span className="flex gap-2">
-                          <span>{step.label}:</span>
-                          <span>{formatPrice(step.price)}</span>
-                        </span>
-                        <button type="button" className="cursor-pointer underline" onClick={() => (flow ? flow.goToStep(kind as "setting" | "stone", "view") : notInTest("Viewing a previous step"))}>
-                          View
-                        </button>
-                        <button type="button" className="cursor-pointer underline" onClick={() => (flow ? flow.goToStep(kind as "setting" | "stone", "edit") : notInTest("Editing a previous step"))}>
-                          Edit
-                        </button>
-                      </div>
-                      <p className="truncate type-caption font-medium text-primary">{step.detail}</p>
-                    </div>
-                  ) : state === "done" && kind === "finishing" && flow ? (
-                    // Full flow, step 3 already done (a size chosen) while on an earlier step: back to it.
-                    <div className="flex min-w-0 flex-col gap-0.75">
-                      <span className="truncate type-label-xs text-primary">{step.label}</span>
-                      <button
-                        type="button"
-                        onClick={toFinishing}
-                        className="cursor-pointer truncate text-left type-caption font-medium text-primary underline-offset-2 hover:underline"
-                      >
-                        {`Size ${ringSize} · ${formatPrice(total)}`}
-                      </button>
-                    </div>
-                  ) : (
-                    // Current / upcoming step: title + description, no price.
-                    <div className="flex min-w-0 flex-col gap-0.75">
-                      <span className="truncate type-label-xs text-primary">{columns && kind === "setting" ? "Your Setting" : step.label}</span>
-                      <span className="truncate type-caption text-muted-foreground">{STEP_DESCRIPTION[kind]}</span>
-                    </div>
-                  )}
+                  {stepBody(kind, step.n)}
                 </li>
               </Fragment>
             )
@@ -289,7 +311,23 @@ export function DyoStepper({
             className="absolute inset-x-0 top-full h-svh bg-black/40 animate-in fade-in"
           />
         )}
-        {open && (
+        {open && columns && (
+          // Full-flow study: the desktop bar's look and content (Figma "Hero Fix"): small outlined numbers, the
+          // choice with its price and Remove, "Your Setting", one divider colour.
+          <ol className="absolute inset-x-0 top-full border-b border-border-subtle bg-background px-margin shadow-lg animate-in fade-in slide-in-from-top-1">
+            {numbered.map(({ kind, n }, i) => (
+              <li
+                key={n}
+                className={cn("flex items-center gap-3 py-4", i < numbered.length - 1 && "border-b border-border-subtle")}
+                aria-current={n === current ? "step" : undefined}
+              >
+                <StepMarker n={n} state={stateOf(n)} shape="circle" outline />
+                {stepBody(kind, n, () => setOpen(false))}
+              </li>
+            ))}
+          </ol>
+        )}
+        {open && !columns && (
           <ol className="absolute inset-x-0 top-full border-b border-border-subtle bg-background px-margin shadow-lg animate-in fade-in slide-in-from-top-1">
             {numbered.map(({ kind, n }) =>
               kind === "finishing"

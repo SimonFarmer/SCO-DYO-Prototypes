@@ -25,6 +25,7 @@ import { flowMetalFor, flowSettingFor } from "@/data/flow-settings"
 import { galleryFor } from "@/data/products"
 import { formatSize, shapesFor, stoneShape, stoneTitle, stoneType, toQuickviewDiamond, type StonePick } from "@/data/stones"
 import { useFlow } from "@/flow/flow-context"
+import { MobileGalleryBar } from "@/flow/mobile-gallery-bar"
 import { FLOW_CRUMBS, FLOW_ROUTES } from "@/flow/flow-paths"
 import { useFlowRingGallery } from "@/flow/ring-images"
 import { FlowStoneGallery } from "@/flow/stone/flow-stone-gallery"
@@ -152,18 +153,26 @@ export function AccordionSetting() {
   return (
     <AccordionFrame
       gallery={
-        <SettingGallery
-          key={metal}
-          media={media}
-          previewLabel={`Previewing: ${shapeLabel} ∙ ${carat.toFixed(2)} ct`}
-          // The full-flow study previews the shape in the panel instead (below the metal).
-          previewMenu={
-            shapeInForm ? undefined : (
-              <StonePreviewMenu shapes={setting.shapes} value={previewShape} onChange={setPreviewShape} mobileDetail={`${carat.toFixed(2)} ct`} />
-            )
-          }
-          previewShape={previewShape}
-        />
+        // Phones: the sticky preview bar once the gallery has scrolled away (as Flow A's setting PDP).
+        <MobileGalleryBar
+          image={media[0]?.src ?? ""}
+          imageAlt={media[0]?.alt ?? setting.name}
+          title={setting.name}
+          specs={[built.metal, `Previewing: ${shapeLabel} ∙ ${carat.toFixed(2)} ct`]}
+        >
+          <SettingGallery
+            key={metal}
+            media={media}
+            previewLabel={`Previewing: ${shapeLabel} ∙ ${carat.toFixed(2)} ct`}
+            // The full-flow study previews the shape in the panel instead (below the metal).
+            previewMenu={
+              shapeInForm ? undefined : (
+                <StonePreviewMenu shapes={setting.shapes} value={previewShape} onChange={setPreviewShape} mobileDetail={`${carat.toFixed(2)} ct`} />
+              )
+            }
+            previewShape={previewShape}
+          />
+        </MobileGalleryBar>
       }
       panel={
         <div className="flex flex-col gap-6">

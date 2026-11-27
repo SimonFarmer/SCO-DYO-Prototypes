@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { FINISHING_GALLERY, REVIEW_GALLERY } from "@/data/dyo"
 import type { GalleryMedia } from "@/data/products"
 import { formatSize, sizeScale, stonePhotos, stoneShape } from "@/data/stones"
+import { MobileGalleryBar } from "@/flow/mobile-gallery-bar"
 import { ellaPreview } from "@/flow/ring-images"
 import { useIsDesktop } from "@/lib/hooks"
 import { useRingBuild } from "@/state/ring-build"
@@ -60,9 +61,20 @@ export function FlowStoneGallery({ shape, size, previewNote, mode = "preview" }:
 
   const isDesktop = useIsDesktop()
 
-  if (mode === "preview") return <PreviewStage hero={media[0]} label={previewLabel} />
-  if (isDesktop) return <SettingGallery media={media} previewLabel={previewLabel} />
-  return <ThumbnailGallery key={media[0].src} media={media} />
+  const gallery =
+    mode === "preview" ? (
+      <PreviewStage hero={media[0]} label={previewLabel} />
+    ) : isDesktop ? (
+      <SettingGallery media={media} previewLabel={previewLabel} />
+    ) : (
+      <ThumbnailGallery key={media[0].src} media={media} />
+    )
+  // Phones: the sticky preview bar once the gallery has scrolled away.
+  return (
+    <MobileGalleryBar image={media[0].src} imageAlt={media[0].alt} title={setting.name} specs={[setting.metal, previewLabel]}>
+      {gallery}
+    </MobileGalleryBar>
+  )
 }
 
 function PreviewStage({ hero, label }: { hero: GalleryMedia; label: string }) {
