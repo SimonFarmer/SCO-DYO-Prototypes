@@ -8,16 +8,19 @@ interface PdpStickyBarProps {
   title: string
   /** Short specs under the title, joined with “∙” (e.g. metal, carat). */
   specs: string[]
-  price: string
+  /** Desktop only; left out on the mobile-only bars. */
+  price?: string
   /** “View Gallery”: back to the gallery at the top of the page. */
   onViewGallery?: () => void
-  /** The bar shows once the top of this section reaches the top of the viewport (and below it). */
-  showFrom: RefObject<HTMLElement | null>
+  /** Desktop: the bar shows once the top of this section reaches the top of the viewport. Without it, mobile only. */
+  showFrom?: RefObject<HTMLElement | null>
   /**
    * Full flows, mobile: the section right after the gallery (the buy form). The bar shows once it reaches
    * the bar's place, i.e. once the gallery has scrolled away. Without it (or outside the flows) the bar is desktop only.
    */
   mobileFrom?: RefObject<HTMLElement | null>
+  /** Full flows, mobile: the gallery itself. The bar shows once its bottom passes the bar's place (instead of `mobileFrom`). */
+  mobileAfter?: RefObject<HTMLElement | null>
 }
 
 /**
@@ -27,10 +30,10 @@ interface PdpStickyBarProps {
  * site header (--header-offset). Publishes its visible height as `--sticky-bar-offset` so other
  * sticky elements (gallery, buy form) can stay clear of it.
  */
-export function PdpStickyBar({ image, imageAlt, title, specs, price, onViewGallery, showFrom, mobileFrom }: PdpStickyBarProps) {
+export function PdpStickyBar({ image, imageAlt, title, specs, price, onViewGallery, showFrom, mobileFrom, mobileAfter }: PdpStickyBarProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [shown, setShown] = useState(false)
-  const mobile = !!useFlow() && !!mobileFrom
+  const mobile = !!useFlow() && !!(mobileFrom || mobileAfter)
   // Mobile: height of the sticky stepper bar the bar sits under.
   const [stepperHeight, setStepperHeight] = useState(0)
 
@@ -41,14 +44,15 @@ export function PdpStickyBar({ image, imageAlt, title, specs, price, onViewGalle
     const update = () => {
       let next: boolean
       if (desktop.matches) {
-        const section = showFrom.current
+        const section = showFrom?.current
         next = !!section && section.getBoundingClientRect().top <= 0
       } else {
-        const after = mobile ? mobileFrom?.current : null
         const stepper = document.querySelector<HTMLElement>('[data-slot="stepper-bar"]')?.offsetHeight ?? 0
         setStepperHeight(stepper)
         const header = parseFloat(getComputedStyle(root).getPropertyValue("--header-offset")) || 0
-        next = !!after && after.getBoundingClientRect().top <= header + stepper
+        const after = mobile ? mobileFrom?.current : null
+        const gallery = mobile ? mobileAfter?.current : null
+        next = after ? after.getBoundingClientRect().top <= header + stepper : !!gallery && gallery.getBoundingClientRect().bottom <= header + stepper
       }
       if (next !== current) {
         current = next
@@ -65,7 +69,7 @@ export function PdpStickyBar({ image, imageAlt, title, specs, price, onViewGalle
       window.removeEventListener("resize", update)
       root.style.removeProperty("--sticky-bar-offset")
     }
-  }, [showFrom, mobileFrom, mobile])
+  }, [showFrom, mobileFrom, mobileAfter, mobile])
 
   const viewGallery =
     onViewGallery ??
@@ -111,7 +115,7 @@ export function PdpStickyBar({ image, imageAlt, title, specs, price, onViewGalle
           </button>
         </div>
       </div>
-      <p className="shrink-0 text-lg leading-[1.2] font-semibold tracking-tight text-primary max-lg:hidden">{price}</p>
+      {price && <p className="shrink-0 text-lg leading-[1.2] font-semibold tracking-tight text-primary max-lg:hidden">{price}</p>}
     </div>
   )
 }
