@@ -98,7 +98,7 @@ export function DyoStepper({
   showTotal = true,
   mobileTone = "secondary",
   contained = true,
-  columns = false,
+  alignToHero = false,
 }: {
   /** Position of the current step (1–3) in this journey's order. */
   current: StepNumber
@@ -113,16 +113,21 @@ export function DyoStepper({
   /** Cap the desktop bar's contents at the page max width (1680px); the bar itself stays full width. */
   contained?: boolean
   /**
-   * Desktop bar as Figma "Hero Fix" (8265:100777, the full-flow study's PLP): no "Design Your Ring" title, the three
-   * steps as equal full-width columns split by full-height dividers, small outlined numbers, "Your Setting".
+   * Full-flow study, under a PLP hero (settings and diamonds): no top border, and up to 1680px the first step is as
+   * wide as the hero's intro column so their dividers line up. Elsewhere the three steps are equal.
    */
-  columns?: boolean
+  alignToHero?: boolean
 }) {
   const { setting, stone, total, start: buildStart, chosen: built, ringSize } = useRingBuild()
   const navigate = useNavigate()
   const notInTest = useNotInTest()
   // Full flow: the name opens the chosen setting/stone, Remove starts the step over. In the tests View/Edit stay inert.
   const flow = useFlow()
+  // Full-flow study (Flows A and B): the desktop bar as Figma "Hero Fix" (8265:100777) on every page: no "Design
+  // Your Ring" title, the steps as full-width columns split by full-height dividers, small outlined numbers,
+  // "Your Setting".
+  const columns = !!flow?.study
+  const aligned = columns && alignToHero
   const [open, setOpen] = useState(false)
   // Full flow turned stone-first (the setting removed with a stone picked): pages still say which step they
   // are as in the setting-first order, so place that step in the stone-first order instead.
@@ -164,10 +169,10 @@ export function DyoStepper({
     <>
       {/* Desktop bar (Figma 7336:177134): title column, then three equal steps split by dividers,
           so the steps stretch with the viewport instead of sitting at fixed widths. */}
-      {/* Figma "Hero Fix" (columns): no top border, the bar sits straight under the hero. */}
-      {/* Its dividers and bottom stroke are one colour, #d5d5d2 (Figma 8265:100777 calls it --input; here that's
-          border-subtle, as the hero's divider above). */}
-      <div className={cn("hidden border-border-subtle bg-primary-foreground lg:block", columns ? "border-b" : "border-y")}>
+      {/* Figma "Hero Fix": under a hero there's no top border (the bar sits straight under it); elsewhere it keeps
+          one to part it from the header. Its dividers and strokes are one colour, #d5d5d2 (Figma 8265:100777 calls
+          it --input; here that's border-subtle, as the hero's divider above). */}
+      <div className={cn("hidden border-border-subtle bg-primary-foreground lg:block", aligned ? "border-b" : "border-y")}>
       <div className={cn("flex items-center gap-2 px-margin", !columns && "py-3", contained && PAGE_MAX)}>
         {!columns && <p className="w-card shrink-0 type-h5 text-primary">Design Your Ring</p>}
         <ol className={cn("flex min-w-0 flex-1", columns ? "items-stretch" : "items-center gap-4")}>
@@ -176,14 +181,15 @@ export function DyoStepper({
             const state = stateOf(step.n)
             return (
               <Fragment key={step.n}>
-                {step.n > 1 && <li aria-hidden className={cn("w-px self-stretch", columns ? "bg-border-subtle" : "bg-muted", columns && step.n === 2 && "max-2xl:-ml-px")} />}
+                {step.n > 1 && <li aria-hidden className={cn("w-px self-stretch", columns ? "bg-border-subtle" : "bg-muted", aligned && step.n === 2 && "max-2xl:-ml-px")} />}
                 <li
                   className={cn(
                     "flex min-w-0 flex-1 items-center gap-3",
-                    // Up to 1680px the first column is as wide as the hero's intro column (w-guided-intent, both
-                    // inside the same page gutters), so its divider lines up with the hero's and the three stay
-                    // close to equal; on wider screens that would leave it far narrower, so the three are equal.
-                    columns && "py-4 pr-4 pl-16 max-2xl:first:pl-12 max-2xl:first:w-guided-intent max-2xl:first:flex-none",
+                    columns && "py-4 pr-4 pl-16",
+                    // Under a hero, up to 1680px the first column is as wide as the hero's intro column
+                    // (w-guided-intent, both inside the same page gutters), so its divider lines up with the hero's
+                    // and the three stay close to equal; wider, that would leave it far narrower, so all are equal.
+                    aligned && "max-2xl:first:w-guided-intent max-2xl:first:flex-none max-2xl:first:pl-12",
                   )}
                   aria-current={state === "current" ? "step" : undefined}
                 >

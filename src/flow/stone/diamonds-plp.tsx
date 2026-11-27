@@ -312,8 +312,8 @@ export function FlowDiamondsPlp() {
       <DiamondGlpView
         listing={listing}
         catalog={catalog}
-        // Full-flow study: the step bar as the settings PLP's (Figma "Hero Fix": no title, full-width steps).
-        stepper={<DyoStepper current={2} mobileLabel="Stone" showTotal={false} mobileTone="plp" contained columns={!!flow?.study} />}
+        // Full-flow study: the step bar's first divider lines up with the hero's, as on the settings PLP.
+        stepper={<DyoStepper current={2} mobileLabel="Stone" showTotal={false} mobileTone="plp" contained alignToHero />}
         tileTitle={(d) => {
           const s = byId.get(d.id)
           return s ? stoneTitle(s) : d.id
