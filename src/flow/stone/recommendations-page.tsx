@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useNavigate } from "react-router"
 import { CaretLeftIcon } from "@phosphor-icons/react"
 import { SectionDivider, StepIntro } from "@/components/dyo/finishing-sections"
@@ -10,6 +10,7 @@ import { formatPrice } from "@/lib/format"
 import { useFlow, useStepNumber } from "@/flow/flow-context"
 import { FLOW_ROUTES } from "@/flow/flow-paths"
 import { cn } from "@/lib/utils"
+import { useStudyViewAll } from "@/flow/study/study"
 import { useRingBuild } from "@/state/ring-build"
 import { useFlowSelectDiamond } from "./use-flow-stone"
 import type { ShopBy } from "@/pages/test-2/variants"
@@ -211,8 +212,18 @@ function HeadlineTile({
   )
 }
 
+/**
+ * Each pick's headline (Test 2's tiles, Figma 8212:97435): the labels the full-flow study asks about (Biggest stone /
+ * Best balance / Top grades). `nearSize`: matched on size (carat first, or outside the budget) rather than the budget.
+ */
+export function pickHeadline(pick: StonePick, nearSize: boolean) {
+  if (pick.kind === "size") return `Biggest stone ${nearSize ? "near your preferred size" : "within your budget"}`
+  if (pick.kind === "value") return pick.stone.type === "gemstone" ? "Best balance of size, color and clarity" : "Best balance of size, sparkle and color"
+  return "Top grades, slightly smaller size"
+}
+
 /** Ring Summary (Figma 8038:26505): setting and stone lines, divider, ring total. */
-function RingSummaryBox({ stone }: { stone: StonePick["stone"] }) {
+export function RingSummaryBox({ stone }: { stone: StonePick["stone"] }) {
   const { setting: SETTING } = useRingBuild()
   const rows = [
     {
@@ -241,6 +252,8 @@ function RingSummaryBox({ stone }: { stone: StonePick["stone"] }) {
   )
 }
 
+const STUDY_PICK_ORDER: StonePick["kind"][] = ["size", "value", "quality"]
+
 /**
  * Full DYO flow · 2b Stone recommendations. A copy of Test 2's page (src/pages/test-2/recommendations.tsx,
  * re-synced with Lewis's Figma 8173:188141 version) so Test 2 stays untouched. Differences: priced with the
@@ -253,7 +266,13 @@ export function FlowStoneRecommendations() {
   const stoneStep = useStepNumber("stone")
   const flow = useFlow()
   const selectDiamond = useFlowSelectDiamond()
-  const { variant, prefs, sim, matching, picks, matchedBy, href } = useStonePrefs()
+  const viewAll = useStudyViewAll()
+  const { variant, prefs, sim, matching, picks: flowPicks, matchedBy, href } = useStonePrefs()
+  // The study's recommendations are the same in both flows: Test 2's order (biggest stone, best balance, top grades).
+  const picks = useMemo(
+    () => (flow?.study ? [...flowPicks].sort((a, b) => STUDY_PICK_ORDER.indexOf(a.kind) - STUDY_PICK_ORDER.indexOf(b.kind)) : flowPicks),
+    [flowPicks, flow?.study],
+  )
   const opensQuickview = flow?.config.t31 !== "A"
   const toPdp = (id: string) => {
     navigate(flow ? flow.path(FLOW_ROUTES.diamond(id)) : FLOW_ROUTES.diamond(id))
@@ -289,7 +308,15 @@ export function FlowStoneRecommendations() {
           <>
             <RadioGroup value={selected.kind} onValueChange={(v) => setSelectedKind(v as StonePick["kind"])} aria-label="Recommended stones" className="gap-2">
               {picks.map((p) => (
-                <PickTile key={p.kind} pick={p} selected={p.kind === selected.kind} onSelect={() => setSelectedKind(p.kind)} onDetails={() => (opensQuickview ? setQuickview(p) : toPdp(p.stone.id))} />
+                <PickTile
+                  key={p.kind}
+                  pick={p}
+                  selected={p.kind === selected.kind}
+                  onSelect={() => setSelectedKind(p.kind)}
+                  onDetails={() => (opensQuickview ? setQuickview(p) : toPdp(p.stone.id))}
+                  // The study's recommendations are the same in both flows: Test 2's headline tiles.
+                  headline={flow?.study ? pickHeadline(p, matchedBy === "size" || !sim.inBudget) : undefined}
+                />
               ))}
             </RadioGroup>
             <RingSummaryBox stone={selected.stone} />
@@ -307,7 +334,8 @@ export function FlowStoneRecommendations() {
           viewAllDisabled={sim.blocked}
           shape={prefs.shape}
           count={matching.length}
-          onViewAll={() => navigate(href("diamonds", { from: "recs" }))}
+          onViewAll={viewAll.guard(() => navigate(href("diamonds", { from: "recs" })))}
+          viewAllUnavailable={viewAll.unavailable}
         />
       </StoneStepLayout>
       {/* The Diamond GLP's Quickview, for diamonds and gemstones (ring total = this setting + the stone). Selecting

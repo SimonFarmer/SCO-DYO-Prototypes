@@ -14,6 +14,7 @@ import {
 } from "@/components/stones/preference-parts"
 import { StoneCtas } from "@/components/stones/stone-ctas"
 import { formatSize, gemById, shapesFor, snapSize, stoneShape, stoneType } from "@/data/stones"
+import { useStudyViewAll } from "@/flow/study/study"
 import { formatPrice } from "@/lib/format"
 import type { ShopBy } from "@/pages/test-2/variants"
 import { useFlowStonePrefs, type StonePrefs, type StoneSim } from "./simulator"
@@ -85,6 +86,7 @@ export function BudgetSection({ sim, update, interactive, withBand }: { sim: Sto
 export function FlowStonePreferences() {
   const navigate = useNavigate()
   const notInTest = useNotInTest()
+  const viewAll = useStudyViewAll()
   const { variant, prefs, sim, update, setSize, matching, prices, href, setting } = useFlowStonePrefs()
   const stoneStep = useStepNumber("stone")
   const { shopBy } = variant
@@ -153,7 +155,8 @@ export function FlowStonePreferences() {
           viewAllDisabled={sim.blocked}
           shape={prefs.shape}
           count={matching.length}
-          onViewAll={() => navigate(href("diamonds", { from: "prefs" }))}
+          onViewAll={viewAll.guard(() => navigate(href("diamonds", { from: "prefs" })))}
+          viewAllUnavailable={viewAll.unavailable}
         />
       </StoneStepLayout>
     </div>

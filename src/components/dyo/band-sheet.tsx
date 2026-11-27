@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { CircleDashedIcon, ProhibitIcon } from "@phosphor-icons/react"
-import { CROWN_PREVIEW_RING, WEDDING_BANDS } from "@/data/dyo"
+import { CROWN_PREVIEW_RING, bandsFor } from "@/data/dyo"
 import { useFlow } from "@/flow/flow-context"
 import { ellaPreview } from "@/flow/ring-images"
 import { useRingBuild } from "@/state/ring-build"
@@ -18,6 +18,7 @@ const NONE = "none"
 export function BandSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { bandId, setBandId, ringSize, setting, stone } = useRingBuild()
   const flow = useFlow()
+  const WEDDING_BANDS = bandsFor(flow?.study != null)
   const current = bandId ?? (flow ? NONE : WEDDING_BANDS[0].id)
   const [pending, setPending] = useState<string>(current)
   const ring = flow

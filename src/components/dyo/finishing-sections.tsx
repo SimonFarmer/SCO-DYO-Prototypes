@@ -8,7 +8,7 @@ import {
   FLOW_CROWNS,
   FLOW_CROWN_FROM_PRICE,
   ENGRAVING,
-  WEDDING_BANDS,
+  bandsFor,
   type EngravingStyle,
 } from "@/data/dyo"
 import { CompactSections, useSectionClass } from "@/components/stones/preference-parts"
@@ -202,6 +202,8 @@ export function PersonalizeSection({ onOpen }: { onOpen: (overlay: "engraving" |
 /** Matching wedding band upsell (Test 4 · B). Once a band is added, its engraving can be added. */
 export function WeddingBandSection({ onOpen }: { onOpen: (overlay: "band" | "band-engraving") => void }) {
   const { band, bandEngraving, bandEngravingStyle, setBandId, setBandEngraving } = useRingBuild()
+  const study = useFlow()?.study != null
+  const bands = bandsFor(study)
   return (
     <section className={useSectionClass()} aria-labelledby="band-heading">
       <SectionHeading id="band-heading">{"Matching Wedding Bands"}</SectionHeading>
@@ -218,8 +220,8 @@ export function WeddingBandSection({ onOpen }: { onOpen: (overlay: "band" | "ban
         ) : (
           <OptionBlock
             label="Add a Matching Wedding Band"
-            media={thumb(WEDDING_BANDS[0].image)}
-            description={fromPrice("Complete the set", BAND_FROM_PRICE)}
+            media={thumb(bands[0].image)}
+            description={fromPrice("Complete the set", study ? Math.min(...bands.map((b) => b.price)) : BAND_FROM_PRICE)}
             onClick={() => onOpen("band")}
           />
         )}
