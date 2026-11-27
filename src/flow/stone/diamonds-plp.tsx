@@ -5,7 +5,7 @@ import { FilterSection } from "@/components/diamond/diamond-filters"
 import { DiamondQuickview } from "@/components/diamond/diamond-quickview"
 import { BackBar } from "@/flow/back-bar"
 import { CatalogQuickview } from "@/flow/study/study-quickviews"
-import { useFlowStoneTypes } from "@/flow/study/study"
+import { useNotInTest } from "@/components/prototype/not-in-test"
 import {
   DIAMOND_COLOR_BANDS,
   DIAMOND_EXPLORE_WITH_PRESETS,
@@ -229,7 +229,7 @@ export function FlowDiamondsPlp() {
   const flow = useFlow()
   const selectDiamond = useFlowSelectDiamond()
   const opensQuickview = flow?.config.t31 !== "A"
-  const stoneTypes = useFlowStoneTypes()
+  const notInTest = useNotInTest()
   const toPdp = (id: string) => {
     navigate(flow ? flow.path(`${FLOW_ROUTES.diamond(id)}?from=plp`) : FLOW_ROUTES.diamond(id))
     window.scrollTo({ top: 0 })
@@ -261,14 +261,14 @@ export function FlowDiamondsPlp() {
 
   // A new type has its own price, size and grade scales (carats vs millimetres): keep the shapes, reset the rest.
   const switchType = (next: StoneTypeId) => {
-    // Natural diamonds, plus lab-grown in the study; the rest show "not part of this test".
-    if (!stoneTypes.carries(next)) return stoneTypes.notCarried()
+    // Natural and lab-grown diamonds in every flow; gemstones aren't part of the test.
+    if (next === "gemstone") return notInTest("Gemstones")
     const none = catalogFor(next, back, () => {}).noFilters as PlpFilters
     setType(next)
     setState((s) => ({ ...s, page: 1, filters: { ...none, shapes: s.filters.shapes } }))
   }
   // Full-flow study: the diamond filters' Learn More links open the 4Cs drawers.
-  const catalog = { ...catalogFor(type, back, switchType), education: !!flow?.study && type !== "gemstone", inertFilters: !!flow?.study && type !== "gemstone" }
+  const catalog = { ...catalogFor(type, back, switchType), education: !!flow?.study && type !== "gemstone", inertFilters: !!flow?.study && type !== "gemstone", hideInStore: true }
 
   const stones = useMemo(() => matching(state.filters, type).sort(SORTERS[state.sort]), [state.filters, state.sort, type])
   const byId = useMemo(() => new Map(stones.map((s) => [s.id, s])), [stones])

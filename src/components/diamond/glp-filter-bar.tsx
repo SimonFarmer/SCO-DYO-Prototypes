@@ -2,6 +2,7 @@ import { useState } from "react"
 import { CaretDownIcon, MapPinIcon, SlidersHorizontalIcon, XIcon } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { DiamondFilters } from "@/components/diamond/diamond-filters"
+import { useGlpCatalog } from "@/components/diamond/glp-catalog"
 import { RadioList } from "@/components/plp/filter-panel"
 import { Button } from "@/components/ui/button"
 import {
@@ -91,6 +92,7 @@ function SortMenu({ listing }: { listing: DiamondListing }) {
 
 /** Desktop filter bar (Figma 8032:112756): Hide Filters | Stone In-Store … Showing N of M | Sort by. */
 export function GlpDesktopBar({ listing, sidebarOpen, onToggleSidebar }: { listing: DiamondListing; sidebarOpen: boolean; onToggleSidebar: () => void }) {
+  const { hideInStore } = useGlpCatalog()
   return (
     <div className="hidden items-center gap-6 px-margin py-7 lg:flex">
       <button
@@ -103,9 +105,7 @@ export function GlpDesktopBar({ listing, sidebarOpen, onToggleSidebar }: { listi
         {sidebarOpen ? "Hide Filters" : "Show Filters"}
       </button>
       <span aria-hidden className="h-6 w-px shrink-0 bg-border-subtle" />
-      <div className="min-w-0 flex-1">
-        <InStoreChip listing={listing} />
-      </div>
+      <div className="min-w-0 flex-1">{!hideInStore && <InStoreChip listing={listing} />}</div>
       <ShowingCount listing={listing} />
       <span aria-hidden className="h-6 w-px shrink-0 bg-border-subtle" />
       <SortMenu listing={listing} />
@@ -115,10 +115,15 @@ export function GlpDesktopBar({ listing, sidebarOpen, onToggleSidebar }: { listi
 
 /** Mobile filter controls (Figma "Filter.Controls", 8032:112912): In-Store chip, rule, Filter & Sort and the count. */
 export function GlpMobileBar({ listing, onOpenFilters }: { listing: DiamondListing; onOpenFilters: () => void }) {
+  const { hideInStore } = useGlpCatalog()
   return (
     <div className="flex flex-col gap-4 px-margin pt-6 pb-8 lg:hidden">
-      <InStoreChip listing={listing} compact />
-      <hr className="border-border-subtle" />
+      {!hideInStore && (
+        <>
+          <InStoreChip listing={listing} compact />
+          <hr className="border-border-subtle" />
+        </>
+      )}
       <div className="flex items-center justify-between gap-4">
         <button type="button" onClick={onOpenFilters} className="flex cursor-pointer items-center gap-2 type-label-xs text-primary">
           <SlidersHorizontalIcon className="size-4" />

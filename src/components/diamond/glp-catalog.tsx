@@ -57,6 +57,8 @@ export interface GlpCatalog {
    * test" (full-flow study); otherwise the two closed notes.
    */
   inertFilters?: boolean
+  /** No "Stone · In-Store" fulfilment chip in the filter bar (the flows' diamond PLPs). */
+  hideInStore?: boolean
 }
 
 export const CUT_HINT: Record<string, string> = {
