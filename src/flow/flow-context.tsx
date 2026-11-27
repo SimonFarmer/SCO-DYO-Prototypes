@@ -451,6 +451,17 @@ export function useSiteNavigate() {
   }
 }
 
+/**
+ * Whether the site menu (the header's mega menu and Engagement Rings link, the mobile Shop menu) navigates. In the
+ * full-flow study only part 1 (Choose a Setting) starts from the homepage and browses; parts 2–4 start on a fixed
+ * setting, so the menu says it isn't part of the task. Everywhere else it always navigates.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useMenuNavigation() {
+  const flow = useFlow()
+  return !flow?.study || flow.study.part === 1
+}
+
 /** Maps an in-prototype path into the flow when inside it; identity elsewhere. */
 // eslint-disable-next-line react-refresh/only-export-components
 export function useFlowPath() {

@@ -8,7 +8,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react"
 import { useEffect, useRef, useState } from "react"
-import { useFlow, useSiteNavigate } from "@/flow/flow-context"
+import { useFlow, useMenuNavigation, useSiteNavigate } from "@/flow/flow-context"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { MegaMenu } from "@/components/site/mega-menu"
 import { useStickyOnIntent } from "@/components/site/use-sticky-on-intent"
@@ -82,6 +82,10 @@ export function SiteHeader({
   const flow = useFlow()
   const toIndex = flow ? () => siteNavigate("/") : () => notInTest("The homepage")
   const closeTimer = useRef<number | undefined>(undefined)
+  // Full-flow study parts 2–4: the menu is shown but doesn't open or navigate (not part of the task).
+  const menuOn = useMenuNavigation()
+  const menuLocked = navigation && !menuOn
+  const nav = navigation && !menuLocked
 
   const openMenu = () => {
     window.clearTimeout(closeTimer.current)
@@ -141,19 +145,20 @@ export function SiteHeader({
             <UtilityLink icon={ShoppingBagIcon} label="Bag" count={flow?.bagCount} />
           </div>
         </div>
-        <div className="relative" onMouseLeave={navigation ? closeMenu : undefined}>
+        <div className="relative" onMouseLeave={nav ? closeMenu : undefined}>
           <nav className="flex h-8 items-start justify-center gap-5">
             {NAV_LEVEL_1.map((item) => {
-              const live = navigation && item === "Engagement Rings"
+              const live = nav && item === "Engagement Rings"
               return (
                 <button
                   key={item}
                   type="button"
                   aria-expanded={live ? menuOpen : undefined}
                   aria-haspopup={live ? "true" : undefined}
-                  onMouseEnter={live ? openMenu : navigation ? closeMenu : undefined}
+                  onMouseEnter={live ? openMenu : nav ? closeMenu : undefined}
                   onFocus={live ? openMenu : undefined}
                   onClick={() => {
+                    if (menuLocked) return notInTest("Site navigation", "task")
                     if (!live) return notInTest(navigation ? item : "Site navigation")
                     setMenuOpen(false)
                     siteNavigate(PLP_PATH)

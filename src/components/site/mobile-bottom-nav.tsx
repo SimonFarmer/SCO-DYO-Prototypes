@@ -15,7 +15,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
-import { useFlow, useFlowPath } from "@/flow/flow-context"
+import { useFlow, useFlowPath, useMenuNavigation } from "@/flow/flow-context"
 import { Button } from "@/components/ui/button"
 import { NAV_LEVEL_1, NAV_SECTIONS, NAV_TOP_LINKS, STORE } from "@/data/plp"
 import { cn } from "@/lib/utils"
@@ -147,6 +147,13 @@ export function MobileBottomNav({
   const [screen, setScreen] = useState<Screen | null>(null)
   const close = () => setScreen(null)
   const open = useOpenNavLink(close)
+  // Full-flow study parts 2–4: Shop says it isn't part of the task instead of opening the menu.
+  const menuOn = useMenuNavigation()
+  const toggleShop = !menuOn
+    ? () => notInTest("Shop menu", "task")
+    : shopInTest
+      ? () => setScreen((s) => (s ? null : { level: 1 }))
+      : () => notInTest("Shop menu")
 
   // Lock the page behind the open menu.
   useEffect(() => {
@@ -263,7 +270,7 @@ export function MobileBottomNav({
               {label}
             </button>
           ))}
-          <ShopToggle open={!!screen} onClick={shopInTest ? () => setScreen((s) => (s ? null : { level: 1 })) : () => notInTest("Shop menu")} />
+          <ShopToggle open={!!screen} onClick={toggleShop} />
         </nav>
         {cta && (
           <div
@@ -278,7 +285,7 @@ export function MobileBottomNav({
             <Button className="flex-1" onClick={cta.onClick}>
               {cta.label}
             </Button>
-            <ShopToggle open={false} onClick={shopInTest ? () => setScreen({ level: 1 }) : () => notInTest("Shop menu")} className="w-10" />
+            <ShopToggle open={false} onClick={!menuOn ? () => notInTest("Shop menu", "task") : shopInTest ? () => setScreen({ level: 1 }) : () => notInTest("Shop menu")} className="w-10" />
           </div>
         )}
       </div>
