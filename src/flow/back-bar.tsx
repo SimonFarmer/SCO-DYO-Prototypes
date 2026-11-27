@@ -1,5 +1,6 @@
 import { CaretLeftIcon } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
+import { cn, PAGE_MAX } from "@/lib/utils"
 
 /**
  * Full flows: the way back from the listing, at the top of the hero (where the setting PLP has its
@@ -7,7 +8,18 @@ import { Button } from "@/components/ui/button"
  * that spot, so it stays at the top of the hero. Serves both ways in: "View all stones" on the stone step
  * (back to stone preferences) and on the recommendations (back to them); the study's Diamond PDP uses it too.
  */
-export function BackBar({ label, onBack }: { label: string; onBack: () => void }) {
+export function BackBar({ label, onBack, page }: { label: string; onBack: () => void; /** Diamond PDP: a 48px band, link centred, no hero to line up with and not sticky */ page?: boolean }) {
+  if (page)
+    return (
+      // Full-width band; the link sits where the flow's breadcrumb does (the page cap, 8px gutter + 16px inset).
+      <div className="bg-secondary">
+        <div className={cn(PAGE_MAX, "flex h-12 items-center px-6")}>
+          <Button variant="link" className="h-auto gap-1 px-0 py-0" onClick={onBack}>
+            <CaretLeftIcon /> {label}
+          </Button>
+        </div>
+      </div>
+    )
   return (
     <>
       {/* 8px of banner above the 40px bar puts the link where the setting PLP has its breadcrumb (20px under

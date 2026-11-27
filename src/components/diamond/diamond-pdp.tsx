@@ -72,12 +72,12 @@ export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false, s
         />
       )}
       <main>
+        {/* The study's way back: a full-width band (px-page lines the link up with the page cap on wide screens). */}
+        {backBar}
         {/* Gallery + buy form capped at 1680px (PAGE_MAX, as Test 2); the bands below use px-page. */}
         <div className={PAGE_MAX}>
         <div className="grid lg:grid-cols-[826fr_606fr] lg:gap-2">
-          {backBar ? (
-            <div className="lg:col-span-2">{backBar}</div>
-          ) : flow ? (
+          {backBar ? null : flow ? (
             flow.config.crumbs && (
               <Breadcrumb items={FLOW_CRUMBS.diamond(`/diamonds${storedPlpQuery(flow.base)}`, diamondName(diamond))} className="mx-2 bg-secondary" />
             )

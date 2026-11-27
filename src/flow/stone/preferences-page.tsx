@@ -31,6 +31,15 @@ export function stoneName(p: StonePrefs, shapeId: string) {
 }
 
 /**
+ * Size + Budget over budget (Test 2 C, full-flow study): the stone price in red and a red note under it. The note
+ * slot stays (null within budget) so it slides in and out.
+ */
+export function overBudget(sim: StoneSim, shopBy: ShopBy): { over?: boolean; note?: string | null } {
+  if (shopBy !== "both") return {}
+  return { over: sim.overBy !== null, note: sim.overBy ? `Selection is +${formatPrice(sim.overBy)} above your budget` : null }
+}
+
+/**
  * Size section: carats for diamonds, millimetres for gemstones (as shaneco.com). In the budget modes the
  * green band is the sizes in stock at the budget. Budget first holds the handle inside it (the chosen size
  * is kept in the URL, so widening the budget restores it); Size + Budget lets it go outside.
@@ -49,7 +58,14 @@ export function SizeSection({ sim, setSize, shopBy }: { sim: StoneSim; setSize: 
       {noBudgetStock ? (
         <StockNote>No stones at this budget. Try widening it.</StockNote>
       ) : (
-        <SizeLine scale={sim.sizes} value={sim.size} onChange={(v) => setSize(snapSize(v, sim.sizes))} largest={sim.largest} band={band} />
+        <SizeLine
+          scale={sim.sizes}
+          value={sim.size}
+          onChange={(v) => setSize(snapSize(v, sim.sizes))}
+          largest={sim.largest}
+          band={band}
+          over={sim.overBy !== null}
+        />
       )}
     </section>
   )
@@ -70,6 +86,7 @@ export function BudgetSection({ sim, update, interactive, withBand }: { sim: Sto
           hi={sim.budgetHi}
           onChange={interactive ? (budgetLo, budgetHi) => update({ budgetLo, budgetHi }) : undefined}
           band={withBand ? sim.sizeRing : null}
+          projection={sim.overBy ? sim.sizeRing?.lo : null}
         />
       )}
     </section>
@@ -132,10 +149,12 @@ export function FlowStonePreferences() {
               desc: (
                 <>
                   {stoneName(prefs, sim.scope.shape)} (<span className="font-semibold">{formatSize(sim.size, sim.sizes.unit)} ±</span>
-                  {shopBy === "both" && (sim.inBudget ? ", in your budget" : ", outside your budget")})
+                  {/* Over budget, the red line under the row says so (Test 2 C). */}
+                  {shopBy === "both" && !sim.overBy && (sim.inBudget ? ", in your budget" : ", outside your budget")})
                 </>
               ),
               price: stonePrice,
+              ...overBudget(sim, shopBy),
             },
           ]}
           total={total}

@@ -340,8 +340,8 @@ export function FlowStoneRecommendations() {
       </StoneStepLayout>
       {/* The Diamond GLP's Quickview, for diamonds and gemstones (ring total = this setting + the stone). Selecting
           there picks the stone and moves on, as the page's Select button does; the full details page is Test 3. */}
-      {/* Part 3 of the full-flow study: the pick's own Quickview, saying why it was picked (Figma 8287:14562). */}
-      {flow?.study?.part === 3 ? (
+      {/* Parts 2 and 3 of the full-flow study: the pick's own Quickview, saying why it was picked (Figma 8224:48249). */}
+      {flow?.study?.part === 2 || flow?.study?.part === 3 ? (
         <PickQuickview
           pick={quickview}
           nearSize={matchedBy === "size" || !sim.inBudget}

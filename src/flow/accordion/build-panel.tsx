@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useLocation, useNavigate } from "react-router"
 import { CaretDownIcon, CaretUpIcon } from "@phosphor-icons/react"
 import { PriceExplainedPopover } from "@/components/shared/price-explained-popover"
-import { CompactSections } from "@/components/stones/preference-parts"
+import { CompactSections, SlideNote } from "@/components/stones/preference-parts"
 import { useFlow } from "@/flow/flow-context"
 import { cn } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
@@ -55,6 +55,9 @@ export interface PriceLine {
   label: string
   desc: ReactNode
   value?: string
+  /** Over budget (Size + Budget, full-flow study): the price in red with `note` (red) under the line. Pass `note` as null to keep its slot. */
+  over?: boolean
+  note?: ReactNode
 }
 
 /** The price breakdown (Figma "Price Explained — Popover", 7549:388533): lines, a rule, the ring total. */
@@ -66,8 +69,9 @@ export function PriceBox({ lines, total, className }: { lines: PriceLine[]; tota
           <p className="type-label-xs">{l.label}</p>
           <div className="flex items-start gap-2 type-caption">
             <p className="min-w-0 flex-1 tracking-[0.12px]">{l.desc}</p>
-            {l.value && <p className="shrink-0 text-right font-semibold whitespace-nowrap">{l.value}</p>}
+            {l.value && <p className={cn("shrink-0 text-right font-semibold whitespace-nowrap", l.over && "text-tertiary")}>{l.value}</p>}
           </div>
+          {l.note !== undefined && <SlideNote>{l.note}</SlideNote>}
         </div>
       ))}
       <div className="h-px bg-input" />

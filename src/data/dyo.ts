@@ -185,6 +185,8 @@ export interface GalleryImage {
   badgePosition?: "top" | "bottom"
   /** "contain" for cut-out product shots on the tile background. */
   fit?: "cover" | "contain"
+  /** A "3D" stone: the frames of its turntable spin, shown in place of `src` (its resting frame). */
+  spin?: { frames: string[]; start: number }
 }
 
 /** Ring Review gallery (setting + stone), in Figma order. */

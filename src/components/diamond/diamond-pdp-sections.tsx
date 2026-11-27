@@ -1,5 +1,5 @@
 import { forwardRef } from "react"
-import { CaretRightIcon, PlayIcon } from "@phosphor-icons/react"
+import { CaretRightIcon } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { ProfileDiagram, TopDiagram } from "@/components/diamond/diamond-diagrams"
 import { SectionHeading } from "@/components/shared/section-heading"
@@ -23,9 +23,10 @@ export function DiamondGallery({ diamond }: { diamond: Diamond }) {
           type="button"
           aria-label="Play 360° video"
           onClick={() => notInTest("The 360° video")}
-          className="absolute top-1/2 left-1/2 flex size-14 -translate-1/2 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground"
+          // The stone step gallery's and the 3D diamond's play button: a white disc with the play icon.
+          className="absolute top-1/2 left-1/2 flex size-14 -translate-1/2 cursor-pointer items-center justify-center rounded-full bg-white"
         >
-          <PlayIcon className="size-4" />
+          <img src="/images/icons/play.svg" alt="" className="size-6" />
         </button>
       </div>
       <div className={tile}>

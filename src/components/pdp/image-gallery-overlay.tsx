@@ -2,6 +2,7 @@ import { useRef, useState } from "react"
 import { CaretLeft, CaretRight, MagnifyingGlassMinus, MagnifyingGlassPlus, Play, X } from "@phosphor-icons/react"
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { MediaNote } from "@/components/pdp/media-note"
+import { SpinViewer } from "@/components/shared/spin-viewer"
 import type { GalleryMedia } from "@/data/products"
 import { cn } from "@/lib/utils"
 
@@ -34,6 +35,8 @@ export function ImageGalleryOverlay({ media, open, onOpenChange, startIndex }: I
   /** Horizontal swipe on the stage (touch / pen): start x, and whether the gesture was a swipe. */
   const swipe = useRef<{ x: number; moved: boolean } | null>(null)
   const item = media[Math.min(index, media.length - 1)]
+  /** Videos and the 3D stone don't zoom: the 3D stone has its own play and drag instead. */
+  const still = item.kind !== "video" && !item.spin
 
   const go = (d: number) => {
     setZoomed(false)
@@ -72,7 +75,7 @@ export function ImageGalleryOverlay({ media, open, onOpenChange, startIndex }: I
               type="button"
               aria-label={zoomed ? "Zoom out" : "Zoom in"}
               aria-pressed={zoomed}
-              disabled={item.kind === "video"}
+              disabled={!still}
               onClick={() => setZoomed((z) => !z)}
               className="hidden size-8 items-center justify-center disabled:opacity-30 lg:flex"
             >
@@ -109,7 +112,7 @@ export function ImageGalleryOverlay({ media, open, onOpenChange, startIndex }: I
                   )}
                 >
                   <img src={m.src} alt="" className="size-full object-cover mix-blend-multiply" />
-                  {m.kind === "video" && (
+                  {(m.kind === "video" || m.spin) && (
                     <span className="absolute inset-0 flex items-center justify-center">
                       <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
                         <Play className="size-3" weight="fill" />
@@ -140,25 +143,29 @@ export function ImageGalleryOverlay({ media, open, onOpenChange, startIndex }: I
             onClick={(e) => {
               const swiped = swipe.current?.moved
               swipe.current = null
-              if (swiped || item.kind === "video") return
+              if (swiped || !still) return
               pan(e as unknown as React.PointerEvent)
               setZoomed((z) => !z)
             }}
             className={cn(
               "relative flex flex-1 touch-pan-y items-center justify-center overflow-hidden pt-20 pb-24 lg:py-0",
-              item.kind !== "video" && (zoomed ? "cursor-zoom-out" : "cursor-zoom-in"),
+              still && (zoomed ? "cursor-zoom-out" : "cursor-zoom-in"),
             )}
           >
             {/* A square box the size of the photo (full width on mobile, full height on desktop), so the note sits on the photo. */}
             <div ref={photoRef} className="relative aspect-square max-h-full w-full lg:h-full lg:w-auto lg:max-w-full">
-              <img
-                key={item.src}
-                src={item.src}
-                alt={item.alt}
-                draggable={false}
-                className="h-full max-h-full w-full object-contain mix-blend-multiply transition-transform duration-200 ease-out select-none"
-                style={{ transform: zoomed ? `scale(${ZOOM})` : undefined, transformOrigin: `${origin.x}% ${origin.y}%` }}
-              />
+              {item.spin ? (
+                <SpinViewer key={item.src} frames={item.spin.frames} start={item.spin.start} alt={item.alt} />
+              ) : (
+                <img
+                  key={item.src}
+                  src={item.src}
+                  alt={item.alt}
+                  draggable={false}
+                  className="h-full max-h-full w-full object-contain mix-blend-multiply transition-transform duration-200 ease-out select-none"
+                  style={{ transform: zoomed ? `scale(${ZOOM})` : undefined, transformOrigin: `${origin.x}% ${origin.y}%` }}
+                />
+              )}
               {item.badge && !zoomed && (
                 <MediaNote className="bottom-3 left-4 max-w-[calc(100%-2rem)] lg:bottom-6 lg:left-6">{item.badge}</MediaNote>
               )}
@@ -215,7 +222,7 @@ export function ImageGalleryOverlay({ media, open, onOpenChange, startIndex }: I
                   )}
                 >
                   <img src={m.src} alt="" className="size-full object-cover mix-blend-multiply" />
-                  {m.kind === "video" && (
+                  {(m.kind === "video" || m.spin) && (
                     <span className="absolute inset-0 flex items-center justify-center">
                       <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
                         <Play className="size-3" weight="fill" />

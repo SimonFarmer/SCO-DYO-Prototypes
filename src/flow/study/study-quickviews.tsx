@@ -12,10 +12,11 @@ import { SpecStrip, pickHeadline } from "@/flow/stone/recommendations-page"
 import { formatPrice } from "@/lib/format"
 
 /*
- * Full-flow study · part 3's Quickviews (Figma SCO Drop 3b – Customizer):
- *   PickQuickview     "From Recommendations" (8287:14562): a recommended pick's View details, with copy on why it was
- *                     picked (8279:100436 biggest stone, 8279:100437 best balance, 8279:100447 top grades)
- *   CatalogQuickview  the Diamond PLP's tile (8287:14466): the stone, its price and 4Cs, Select and View Full Details
+ * Full-flow study · Quickviews (Figma SCO Drop 3b – Customizer):
+ *   PickQuickview     parts 2 and 3, "From Recommendations" (8224:48249, 8287:14562): a recommended pick's View
+ *                     details, with copy on why it was picked (8312:58759: 8279:100436 biggest stone,
+ *                     8279:100437 best balance, 8279:100447 top grades)
+ *   CatalogQuickview  part 3, the Diamond PLP's tile (8287:14466): the stone, its price and 4Cs, Select and View Full Details
  * Desktop frames only: on phones each stacks the photo over the details, as the Test 3 Quickview does.
  */
 

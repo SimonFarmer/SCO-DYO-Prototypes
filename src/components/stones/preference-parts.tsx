@@ -486,7 +486,7 @@ export function PriceExplained({
  * A note that slides open (height and fade, 200ms) when it gets content and shut when it loses it, keeping
  * its last text while it closes, so what sits below moves smoothly rather than jumping.
  */
-function SlideNote({ children }: { children: ReactNode }) {
+export function SlideNote({ children }: { children: ReactNode }) {
   const open = children !== null && children !== false && children !== ""
   const [last, setLast] = useState<ReactNode>(children)
   if (open && children !== last) setLast(children)

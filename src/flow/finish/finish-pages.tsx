@@ -14,7 +14,7 @@ import {
 } from "@/components/dyo/finishing-sections"
 import { PageColumns } from "@/components/dyo/page-columns"
 import { PriceBreakdown } from "@/components/dyo/price-breakdown"
-import { ProductGallery } from "@/components/dyo/product-gallery"
+import { FlowProductGallery } from "@/flow/flow-product-gallery"
 import { RingSummary } from "@/components/dyo/ring-summary"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { Breadcrumb, type Crumb } from "@/components/site/breadcrumb"
@@ -132,7 +132,7 @@ function FlowFinishingTouches() {
 
   return (
     <FlowStep3Frame mobileLabel="Personalize" crumbs={FLOW_CRUMBS.finish}>
-      <PageColumns gallery={<ProductGallery images={gallery} />}>
+      <PageColumns gallery={<FlowProductGallery images={gallery} />}>
         <StepIntro eyebrow="Step 3 of 3 · Finishing Touches" title="Complete your ring" subtitle="Add the final details to make your ring yours." />
         <SectionDivider />
         <PersonalizeSection onOpen={open} />
@@ -164,7 +164,7 @@ function FlowRingReviewA() {
   const { review } = useFlowRingGallery()
   return (
     <FlowStep3Frame mobileLabel="Review" crumbs={FLOW_CRUMBS.review}>
-      <PageColumns gallery={<ProductGallery images={review} />}>
+      <PageColumns gallery={<FlowProductGallery images={review} />}>
         <StepIntro eyebrow="Step 3 of 3 · Finishing Touches" title="Review Your Ring" subtitle="Add the final details to make your ring yours." />
         <SectionDivider />
         <RingSizeSection onOpen={open} />
@@ -200,7 +200,7 @@ export function FlowRingReviewB() {
 
   return (
     <FlowStep3Frame mobileLabel="Review" crumbs={FLOW_CRUMBS.review}>
-      <PageColumns gallery={<ProductGallery images={review} />}>
+      <PageColumns gallery={<FlowProductGallery images={review} />}>
         <StepIntro eyebrow="Step 3 of 3 · Finishing Touches" title="Review Your Ring" onBack={() => go(FLOW_ROUTES.finish)} />
         <SectionDivider />
         <section aria-label="Ring summary">

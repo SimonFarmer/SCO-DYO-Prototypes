@@ -43,8 +43,9 @@ export function InlineRecommendations({
   viewAll: ReactNode
 }) {
   const [quickview, setQuickview] = useState<StonePick | null>(null)
-  // Part 3: the pick's own Quickview, saying why it was picked (Figma 8287:14562).
-  const whyPicked = useFlow()?.study?.part === 3
+  // Parts 2 and 3: the pick's own Quickview, saying why it was picked (Figma 8224:48249).
+  const part = useFlow()?.study?.part
+  const whyPicked = part === 2 || part === 3
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-200">
       <div className="flex flex-col gap-4.5">

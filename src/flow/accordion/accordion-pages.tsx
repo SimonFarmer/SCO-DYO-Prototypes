@@ -8,7 +8,7 @@ import {
   WeddingBandSection,
   useFinishingOverlays,
 } from "@/components/dyo/finishing-sections"
-import { ProductGallery } from "@/components/dyo/product-gallery"
+import { FlowProductGallery } from "@/flow/flow-product-gallery"
 import { DyoAssurances, MetalSelector } from "@/components/pdp/setting-buy-form"
 import { SettingGallery } from "@/components/pdp/setting-gallery"
 import { StonePreviewMenu } from "@/components/pdp/stone-preview-menu"
@@ -28,7 +28,7 @@ import { useFlow } from "@/flow/flow-context"
 import { FLOW_CRUMBS, FLOW_ROUTES } from "@/flow/flow-paths"
 import { useFlowRingGallery } from "@/flow/ring-images"
 import { FlowStoneGallery } from "@/flow/stone/flow-stone-gallery"
-import { BudgetSection, SizeSection, stoneName } from "@/flow/stone/preferences-page"
+import { BudgetSection, overBudget, SizeSection, stoneName } from "@/flow/stone/preferences-page"
 import { Basis, picksHeading } from "@/flow/stone/recommendations-page"
 import { firstStoneQuery, flowStonePath, effectiveShape, useFlowStonePrefs } from "@/flow/stone/simulator"
 import { useFlowSelectDiamond } from "@/flow/stone/use-flow-stone"
@@ -278,6 +278,7 @@ export function AccordionStone() {
                   </>
                 ),
                 value: stonePrice,
+                ...overBudget(sim, shopBy),
               },
             ]}
             total={ringTotal}
@@ -426,7 +427,7 @@ export function AccordionFinish() {
   return (
     <AccordionFrame
       // Test 4's gallery pads 8px all round; pulled up so it starts right under the breadcrumb.
-      gallery={<div className="lg:-mt-2"><ProductGallery images={gallery} /></div>}
+      gallery={<div className="lg:-mt-2"><FlowProductGallery images={gallery} /></div>}
       panel={
         <div className="flex flex-col gap-6">
           {/* Figma 7549:388638: ring size first, then personalization and the wedding band. */}
@@ -462,7 +463,7 @@ export function AccordionReview() {
 
   return (
     <AccordionFrame
-      gallery={<div className="lg:-mt-2"><ProductGallery images={gallery} /></div>}
+      gallery={<div className="lg:-mt-2"><FlowProductGallery images={gallery} /></div>}
       panel={
         <div className="flex flex-col gap-6">
           {/* Figma 7549:392444: every step closed, the price box, then Add Ring to Bag. */}
