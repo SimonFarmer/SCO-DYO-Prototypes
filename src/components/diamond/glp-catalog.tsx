@@ -50,6 +50,8 @@ export interface GlpCatalog {
   chips: (f: DiamondFilterState) => AppliedChip[]
   /** Extra sidebar section after Stone Shape (Test 2: the gemstone kinds) */
   extraFilters?: (value: DiamondFilterState, onChange: (f: DiamondFilterState) => void) => ReactNode
+  /** Carat, Cut, Color and Clarity "Learn More" open the 4Cs drawers (full-flow study); otherwise "not part of this test". */
+  education?: boolean
 }
 
 export const CUT_HINT: Record<string, string> = {

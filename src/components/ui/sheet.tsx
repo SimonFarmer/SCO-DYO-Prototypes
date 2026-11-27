@@ -39,14 +39,17 @@ function SheetContent({
   children,
   side = "right",
   showCloseButton = true,
+  nestedOverlay = false,
   ...props
 }: SheetPrimitive.Popup.Props & {
   side?: "top" | "right" | "bottom" | "left"
   showCloseButton?: boolean
+  /** Dim the page even when this sheet opens over another one (Base UI hides nested backdrops by default). */
+  nestedOverlay?: boolean
 }) {
   return (
     <SheetPortal>
-      <SheetOverlay />
+      <SheetOverlay forceRender={nestedOverlay} />
       <SheetPrimitive.Popup
         data-slot="sheet-content"
         data-side={side}
