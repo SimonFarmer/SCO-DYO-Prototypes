@@ -4,7 +4,9 @@ import { useNotInTest } from "@/components/prototype/not-in-test"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet"
-import { stoneImage, stoneSpecs, stoneTitle, type StonePick } from "@/data/stones"
+import { DiamondQuickview } from "@/components/diamond/diamond-quickview"
+import { stoneImage, stoneSpecs, stoneTitle, toQuickviewDiamond, type StonePick } from "@/data/stones"
+import { PickTile, RingSummaryBox, pickHeadline } from "@/flow/stone/recommendations-page"
 import { formatPrice } from "@/lib/format"
 import { useIsDesktop } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
@@ -69,6 +71,10 @@ export function RecommendationsSheet({
   onEditPreferences,
   onSelect,
   onViewAll,
+  viewAllUnavailable = false,
+  viewAllLabel = "View all stones",
+  aligned = false,
+  onFullDetails,
 }: {
   open: boolean
   /** Closing (the X, the scrim, Esc) returns to the stone preferences. */
@@ -83,17 +89,28 @@ export function RecommendationsSheet({
   onEditPreferences: () => void
   onSelect: (pick: StonePick) => void
   onViewAll: () => void
+  /** Shown as disabled but still clickable, so its click can say why (the full-flow study's part 2). */
+  viewAllUnavailable?: boolean
+  viewAllLabel?: string
+  /**
+   * The full-flow study: the recommendations match the step-by-step flow's (Lucid: "the same in both flows"): Test 2's
+   * headline tiles with the first pick selected, the Ring Summary, and View details opening the Quickview.
+   */
+  aligned?: boolean
+  /** Aligned Quickview's Full Details: the Diamond PDP. */
+  onFullDetails?: (pick: StonePick) => void
 }) {
   const isDesktop = useIsDesktop()
   const notInTest = useNotInTest()
-  const [chosen, setChosen] = useState<StonePick["kind"] | null>(null)
+  const [chosen, setChosen] = useState<StonePick["kind"] | null>(aligned && open ? (picks[0]?.kind ?? null) : null)
   const [details, setDetails] = useState<StonePick["kind"] | null>(null)
-  // A fresh visit starts on the list with nothing chosen.
+  const [quickview, setQuickview] = useState<StonePick | null>(null)
+  // A fresh visit starts on the list with nothing chosen (aligned: the first pick, as the step-by-step page).
   const [wasOpen, setWasOpen] = useState(open)
   if (open !== wasOpen) {
     setWasOpen(open)
     if (open) {
-      setChosen(null)
+      setChosen(aligned ? (picks[0]?.kind ?? null) : null)
       setDetails(null)
     }
   }
@@ -131,7 +148,23 @@ export function RecommendationsSheet({
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {shown ? (
+          {aligned && picks.length ? (
+            <div className="flex flex-col gap-4 p-6 max-lg:px-margin">
+              <RadioGroup value={selected?.kind ?? null} onValueChange={(v) => setChosen(v as StonePick["kind"])} aria-label="Recommended stones" className="gap-2">
+                {picks.map((p) => (
+                  <PickTile
+                    key={p.kind}
+                    pick={p}
+                    selected={p.kind === selected?.kind}
+                    onSelect={() => setChosen(p.kind)}
+                    onDetails={() => setQuickview(p)}
+                    headline={pickHeadline(p, bySize)}
+                  />
+                ))}
+              </RadioGroup>
+              {selected && <RingSummaryBox stone={selected.stone} />}
+            </div>
+          ) : shown ? (
             // A pick's details (Figma 7541:363857).
             <div key={shown.kind} className="flex flex-col animate-in fade-in duration-200">
               {/* The whole stone (Figma 7541:363860): the photo contained, the same photo blurred behind to fill the band. */}
@@ -219,11 +252,34 @@ export function RecommendationsSheet({
           <Button className="w-full" disabled={!selected} onClick={() => selected && onSelect(selected)}>
             Select this Diamond
           </Button>
-          <Button variant="outline" className="w-full" onClick={onViewAll}>
-            View all stones ({stoneCount.toLocaleString("en-US")})
+          <Button
+            variant="outline"
+            className={cn("w-full", viewAllUnavailable && "opacity-50")}
+            aria-disabled={viewAllUnavailable || undefined}
+            onClick={onViewAll}
+          >
+            {viewAllLabel} ({stoneCount.toLocaleString("en-US")})
           </Button>
         </div>
       </SheetContent>
+      {aligned && (
+        // The step-by-step flow's Quickview (flow t31 B); Select there picks the stone as the footer does.
+        <DiamondQuickview
+          diamond={quickview && toQuickviewDiamond(quickview.stone)}
+          title={quickview ? stoneTitle(quickview.stone) : undefined}
+          onOpenChange={(o) => !o && setQuickview(null)}
+          onSelect={() => {
+            const picked = quickview
+            setQuickview(null)
+            if (picked) onSelect(picked)
+          }}
+          onViewDetails={() => {
+            const picked = quickview
+            setQuickview(null)
+            if (picked) onFullDetails?.(picked)
+          }}
+        />
+      )}
     </Sheet>
   )
 }

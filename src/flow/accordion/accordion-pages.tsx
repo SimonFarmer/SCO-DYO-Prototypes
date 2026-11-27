@@ -31,6 +31,7 @@ import { FlowStoneGallery } from "@/flow/stone/flow-stone-gallery"
 import { BudgetSection, SizeSection, stoneName } from "@/flow/stone/preferences-page"
 import { firstStoneQuery, flowStonePath, effectiveShape, useFlowStonePrefs } from "@/flow/stone/simulator"
 import { useFlowSelectDiamond } from "@/flow/stone/use-flow-stone"
+import { settingTaskEnd, useStudyAddToBag, useStudyViewAll } from "@/flow/study/study"
 import { formatPrice } from "@/lib/format"
 import { useElementHeight } from "@/lib/hooks"
 import { cn, PAGE_MAX } from "@/lib/utils"
@@ -129,7 +130,13 @@ export function AccordionSetting() {
   const media = galleryFor(setting, metal, previewShape)
   const total = formatPrice(built.price + (stoneFirst ? stone.price : 0))
 
-  const next = () => (setSettingChosen(true), stoneFirst ? go("/finish") : go(flowStonePath("preferences", firstStoneQuery(flow?.config.t2 ?? "B", previewShape, built.price))))
+  const next = () => {
+    // Study part 1 ends here: the accordion's "Continue to Stone" is its "Select this Setting".
+    if (flow?.study) return flow.study.endTask(settingTaskEnd(setting, metal))
+    setSettingChosen(true)
+    if (stoneFirst) go("/finish")
+    else go(flowStonePath("preferences", firstStoneQuery(flow?.config.t2 ?? "B", previewShape, built.price)))
+  }
 
   return (
     <AccordionFrame
@@ -194,11 +201,13 @@ const PICK_ORDER: StonePick["kind"][] = ["size", "value", "quality"]
  * between them keeps the page mounted and the modal slides in and out over it.
  */
 export function AccordionStone() {
+  const flow = useFlow()
   const navigate = useNavigate()
   const recommendations = useLocation().pathname.endsWith("/recommendations")
   const notInTest = useNotInTest()
   const selectDiamond = useFlowSelectDiamond()
   const { variant, prefs, sim, update, setSize, matching, prices, picks: flowPicks, matchedBy, href, setting } = useFlowStonePrefs()
+  const viewAll = useStudyViewAll()
   const { shopBy } = variant
   const set = setting.price
   const r5 = (n: number) => Math.round(n / 5) * 5
@@ -267,7 +276,13 @@ export function AccordionStone() {
               <Button className="w-full" onClick={() => navigate(href("recommendations"))} disabled={sim.blocked || matching.length === 0}>
                 View Recommended Stones
               </Button>
-              <Button variant="outline" className="w-full" onClick={() => navigate(href("diamonds", { from: "prefs" }))} disabled={sim.blocked}>
+              <Button
+                variant="outline"
+                className={cn("w-full", viewAll.unavailable && "opacity-50")}
+                aria-disabled={viewAll.unavailable || undefined}
+                onClick={viewAll.guard(() => navigate(href("diamonds", { from: "prefs" })))}
+                disabled={sim.blocked}
+              >
                 View all {shapeLabel} stones ({matching.length.toLocaleString("en-US")})
               </Button>
             </div>
@@ -284,7 +299,15 @@ export function AccordionStone() {
             stoneCount={matching.length}
             onEditPreferences={() => navigate(href("preferences"))}
             onSelect={(p) => selectDiamond(toQuickviewDiamond(p.stone))}
-            onViewAll={() => navigate(href("diamonds", { from: "recs" }))}
+            onViewAll={viewAll.guard(() => navigate(href("diamonds", { from: "recs" })))}
+            viewAllUnavailable={viewAll.unavailable}
+            // The study names the shape, as the panel's button does (and the Part 3 guide quotes it).
+            viewAllLabel={flow?.study ? `View all ${shapeLabel} stones` : undefined}
+            aligned={flow?.study != null}
+            onFullDetails={(p) => {
+              navigate(flow ? flow.path(FLOW_ROUTES.diamond(p.stone.id)) : FLOW_ROUTES.diamond(p.stone.id))
+              window.scrollTo({ top: 0 })
+            }}
           />
         </div>
       }
@@ -379,6 +402,7 @@ export function AccordionFinish() {
 export function AccordionReview() {
   const flow = useFlow()
   const go = useGo()
+  const addToBag = useStudyAddToBag(() => go(FLOW_ROUTES.added))
   const { ringSize } = useRingBuild()
   const { lines, total } = useRingLines()
   // Same gallery as Finishing Touches.
@@ -401,7 +425,7 @@ export function AccordionReview() {
               // Figma 7549:394197: Add Ring to Bag, then Save and Drop a Hint, then the chat link centred.
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <Button className="w-full" onClick={() => go(FLOW_ROUTES.added)}>
+                  <Button className="w-full" onClick={addToBag}>
                     Add Ring to Bag
                   </Button>
                   <SaveAndHint />

@@ -2,7 +2,18 @@ import { Link } from "react-router"
 import { useRingBuild } from "@/state/ring-build"
 import { SETTING_PDP_VARIANTS } from "./test-1/variants"
 
+/** The full-flow study's four tasks (Lucid "Full-flow test plan for Nov 30"); each link starts its task afresh. */
+const STUDY_PARTS = ["Part 1: Choose a Setting", "Part 2: Preview a Stone and Pick from Recommendations", "Part 3: Browse All Diamonds", "Part 4: Personalize and Finish your Ring"]
+
 const PROTOTYPES = [
+  {
+    test: "Full-Flow Study · Flow A: Step by Step",
+    links: STUDY_PARTS.map((label, i) => ({ label, to: `/study/a/part/${i + 1}` })),
+  },
+  {
+    test: "Full-Flow Study · Flow B: Accordion",
+    links: STUDY_PARTS.map((label, i) => ({ label, to: `/study/b/part/${i + 1}` })),
+  },
   {
     test: "Full DYO Flow · Step by Step",
     links: [

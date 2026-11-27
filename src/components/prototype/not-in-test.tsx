@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react"
 import { InfoIcon } from "@phosphor-icons/react"
 
-type Notify = (what?: string) => void
+/** `scope`: "test" (the unmoderated tests) or "task" (the full-flow study's tasks). */
+type Notify = (what?: string, scope?: "test" | "task") => void
 
 const NotInTestContext = createContext<Notify>(() => {})
 
@@ -13,9 +14,9 @@ export function NotInTestProvider({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState<string | null>(null)
   const timer = useRef<number | undefined>(undefined)
 
-  const notify = useCallback<Notify>((what) => {
+  const notify = useCallback<Notify>((what, scope = "test") => {
     window.clearTimeout(timer.current)
-    setMessage(what ? `${what} isn’t part of this test` : "This isn’t part of this test")
+    setMessage(what ? `${what} isn’t part of this ${scope}` : `This isn’t part of this ${scope}`)
     timer.current = window.setTimeout(() => setMessage(null), 2400)
   }, [])
 

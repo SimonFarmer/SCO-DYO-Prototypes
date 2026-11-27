@@ -94,7 +94,7 @@ interface RingBuild extends BuildState {
  * A and B are Test 4's variants; T3 is Test 3's own build, so a stone picked there never shows up in Test 4.
  * FLOW is the full DYO flow (/flow), kept apart from every unmoderated test.
  */
-type BuildKey = "A" | "B" | "T3" | "FLOW" | "FLOWA"
+type BuildKey = "A" | "B" | "T3" | "FLOW" | "FLOWA" | "STUDYA" | "STUDYB"
 
 /**
  * Starting state per build, following the Figma frames:
@@ -107,6 +107,9 @@ const INITIAL: Record<BuildKey, BuildState> = {
   FLOW: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null, start: null },
   /** The accordion steps flow (/flow-accordion): its own build, apart from /flow. */
   FLOWA: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null, start: null },
+  /** The full-flow study's two flows (/study/a, /study/b): their own builds, set up by each task's entry link. */
+  STUDYA: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null, start: null },
+  STUDYB: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null, start: null },
 }
 
 const BUILD_KEYS = Object.keys(INITIAL) as BuildKey[]
@@ -131,6 +134,8 @@ function flowSetting(settingId: string | null | undefined, metal: MetalId | null
  * older ?variant=B links still resolve to B.
  */
 function buildKeyFor(pathname: string, search: string): BuildKey {
+  if (/^\/study\/a(\/|$)/.test(pathname)) return "STUDYA"
+  if (/^\/study\/b(\/|$)/.test(pathname)) return "STUDYB"
   if (/^\/flow-accordion(\/|$)/.test(pathname)) return "FLOWA"
   if (/^\/flow(\/|$)/.test(pathname)) return "FLOW"
   if (/^\/test-3/.test(pathname)) return "T3"
@@ -175,7 +180,7 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
   const value = useMemo<RingBuild>(() => {
     const update = (patch: Partial<BuildState>) => setBuilds((b) => ({ ...b, [key]: { ...b[key], ...patch } }))
     const stone = state.stone ?? STONE
-    const isFlow = key === "FLOW" || key === "FLOWA"
+    const isFlow = key === "FLOW" || key === "FLOWA" || key === "STUDYA" || key === "STUDYB"
     const pickedCrown = CROWNS.find((c) => c.id === state.crownId) ?? null
     // Full flows: the crown is sized to the shopper's own stone.
     const crown = pickedCrown && isFlow ? { ...pickedCrown, holds: crownHolds(stone) } : pickedCrown

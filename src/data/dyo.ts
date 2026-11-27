@@ -156,6 +156,11 @@ export const WEDDING_BANDS: WeddingBand[] = [
 
 export const BAND_FROM_PRICE = Math.min(...WEDDING_BANDS.map((b) => b.price))
 
+/** The full-flow study's part 4 offers five matching bands (Lucid prototype notes), across the price range. */
+const STUDY_BAND_IDS = ["willow", "lace", "augusta", "louisa", "delicate"]
+/** The bands on offer: the study's five, otherwise every band. */
+export const bandsFor = (study: boolean) => (study ? WEDDING_BANDS.filter((b) => STUDY_BAND_IDS.includes(b.id)) : WEDDING_BANDS)
+
 export const ENGRAVING = {
   price: 60,
   maxLength: 30,

@@ -4,7 +4,9 @@ import { HeartStraightIcon } from "@phosphor-icons/react"
 import { diamondName } from "@/data/diamonds"
 import { useRingBuild } from "@/state/ring-build"
 import { findFlowDiamond } from "./stone/find-diamond"
+import { useNotInTest } from "@/components/prototype/not-in-test"
 import { FlowExitModal } from "./exit-modal"
+import { CatalogGuideModal, TaskEndModal, type TaskEnd } from "./study/study-modals"
 
 /**
  * Full DYO flow (Test 5, moderated). Every flow page lives under /flow, so the unmoderated tests
@@ -20,8 +22,25 @@ export const FLOW_BASE = "/flow"
  */
 export const ACCORDION_BASE = "/flow-accordion"
 
-const BASES = [ACCORDION_BASE, FLOW_BASE] as const
+/**
+ * The full-flow A/B study (Lucid "Full-flow test plan for Nov 30"): the same two flows split into four tasks, each
+ * with its own start and an end-of-task modal. Flow A is the step-by-step flow, Flow B the accordion. Their own
+ * bases (and builds), so /flow and /flow-accordion stay the linked-up full flows.
+ */
+export const STUDY_A_BASE = "/study/a"
+export const STUDY_B_BASE = "/study/b"
+
+const BASES = [ACCORDION_BASE, STUDY_A_BASE, STUDY_B_BASE, FLOW_BASE] as const
 export type FlowBase = (typeof BASES)[number]
+
+/** The bases that use the accordion step pages. */
+// eslint-disable-next-line react-refresh/only-export-components
+export const isAccordionBase = (base: FlowBase) => base === ACCORDION_BASE || base === STUDY_B_BASE
+
+/** Study bases: which flow of the A/B study. */
+const STUDY_FLOW: Partial<Record<FlowBase, StudyFlow>> = { [STUDY_A_BASE]: "a", [STUDY_B_BASE]: "b" }
+export type StudyFlow = "a" | "b"
+export type StudyPart = 1 | 2 | 3 | 4
 
 /**
  * Which variant of each unmoderated test the flow uses. The defaults follow each test's hypothesis
@@ -45,6 +64,13 @@ export interface FlowConfig {
 
 export const FLOW_DEFAULTS: FlowConfig = { t1: "B", t2: "B", t31: "B", t32: "A", t4: "B", crumbs: true }
 
+/**
+ * The study's stone preview per flow (Lucid): Flow A carat first (Test 2 A), Flow B size + budget (Test 2 C).
+ * The other tests keep the full flows' defaults.
+ */
+const BASE_DEFAULTS: Partial<Record<FlowBase, Partial<FlowConfig>>> = { [STUDY_A_BASE]: { t2: "A" }, [STUDY_B_BASE]: { t2: "C" } }
+const defaultsFor = (base: FlowBase): FlowConfig => ({ ...FLOW_DEFAULTS, ...BASE_DEFAULTS[base] })
+
 const ALLOWED: Record<Exclude<keyof FlowConfig, "crumbs">, readonly string[]> = {
   t1: ["A", "B", "C", "D", "E", "F"],
   t2: ["A", "B", "C"],
@@ -59,9 +85,9 @@ const storageKey = (base: FlowBase) => (base === FLOW_BASE ? "dyo-flow-config" :
 function load(base: FlowBase): FlowConfig {
   try {
     const raw = sessionStorage.getItem(storageKey(base))
-    return raw ? { ...FLOW_DEFAULTS, ...JSON.parse(raw) } : FLOW_DEFAULTS
+    return raw ? { ...defaultsFor(base), ...JSON.parse(raw) } : defaultsFor(base)
   } catch {
-    return FLOW_DEFAULTS
+    return defaultsFor(base)
   }
 }
 
@@ -100,6 +126,30 @@ interface FlowState {
   removeStep: (step: "setting" | "stone") => void
   /** Items in the bag, shown on the header's Bag icon: 1 on the end screen (the ring just added), otherwise 0. */
   bagCount: number
+  /** The full-flow study's task (the /study bases only); null in the full flows. */
+  study: StudyState | null
+}
+
+export interface StudyState {
+  flow: StudyFlow
+  part: StudyPart
+  /** Starts a part (its entry link): stored so a reload stays in the same task. */
+  setPart: (part: StudyPart) => void
+  /** Ends the task: the end-of-task modal with what the participant chose. */
+  endTask: (end: TaskEnd) => void
+  /** Part 3: Select on the recommendations points to the full catalog instead (the View All button's label). */
+  guideToCatalog: (viewAllLabel: string) => void
+}
+
+const partKey = (base: FlowBase) => `dyo-study-part${base}`
+
+function loadPart(base: FlowBase): StudyPart {
+  try {
+    const n = Number(sessionStorage.getItem(partKey(base)))
+    return n >= 1 && n <= 4 ? (n as StudyPart) : 1
+  } catch {
+    return 1
+  }
 }
 
 /** Pages past step 1, where leaving would lose the build (stone step, GLP, diamond, finishing, review). */
@@ -139,7 +189,7 @@ const toFlowPathIn = (base: FlowBase) => (to: string) => {
 function flowPageTitle(base: FlowBase, page: string, settingName: string): string | null {
   if (page === "/" || page === "/shop") return "Shane Co. | Engagement Rings, Diamonds & Fine Jewelry"
   // The accordion's steps are one product page (its breadcrumb ends on the setting), so the title is the setting's.
-  if (base === ACCORDION_BASE && /^\/(setting|stone|finish|review)(\/|$)/.test(page)) return settingName
+  if (isAccordionBase(base) && /^\/(setting|stone|finish|review)(\/|$)/.test(page)) return settingName
   if (page === "/setting") return settingName
   if (page === "/stone") return "Find Your Stone"
   if (page === "/stone/recommendations") return "Stone Recommendations"
@@ -161,6 +211,11 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
   const [pending, setPending] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const savedTimer = useRef<number | undefined>(undefined)
+  const notInTest = useNotInTest()
+  const studyFlow = STUDY_FLOW[base] ?? null
+  const [part, setPartState] = useState<StudyPart>(() => loadPart(base))
+  const [ended, setEnded] = useState<TaskEnd | null>(null)
+  const [guide, setGuide] = useState<string | null>(null)
 
   useEffect(() => {
     setConfig((c) => {
@@ -199,8 +254,25 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
   const inBuild = BUILD_PAGES.test(page)
   const leave = useCallback((to: string) => (inBuild ? setPending(toFlowPath(to)) : go(to)), [inBuild, go, toFlowPath])
 
+  /**
+   * Study parts 2–4 start on a fixed setting (and part 4 on a fixed diamond): changing them isn't part of the task
+   * (Lucid: its confirmation modals aren't designed yet), so the stepper and summary links say so instead.
+   */
+  const lockedInTask = useCallback(
+    (step: "setting" | "stone") => {
+      if (!studyFlow || part === 1) return false
+      if (step === "setting" || part === 4) {
+        notInTest(step === "setting" ? "Changing the setting" : "Changing the diamond", "task")
+        return true
+      }
+      return false
+    },
+    [studyFlow, part, notInTest],
+  )
+
   const goToStep = useCallback<FlowState["goToStep"]>(
     (step, mode) => {
+      if (lockedInTask(step)) return
       if (step === "setting") return go("/setting")
       if (mode === "view") return go(`/diamond/${stone.id}`)
       let query = ""
@@ -212,7 +284,7 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
       // No stored preferences yet (e.g. a stone picked straight from the GLP): start from the stone's shape.
       go(`/stone${query || `?type=natural&shape=${stone.shape.toLowerCase() || shape || "round"}`}`)
     },
-    [go, stone.id, stone.shape, shape, base],
+    [go, stone.id, stone.shape, shape, base, lockedInTask],
   )
 
   // Exit modal actions. OK drops the build; Save keeps it and stores the ring in the Wish List.
@@ -240,6 +312,7 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
 
   const removeStep = useCallback<FlowState["removeStep"]>(
     (step) => {
+      if (lockedInTask(step)) return
       if (step === "stone") {
         // The stone leaves the build (the stepper, summaries and totals stop showing it), then back to the stone
         // step with the shopper's last preferences. A setting still in the build makes the journey setting-first
@@ -258,17 +331,44 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
       }
       go("/engagement-rings")
     },
-    [go, goToStep, hasStone, setStart, setShape, setSettingChosen, clearStone, start, chosen.setting, stone.shape],
+    [go, goToStep, hasStone, setStart, setShape, setSettingChosen, clearStone, start, chosen.setting, stone.shape, lockedInTask],
+  )
+
+  const study = useMemo<StudyState | null>(
+    () =>
+      studyFlow && {
+        flow: studyFlow,
+        part,
+        setPart: (next) => {
+          setPartState(next)
+          setEnded(null)
+          setGuide(null)
+          try {
+            sessionStorage.setItem(partKey(base), String(next))
+          } catch {
+            /* storage unavailable: the part holds until a reload */
+          }
+        },
+        endTask: setEnded,
+        guideToCatalog: setGuide,
+      },
+    [studyFlow, part, base],
   )
 
   const value = useMemo<FlowState>(
-    () => ({ base, config, path: toFlowPath, leave, goToStep, removeStep, bagCount: page === "/added" ? 1 : 0 }),
-    [base, config, toFlowPath, leave, goToStep, removeStep, page],
+    () => ({ base, config, path: toFlowPath, leave, goToStep, removeStep, bagCount: page === "/added" ? 1 : 0, study }),
+    [base, config, toFlowPath, leave, goToStep, removeStep, page, study],
   )
   return (
     <FlowContext.Provider value={value}>
       <Outlet />
       <FlowExitModal open={pending !== null} onCancel={() => setPending(null)} onLeave={leaveNow} onSaveAndLeave={saveAndLeave} />
+      {studyFlow && (
+        <>
+          <TaskEndModal end={ended} onClose={() => setEnded(null)} />
+          <CatalogGuideModal viewAllLabel={guide} onClose={() => setGuide(null)} />
+        </>
+      )}
       {/* Saved confirmation on the page the shopper went to (no Figma frame yet: the "not part of this test" notice style). */}
       <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-24 z-60 flex justify-center px-margin lg:bottom-6">
         {saved && (

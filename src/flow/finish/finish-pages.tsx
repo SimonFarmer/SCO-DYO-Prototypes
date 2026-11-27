@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button"
 import { CLASSIC_CROWN, type GalleryImage } from "@/data/dyo"
 import { useFlow } from "@/flow/flow-context"
 import { FLOW_CRUMBS, FLOW_ROUTES } from "@/flow/flow-paths"
+import { useStudyAddToBag } from "@/flow/study/study"
 import { useFlowRingGallery } from "@/flow/ring-images"
 import { PAGE_MAX } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
@@ -158,6 +159,7 @@ function FlowFinishingTouches() {
 /** t4 A · Options on the Ring Review step (Test 4 A, Figma 7366:137280). */
 function FlowRingReviewA() {
   const go = useFlowNav()
+  const addToBag = useStudyAddToBag(() => go(FLOW_ROUTES.added))
   const { open, sheets } = useFinishingOverlays()
   const { review } = useFlowRingGallery()
   return (
@@ -173,7 +175,7 @@ function FlowRingReviewA() {
           <RingSummary onEditCrown={() => open("crown")} onEditEngraving={() => open("engraving")} />
         </section>
         <SectionDivider />
-        <BuyActions onAddToBag={() => go(FLOW_ROUTES.added)} />
+        <BuyActions onAddToBag={addToBag} />
         <Assurances />
         <DeliveryOptions />
       </PageColumns>
@@ -186,6 +188,7 @@ function FlowRingReviewA() {
 export function FlowRingReviewB() {
   const flow = useFlow()
   const go = useFlowNav()
+  const addToBag = useStudyAddToBag(() => go(FLOW_ROUTES.added))
   const { ringSize } = useRingBuild()
   const { review } = useFlowRingGallery()
   const finishing = flow ? flow.path(FLOW_ROUTES.finish) : FLOW_ROUTES.finish
@@ -212,7 +215,7 @@ export function FlowRingReviewB() {
           />
         </section>
         <SectionDivider />
-        <BuyActions onAddToBag={() => go(FLOW_ROUTES.added)} />
+        <BuyActions onAddToBag={addToBag} />
         <Assurances />
         <DeliveryOptions />
       </PageColumns>

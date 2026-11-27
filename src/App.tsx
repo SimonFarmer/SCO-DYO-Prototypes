@@ -2,7 +2,8 @@ import { BrowserRouter, Route, Routes } from "react-router"
 import { NotInTestProvider } from "@/components/prototype/not-in-test"
 import { NaturalDiamondPdp, NaturalDiamondsGlp } from "@/pages/diamonds"
 import { AccordionFinish, AccordionRecommendations, AccordionReview, AccordionSetting, AccordionStone } from "@/flow/accordion/accordion-pages"
-import { ACCORDION_BASE, FlowLayout } from "@/flow/flow-context"
+import { ACCORDION_BASE, FlowLayout, STUDY_A_BASE, STUDY_B_BASE } from "@/flow/flow-context"
+import { StudyStart } from "@/flow/study/study"
 import { FlowSettingPdp } from "@/flow/pages/flow-setting"
 import { FlowAddedToBag, FlowRingReviewB, FlowStep3 } from "@/flow/finish/finish-pages"
 import { FlowDiamondPdp } from "@/flow/stone/diamond-pages"
@@ -66,6 +67,38 @@ export default function App() {
                 its own step pages, config and build. */}
             <Route path={ACCORDION_BASE} element={<FlowLayout base={ACCORDION_BASE} />}>
               <Route index element={<StoreHome />} />
+              <Route path="shop" element={<StoreHome />} />
+              <Route path="engagement-rings" element={<EngagementRingPlp />} />
+              <Route path="engagement-rings/:slug" element={<EngagementRingPlp />} />
+              <Route path="setting" element={<AccordionSetting />} />
+              <Route path="stone" element={<AccordionStone />} />
+              <Route path="stone/recommendations" element={<AccordionRecommendations />} />
+              <Route path="diamonds" element={<FlowDiamondsPlp />} />
+              <Route path="diamond/:id" element={<FlowDiamondPdp />} />
+              <Route path="finish" element={<AccordionFinish />} />
+              <Route path="review" element={<AccordionReview />} />
+              <Route path="added" element={<FlowAddedToBag />} />
+            </Route>
+            {/* Full-flow study (A/B of the two flows, split into four tasks): each flow's pages under its own base and
+                build, plus each task's entry link (/study/a/part/1 … /study/b/part/4). */}
+            <Route path={STUDY_A_BASE} element={<FlowLayout base={STUDY_A_BASE} />}>
+              <Route index element={<StoreHome />} />
+              <Route path="part/:n" element={<StudyStart />} />
+              <Route path="shop" element={<StoreHome />} />
+              <Route path="engagement-rings" element={<EngagementRingPlp />} />
+              <Route path="engagement-rings/:slug" element={<EngagementRingPlp />} />
+              <Route path="setting" element={<FlowSettingPdp />} />
+              <Route path="stone" element={<FlowStonePreferences />} />
+              <Route path="stone/recommendations" element={<FlowStoneRecommendations />} />
+              <Route path="diamonds" element={<FlowDiamondsPlp />} />
+              <Route path="diamond/:id" element={<FlowDiamondPdp />} />
+              <Route path="finish" element={<FlowStep3 />} />
+              <Route path="review" element={<FlowRingReviewB />} />
+              <Route path="added" element={<FlowAddedToBag />} />
+            </Route>
+            <Route path={STUDY_B_BASE} element={<FlowLayout base={STUDY_B_BASE} />}>
+              <Route index element={<StoreHome />} />
+              <Route path="part/:n" element={<StudyStart />} />
               <Route path="shop" element={<StoreHome />} />
               <Route path="engagement-rings" element={<EngagementRingPlp />} />
               <Route path="engagement-rings/:slug" element={<EngagementRingPlp />} />

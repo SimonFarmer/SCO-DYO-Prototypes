@@ -4,6 +4,7 @@ import { useFlow } from "@/flow/flow-context"
 import { FLOW_CRUMBS } from "@/flow/flow-paths"
 import { firstStoneQuery, flowStonePath } from "@/flow/stone/simulator"
 import { SettingPdp } from "@/flow/pages/setting-pdp"
+import { settingTaskEnd } from "@/flow/study/study"
 import { useRingBuild } from "@/state/ring-build"
 
 /**
@@ -31,6 +32,8 @@ export function FlowSettingPdp() {
         // On to step 2, stone preferences, in the shape the shopper came in with when this setting takes it,
         // otherwise the setting's own default shape (a marquise halo starts on marquise, not round).
         onSelect: () => {
+          // Study part 1 ends on "Select this Setting".
+          if (flow.study) return flow.study.endTask(settingTaskEnd(setting, flowMetalFor(setting, settingMetal)))
           setSettingChosen(true)
           // Stone-first (setting removed with a stone already picked): the stone is done, so on to step 3.
           if (start === "stone") {
