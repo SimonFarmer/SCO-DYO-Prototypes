@@ -4,6 +4,7 @@ import { CaretDownIcon, CaretUpIcon } from "@phosphor-icons/react"
 import { PriceExplainedPopover } from "@/components/shared/price-explained-popover"
 import { CompactSections, SlideNote } from "@/components/stones/preference-parts"
 import { useFlow } from "@/flow/flow-context"
+import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { useRingBuild } from "@/state/ring-build"
 
@@ -136,6 +137,106 @@ function StepRow({ n, name, summary, open, onOpen, aside }: { n: number; name: s
   )
 }
 
+/** A priced line inside a step (full-flow study): the choice on the left, its price far right so the column sums. */
+interface StepItem {
+  desc: ReactNode
+  value?: string
+  over?: boolean
+  note?: ReactNode
+}
+
+/** Finishing touches in the order the step shows them: engraving, crown, band, band engraving. */
+const FINISH_ORDER = ["Engraving", "Crown", "Wedding Band", "Band Engraving"]
+
+/** Each step's priced lines (full-flow study), taken from the price lines so the steps and the total agree. */
+function stepItems(lines: PriceLine[], summaries: Record<StepKey, string>, ringSize: string | null | undefined, done: (key: StepKey) => boolean): Record<StepKey, StepItem[]> {
+  const line = (label: string) => lines.find((l) => l.label === label)
+  const setting = line("Setting")
+  const stone = line("Stone")
+  const finishing = lines
+    .filter((l) => FINISH_ORDER.includes(l.label))
+    .sort((a, b) => FINISH_ORDER.indexOf(a.label) - FINISH_ORDER.indexOf(b.label))
+    .map((l) => ({
+      desc: l.label === "Engraving" ? <>Engraving: {l.desc}</> : l.label === "Band Engraving" ? <>Band engraving: {l.desc}</> : l.desc,
+      value: l.value,
+    }))
+  return {
+    setting: setting?.value ? [{ desc: summaries.setting, value: setting.value }] : [],
+    stone: stone?.value ? [{ desc: done("stone") ? summaries.stone : stone.desc, value: stone.value, over: stone.over, note: stone.note }] : [],
+    finishing: [...(ringSize ? [{ desc: `Size ${ringSize}` }] : []), ...finishing],
+  }
+}
+
+/** Finishing touches on one line: "Size 5.5 · 4 add-ons" with the add-ons' subtotal. */
+function compactFinishing(items: StepItem[], ringSize: string | null | undefined): StepItem[] {
+  const addOns = items.filter((i) => i.value)
+  if (addOns.length === 0) return items
+  const subtotal = addOns.reduce((sum, i) => sum + Number(i.value!.replace(/[^0-9.]/g, "")), 0)
+  const count = `${addOns.length} add-on${addOns.length === 1 ? "" : "s"}`
+  return [{ desc: ringSize ? `Size ${ringSize} · ${count}` : count, value: formatPrice(subtotal) }]
+}
+
+/**
+ * A step in the full-flow study: no caret (a step opens by finishing the one before, or by its row once done);
+ * the choices sit inside the step with their prices far right, so the steps add up to the total under them.
+ * `onOpen` makes a finished step's row reopen it; `aside` sits right of the name (the "Remove" link).
+ */
+function StudyStepRow({
+  n,
+  name,
+  summary,
+  items,
+  open,
+  onOpen,
+  aside,
+}: {
+  n: number
+  name: string
+  summary?: string
+  items: StepItem[]
+  open: boolean
+  onOpen?: () => void
+  aside?: ReactNode
+}) {
+  const hover = onOpen ? "underline-offset-4 decoration-1 group-hover/row:underline" : undefined
+  return (
+    <div className="relative flex items-start gap-3 text-left">
+      {/* The whole row reopens a finished step; Remove sits above it. */}
+      {onOpen && (
+        <button
+          type="button"
+          onClick={onOpen}
+          aria-label={`${name}: ${summary ?? ""}. Change`}
+          className="absolute inset-0 cursor-pointer"
+        />
+      )}
+      <StepNumber n={n} open={open} />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <div className="flex min-h-8 items-center justify-between gap-4">
+          <span className={cn("text-base leading-6 font-semibold text-primary", hover)}>{name}</span>
+          {aside && <span className="relative z-10 shrink-0">{aside}</span>}
+        </div>
+        {summary && <span className="text-xs leading-4 font-medium text-muted-foreground">{summary}</span>}
+        {items.length > 0 && (
+          <div className="flex flex-col gap-1.5 pt-1">
+            {items.map((item, i) => (
+              <div key={i} className="flex flex-col">
+                <div className="flex items-start justify-between gap-4 text-xs leading-4">
+                  <span className={cn("min-w-0 font-medium text-muted-foreground", hover)}>{item.desc}</span>
+                  {item.value && (
+                    <span className={cn("shrink-0 text-right font-semibold whitespace-nowrap text-primary", item.over && "text-tertiary")}>{item.value}</span>
+                  )}
+                </div>
+                {item.note !== undefined && <SlideNote>{item.note}</SlideNote>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /**
  * The panel. `current` is the open step ("review" = every step finished and closed); `children` is the open
  * step's content; `lines` and `total` fill the price box (and the "Price explained" popover); `ringTotal` is the
@@ -148,11 +249,14 @@ export function BuildPanel({
   total,
   children,
   footer,
+  explainedTotal,
 }: {
   current: StepKey | "review"
   ringTotal: string
   lines: PriceLine[]
   total: string
+  /** The "Price explained" popover's total, when it differs from `total` (study part 1: "$690 + STONE"). */
+  explainedTotal?: string
   children?: ReactNode
   footer?: ReactNode
 }) {
@@ -160,12 +264,16 @@ export function BuildPanel({
   const navigate = useNavigate()
   // The recommendations modal opens over the stone step: same step, so no scroll or re-animation behind it.
   const pathname = useLocation().pathname.replace(/\/recommendations$/, "")
-  const { start, chosen } = useRingBuild()
+  const { start, chosen, ringSize } = useRingBuild()
+  // The full-flow study (Flow B) shows each step's choices and prices inside the step, with the total under the
+  // steps, instead of a separate price box (the steps read like a checkout summary).
+  const study = flow?.study != null
   const steps = stepsFor(start)
   const index = current === "review" ? steps.length : steps.findIndex((s) => s.key === current)
   // Done: before the open step, or already chosen in the build (going back to the setting keeps the stone done).
   const isDone = (key: StepKey) => key !== current && (steps.findIndex((s) => s.key === key) < index || chosen[key])
   const summaries = useStepSummaries(isDone)
+  const items = stepItems(lines, summaries, ringSize, isDone)
   const sectionRef = useRef<HTMLElement>(null)
   const currentRef = useRef<HTMLLIElement>(null)
 
@@ -249,7 +357,7 @@ export function BuildPanel({
           <PriceExplainedPopover
             align="start"
             rows={lines.map((l) => ({ label: l.label, name: l.desc, price: l.value }))}
-            total={total}
+            total={explainedTotal ?? total}
           />
         </div>
       </div>
@@ -260,6 +368,19 @@ export function BuildPanel({
             const open = s.key === current
             const done = isDone(s.key)
             const summary = summaries[s.key]
+            // Study: a finished step shows its priced choices; the open one its prompt (not on the setting) and
+            // what's priced so far; a later step only its prompt.
+            const full = done || open ? items[s.key] : []
+            // Open Finishing Touches lists its choices in its own sections below, so its (pinned) row keeps to one
+            // line: the size, how many add-ons, and their subtotal (the column still sums to the total).
+            const stepList = open && s.key === "finishing" ? compactFinishing(full, ringSize) : full
+            const showSummary = stepList.length === 0 || (open && s.key !== "setting")
+            const row = (p: { open: boolean; onOpen?: () => void; aside?: ReactNode }) =>
+              study ? (
+                <StudyStepRow n={s.n} name={s.name} summary={showSummary ? summary : undefined} items={stepList} {...p} />
+              ) : (
+                <StepRow n={s.n} name={s.name} summary={summary} {...p} />
+              )
             return (
               <li
                 key={s.key}
@@ -278,7 +399,7 @@ export function BuildPanel({
                         stuck && "shadow-2xs",
                       )}
                     >
-                      <StepRow n={s.n} name={s.name} summary={summary} open />
+                      {row({ open: true })}
                     </div>
                     {/* Indented to the step's name on desktop (Figma 7549:387046: 44px; phones keep the full width); eases in, keyed by page. */}
                     <div
@@ -291,13 +412,10 @@ export function BuildPanel({
                 ) : done && flow ? (
                   // A finished step: its row opens it again; the setting and the stone can also be removed.
                   <div className="group/row -mx-2 px-2 py-5 transition-colors duration-150 hover:bg-bg-input-50">
-                    <StepRow
-                      n={s.n}
-                      name={s.name}
-                      summary={summary}
-                      open={false}
-                      onOpen={() => reopen(s.key)}
-                      aside={
+                    {row({
+                      open: false,
+                      onOpen: () => reopen(s.key),
+                      aside: (
                         s.key !== "finishing" && (
                           <button
                             type="button"
@@ -308,20 +426,31 @@ export function BuildPanel({
                             Remove
                           </button>
                         )
-                      }
-                    />
+                      ),
+                    })}
                   </div>
                 ) : (
                   // Later steps open once the current one is done.
                   <div className="py-5" aria-disabled>
-                    <StepRow n={s.n} name={s.name} summary={summary} open={false} />
+                    {row({ open: false })}
                   </div>
                 )}
               </li>
             )
           })}
         </ol>
-        <PriceBox lines={lines} total={total} />
+        {study ? (
+          // The steps' prices sum here (Figma direction for the study: no separate price box).
+          <div className="flex flex-col gap-4 text-primary" aria-live="polite">
+            <div className="h-px bg-primary" />
+            <div className="flex items-baseline justify-between gap-2 text-lg leading-7 font-semibold">
+              <p>Ring Total:</p>
+              <p className="whitespace-nowrap">{total}</p>
+            </div>
+          </div>
+        ) : (
+          <PriceBox lines={lines} total={total} />
+        )}
         {footer}
       </div>
     </section>

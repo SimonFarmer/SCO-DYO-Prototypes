@@ -24,7 +24,7 @@ import { METALS, descriptionFor, type MetalId, type Setting } from "@/data/produ
 import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { useNotInTest } from "@/components/prototype/not-in-test"
-import { useStepNumber } from "@/flow/flow-context"
+import { useFlow, useStepNumber } from "@/flow/flow-context"
 import { useFlowDelivery } from "@/flow/delivery"
 
 interface SettingBuyFormProps {
@@ -129,6 +129,9 @@ export function MetalSelector({
  * the center stone still to choose, and the ring total so far.
  */
 export function PriceExplained({ name, price }: { name: string; price: number }) {
+  // Full-flow study part 1: "+ STONE" in caps, so the stone still to come reads as part of the total.
+  const flow = useFlow()
+  const stone = flow?.study?.part === 1 ? "STONE" : "stone"
   return (
     <PriceExplainedPopover
       align="start"
@@ -136,7 +139,7 @@ export function PriceExplained({ name, price }: { name: string; price: number })
         { label: "Setting", name: `${name}, incl. accent stones`, price: formatPrice(price) },
         { label: "Stone", name: "Your center stone, chosen in the next step" },
       ]}
-      total={`${formatPrice(price)} + stone`}
+      total={`${formatPrice(price)} + ${stone}`}
     />
   )
 }
