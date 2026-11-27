@@ -268,7 +268,7 @@ export function FlowDiamondsPlp() {
     setState((s) => ({ ...s, page: 1, filters: { ...none, shapes: s.filters.shapes } }))
   }
   // Full-flow study: the diamond filters' Learn More links open the 4Cs drawers.
-  const catalog = { ...catalogFor(type, back, switchType), education: !!flow?.study && type !== "gemstone" }
+  const catalog = { ...catalogFor(type, back, switchType), education: !!flow?.study && type !== "gemstone", inertFilters: !!flow?.study && type !== "gemstone" }
 
   const stones = useMemo(() => matching(state.filters, type).sort(SORTERS[state.sort]), [state.filters, state.sort, type])
   const byId = useMemo(() => new Map(stones.map((s) => [s.id, s])), [stones])
