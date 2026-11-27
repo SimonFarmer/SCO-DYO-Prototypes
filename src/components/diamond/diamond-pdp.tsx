@@ -36,6 +36,23 @@ interface DiamondPdpProps {
 export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false, start = "setting", backBar }: DiamondPdpProps) {
   const flow = useFlow()
   const aboutRef = useRef<HTMLElement>(null)
+  const fourCsRef = useRef<HTMLDivElement>(null)
+  // Glide to the Four C's report card, its heading clear of what sticks at the top: the site header when it shows,
+  // the stepper bar and the product bar (which shows by then). Measured at click, as the bars differ by screen size.
+  const scrollToFourCs = () => {
+    const card = fourCsRef.current
+    if (!card) return
+    const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-offset")) || 0
+    // Only what stays pinned: the stepper bar where it sticks (phones), and the product bar on phones (on desktop it
+    // shows only from "About this diamond", below the report card).
+    const pinned = (el: HTMLElement | null) => (el && ["sticky", "fixed"].includes(getComputedStyle(el).position) ? el.offsetHeight : 0)
+    const desktop = window.matchMedia("(min-width: 64rem)").matches
+    const stepper = pinned(document.querySelector<HTMLElement>('[data-slot="stepper-bar"]'))
+    const bar = desktop ? 0 : (document.querySelector<HTMLElement>('[data-slot="pdp-sticky-bar"]')?.offsetHeight ?? 0)
+    const top = card.getBoundingClientRect().top + window.scrollY - header - stepper - bar
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    window.scrollTo({ top: Math.max(0, top), behavior: reduce ? "auto" : "smooth" })
+  }
   // Full flow, mobile: the sticky bar shows once the buy form (after the gallery) reaches the top.
   const buyFormRef = useRef<HTMLElement>(null)
   return (
@@ -79,12 +96,17 @@ export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false, s
                 specLayout={specLayout}
                 onSelect={onSelect}
                 onViewDetails={() => aboutRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                // The flows: "Understand the 4Cs" goes down to the report card, and Select has no ⋯ menu beside it.
+                onUnderstand4Cs={flow ? scrollToFourCs : undefined}
+                moreMenu={!flow}
               />
             </div>
           </aside>
         </div>
         </div>
-        <FourCsReportCard diamond={diamond} />
+        <div ref={fourCsRef}>
+          <FourCsReportCard diamond={diamond} />
+        </div>
         <AboutDiamondBlock ref={aboutRef} diamond={diamond} />
         <ValuePropsBlock />
         <FeatureBlock
