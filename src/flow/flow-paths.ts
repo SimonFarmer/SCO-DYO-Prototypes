@@ -25,6 +25,8 @@ export const FLOW_CRUMBS = {
     { label: "Find Your Stone", to: preferences, step: true },
     "Stone Recommendations",
   ],
+  /** Diamonds PLP opened from the header's Shop by Stone: Home › Diamonds */
+  diamonds: [HOME, "Diamonds"] as Crumb[],
   /** Diamond PDP: Home › Diamonds (the flow's listing) › {Diamond} */
   diamond: (listing: string, name: string): Crumb[] => [HOME, { label: "Diamonds", to: listing, step: true }, name],
   /** Step 3: Home › Engagement Rings › Complete Your Ring / Review Your Ring */

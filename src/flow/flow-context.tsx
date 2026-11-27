@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Outlet, useLocation, useNavigate } from "react-router"
 import { HeartStraightIcon } from "@phosphor-icons/react"
 import { diamondName } from "@/data/diamonds"
+import { GLP_PATH } from "@/data/plp"
 import { useRingBuild } from "@/state/ring-build"
 import { findFlowDiamond } from "./stone/find-diamond"
 import { useNotInTest } from "@/components/prototype/not-in-test"
@@ -158,6 +159,22 @@ const BUILD_PAGES = /^\/(stone|diamonds|diamond|finish|review)(\/|$)/
 /** Last stone preferences URL query, so "Edit" on the stone returns to the shopper's own preferences. */
 export const stoneQueryKey = (base: FlowBase) => (base === FLOW_BASE ? "flow-stone-query" : `flow-stone-query${base}`)
 
+/**
+ * The Diamonds PLP's last URL query (with how the shopper got there, `from`), so the Diamond PDP's "Diamonds" crumb
+ * returns to the same listing: the breadcrumb one from Shop by Stone, the "Back to stone preferences" one otherwise.
+ */
+export const plpQueryKey = (base: FlowBase) => `flow-plp-query${base}`
+
+/** The Diamonds PLP's last query; the stone preferences' before any visit. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function storedPlpQuery(base: FlowBase) {
+  try {
+    return sessionStorage.getItem(plpQueryKey(base)) ?? storedStoneQuery(base)
+  } catch {
+    return storedStoneQuery(base)
+  }
+}
+
 /** The shopper's last stone preferences query ("" before any), for links back into the stone step. */
 // eslint-disable-next-line react-refresh/only-export-components
 export function storedStoneQuery(base: FlowBase) {
@@ -180,6 +197,18 @@ const baseOf = (path: string) => BASES.find((b) => path === b || path.startsWith
 const toFlowPathIn = (base: FlowBase) => (to: string) => {
   if (!to.startsWith("/") || baseOf(to)) return to
   return to === "/" ? base : `${base}${to}`
+}
+
+/**
+ * The header's Shop by Stone links point at the standalone Diamond GLP (/natural-diamonds?shape=…), which has no
+ * route inside a flow. In a flow they open the flow's own Diamonds PLP on that shape instead (`from=nav`: the shape
+ * alone, none of the stone step's size or budget). Null for any other link.
+ */
+const flowGlpLink = (to: string) => {
+  const url = new URL(to, "http://prototype")
+  if (url.pathname !== GLP_PATH) return null
+  const shape = url.searchParams.get("shape")
+  return `/diamonds?type=natural${shape ? `&shape=${encodeURIComponent(shape)}` : ""}&from=nav`
 }
 
 /**
@@ -252,7 +281,16 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
   }, [base, page, setting.name])
 
   const inBuild = BUILD_PAGES.test(page)
-  const leave = useCallback((to: string) => (inBuild ? setPending(toFlowPath(to)) : go(to)), [inBuild, go, toFlowPath])
+  const leave = useCallback(
+    (to: string) => {
+      // Shop by Stone stays in the build (the stone step's own catalog), so no exit warning and nothing is reset:
+      // the study's fixed setting (parts 2 and 3) carries over.
+      const glp = flowGlpLink(to)
+      if (glp) return go(glp)
+      return inBuild ? setPending(toFlowPath(to)) : go(to)
+    },
+    [inBuild, go, toFlowPath],
+  )
 
   /**
    * Study parts 2–4 start on a fixed setting (and part 4 on a fixed diamond): changing them isn't part of the task

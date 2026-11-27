@@ -6,7 +6,7 @@ import { flowMetalFor, flowSettingFor } from "@/data/flow-settings"
 import { METALS, galleryFor, type MetalId, type Setting } from "@/data/products"
 import { STONES, stoneImage, toQuickviewDiamond } from "@/data/stones"
 import { toStone } from "@/data/diamonds"
-import { stoneQueryKey, useFlow, type StudyPart } from "@/flow/flow-context"
+import { plpQueryKey, stoneQueryKey, useFlow, type StudyPart } from "@/flow/flow-context"
 import { FLOW_ROUTES } from "@/flow/flow-paths"
 import { firstStoneQuery, flowStonePath } from "@/flow/stone/simulator"
 import { formatPrice } from "@/lib/format"
@@ -55,6 +55,7 @@ export function StudyStart() {
     try {
       // The stepper's Edit on the stone returns to the last preferences: none yet in a new task.
       sessionStorage.removeItem(stoneQueryKey(flow.base))
+      sessionStorage.removeItem(plpQueryKey(flow.base))
     } catch {
       /* storage unavailable */
     }

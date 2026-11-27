@@ -104,12 +104,12 @@ const INITIAL: Record<BuildKey, BuildState> = {
   A: { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
   B: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
   T3: { ringSize: DEFAULT_RING_SIZE, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null },
-  FLOW: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null, start: null },
+  FLOW: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null, start: null, settingChosen: null },
   /** The accordion steps flow (/flow-accordion): its own build, apart from /flow. */
-  FLOWA: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null, start: null },
+  FLOWA: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null, start: null, settingChosen: null },
   /** The full-flow study's two flows (/study/a, /study/b): their own builds, set up by each task's entry link. */
-  STUDYA: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null, start: null },
-  STUDYB: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null, start: null },
+  STUDYA: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null, start: null, settingChosen: null },
+  STUDYB: { ringSize: null, engraving: null, crownId: null, bandId: null, bandEngraving: null, stone: null, settingId: null, settingMetal: null, shape: null, start: null, settingChosen: null },
 }
 
 const BUILD_KEYS = Object.keys(INITIAL) as BuildKey[]

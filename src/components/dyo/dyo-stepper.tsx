@@ -35,11 +35,30 @@ function StepMarker({
   n,
   state,
   shape,
+  outline = false,
 }: {
   n: StepNumber
   state: "done" | "current" | "upcoming"
   shape: "circle" | "square"
+  /** Figma "Hero Fix" (8265:100777): a small sans number; steps not current are outlined on white. */
+  outline?: boolean
 }) {
+  if (outline)
+    return (
+      <span
+        className={cn(
+          "relative flex size-8 shrink-0 items-center justify-center rounded-full type-label-xs tracking-normal",
+          state === "current" ? "bg-primary text-primary-foreground" : "border border-input bg-background text-primary",
+        )}
+      >
+        {n}
+        {state === "done" && (
+          <span className="absolute -right-1 -bottom-1 flex size-3 items-center justify-center rounded-full border border-primary-foreground bg-primary text-primary-foreground">
+            <CheckIcon className="size-2" weight="bold" />
+          </span>
+        )}
+      </span>
+    )
   return (
     <span
       className={cn(
@@ -79,6 +98,7 @@ export function DyoStepper({
   showTotal = true,
   mobileTone = "secondary",
   contained = true,
+  columns = false,
 }: {
   /** Position of the current step (1–3) in this journey's order. */
   current: StepNumber
@@ -92,6 +112,11 @@ export function DyoStepper({
   mobileTone?: "secondary" | "plp"
   /** Cap the desktop bar's contents at the page max width (1680px); the bar itself stays full width. */
   contained?: boolean
+  /**
+   * Desktop bar as Figma "Hero Fix" (8265:100777, the full-flow study's PLP): no "Design Your Ring" title, the three
+   * steps as equal full-width columns split by full-height dividers, small outlined numbers, "Your Setting".
+   */
+  columns?: boolean
 }) {
   const { setting, stone, total, start: buildStart, chosen: built, ringSize } = useRingBuild()
   const navigate = useNavigate()
@@ -132,18 +157,30 @@ export function DyoStepper({
     <>
       {/* Desktop bar (Figma 7336:177134): title column, then three equal steps split by dividers,
           so the steps stretch with the viewport instead of sitting at fixed widths. */}
-      <div className="hidden border-y border-border-subtle bg-primary-foreground lg:block">
-      <div className={cn("flex items-center gap-2 px-margin py-3", contained && PAGE_MAX)}>
-        <p className="w-card shrink-0 type-h5 text-primary">Design Your Ring</p>
-        <ol className="flex min-w-0 flex-1 items-center gap-4">
+      {/* Figma "Hero Fix" (columns): no top border, the bar sits straight under the hero. */}
+      {/* Its dividers and bottom stroke are one colour, #d5d5d2 (Figma 8265:100777 calls it --input; here that's
+          border-subtle, as the hero's divider above). */}
+      <div className={cn("hidden border-border-subtle bg-primary-foreground lg:block", columns ? "border-b" : "border-y")}>
+      <div className={cn("flex items-center gap-2 px-margin", !columns && "py-3", contained && PAGE_MAX)}>
+        {!columns && <p className="w-card shrink-0 type-h5 text-primary">Design Your Ring</p>}
+        <ol className={cn("flex min-w-0 flex-1", columns ? "items-stretch" : "items-center gap-4")}>
           {numbered.map(({ kind, n }) => {
             const step = { n, label: STEP_LABEL[kind], ...chosen[kind] }
             const state = stateOf(step.n)
             return (
               <Fragment key={step.n}>
-                {step.n > 1 && <li aria-hidden className="w-px self-stretch bg-muted" />}
-                <li className="flex min-w-0 flex-1 items-center gap-3" aria-current={state === "current" ? "step" : undefined}>
-                  <StepMarker n={step.n} state={state} shape="circle" />
+                {step.n > 1 && <li aria-hidden className={cn("w-px self-stretch", columns ? "bg-border-subtle" : "bg-muted", columns && step.n === 2 && "max-2xl:-ml-px")} />}
+                <li
+                  className={cn(
+                    "flex min-w-0 flex-1 items-center gap-3",
+                    // Up to 1680px the first column is as wide as the hero's intro column (w-guided-intent, both
+                    // inside the same page gutters), so its divider lines up with the hero's and the three stay
+                    // close to equal; on wider screens that would leave it far narrower, so the three are equal.
+                    columns && "py-4 pr-4 pl-16 max-2xl:first:pl-12 max-2xl:first:w-guided-intent max-2xl:first:flex-none",
+                  )}
+                  aria-current={state === "current" ? "step" : undefined}
+                >
+                  <StepMarker n={step.n} state={state} shape="circle" outline={columns} />
                   {showsChoice(step.n) && flow ? (
                     // Full flow: the chosen item's name opens it (was "View"), and "Remove" (was "Edit")
                     // starts that step's choice over.
@@ -196,7 +233,7 @@ export function DyoStepper({
                   ) : (
                     // Current / upcoming step: title + description, no price.
                     <div className="flex min-w-0 flex-col gap-0.75">
-                      <span className="truncate type-label-xs text-primary">{step.label}</span>
+                      <span className="truncate type-label-xs text-primary">{columns && kind === "setting" ? "Your Setting" : step.label}</span>
                       <span className="truncate type-caption text-muted-foreground">{STEP_DESCRIPTION[kind]}</span>
                     </div>
                   )}
