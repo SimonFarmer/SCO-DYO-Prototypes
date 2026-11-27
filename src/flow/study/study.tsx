@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react"
 import { Navigate, useNavigate, useParams } from "react-router"
-import { useNotInTest } from "@/components/prototype/not-in-test"
 import { diamondTitle, type Diamond } from "@/data/diamonds"
 import { flowMetalFor, flowSettingFor } from "@/data/flow-settings"
 import { METALS, galleryFor, type MetalId, type Setting } from "@/data/products"
@@ -137,17 +136,14 @@ export function useRingTaskEnd(): () => TaskEnd {
 }
 
 /**
- * Part 2's View All: shown, but clearly unavailable, and a click says it isn't part of this task (Lucid). Elsewhere
- * (the full flows, part 3) it works as usual.
+ * Part 2's View All: looks and clicks as usual, but the click opens the "not part of this test" modal instead of the
+ * catalog. Elsewhere (the full flows, part 3) it works as usual.
  */
 export function useStudyViewAll() {
-  const flow = useFlow()
-  const notInTest = useNotInTest()
-  const unavailable = flow?.study?.part === 2
+  const study = useFlow()?.study
   return {
-    unavailable,
-    /** Wraps the View All action: in part 2 the "not part of this task" notice instead. */
-    guard: (action: () => void) => () => (unavailable ? notInTest("Viewing every stone", "task") : action()),
+    /** Wraps the View All action: in part 2 the "not part of this test" modal instead. */
+    guard: (action: () => void) => () => (study?.part === 2 ? study.notInTest("Viewing all stones") : action()),
   }
 }
 

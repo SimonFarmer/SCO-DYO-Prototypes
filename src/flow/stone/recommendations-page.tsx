@@ -335,7 +335,6 @@ export function FlowStoneRecommendations() {
           shape={prefs.shape}
           count={matching.length}
           onViewAll={viewAll.guard(() => navigate(href("diamonds", { from: "recs" })))}
-          viewAllUnavailable={viewAll.unavailable}
         />
       </StoneStepLayout>
       {/* The Diamond GLP's Quickview, for diamonds and gemstones (ring total = this setting + the stone). Selecting

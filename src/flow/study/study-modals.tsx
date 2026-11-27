@@ -105,3 +105,23 @@ export function CatalogGuideModal({ viewAllLabel: current, onClose }: { viewAllL
     </StudyDialog>
   )
 }
+
+/**
+ * A control that looks and works as usual but is outside the task (part 2's View All): a click explains that rather
+ * than going anywhere, and Go Back returns to the page.
+ */
+export function NotInTestModal({ what: current, onClose }: { what: string | null; onClose: () => void }) {
+  const what = useLast(current)
+  return (
+    <StudyDialog open={current !== null} onClose={onClose}>
+      <div className="flex flex-col gap-2">
+        <InfoIcon className="size-10 text-primary" />
+        <DialogTitle className="font-heading text-3xl leading-10 font-semibold tracking-[-0.025em] text-primary">Not part of this test</DialogTitle>
+        <DialogDescription className="text-sm leading-5 text-muted-foreground">{what} isn’t part of this test. Please continue with the task.</DialogDescription>
+      </div>
+      <Button className="w-full" onClick={onClose}>
+        Go Back
+      </Button>
+    </StudyDialog>
+  )
+}

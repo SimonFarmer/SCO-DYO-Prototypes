@@ -284,8 +284,7 @@ export function AccordionStone() {
                 viewAll={
                   <Button
                     variant="outline"
-                    className={cn("w-full", viewAll.unavailable && "opacity-50")}
-                    aria-disabled={viewAll.unavailable || undefined}
+                    className="w-full"
                     onClick={viewAll.guard(() => navigate(href("diamonds", { from: "recs" })))}
                   >
                     View all {shapeLabel} stones ({matching.length.toLocaleString("en-US")})
@@ -319,8 +318,7 @@ export function AccordionStone() {
                   </Button>
                   <Button
                     variant="outline"
-                    className={cn("w-full", viewAll.unavailable && "opacity-50")}
-                    aria-disabled={viewAll.unavailable || undefined}
+                    className="w-full"
                     onClick={viewAll.guard(() => navigate(href("diamonds", { from: "prefs" })))}
                     disabled={sim.blocked}
                   >
@@ -344,7 +342,6 @@ export function AccordionStone() {
               onEditPreferences={() => navigate(href("preferences"))}
               onSelect={(p) => selectDiamond(toQuickviewDiamond(p.stone))}
               onViewAll={viewAll.guard(() => navigate(href("diamonds", { from: "recs" })))}
-              viewAllUnavailable={viewAll.unavailable}
             />
           )}
         </div>
