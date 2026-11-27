@@ -36,7 +36,8 @@ const STUDY_DIAMOND_SPIN = {
 export function useFlowRingGallery() {
   const { setting, stone, settingId, settingMetal, band } = useRingBuild()
   // Full-flow study part 4: its preselected diamond turns in 3D instead of the still photo.
-  const spin = useFlow()?.study?.part === 4 && stone.id === STUDY_DIAMOND_ID
+  const study = useFlow()?.study
+  const spin = study?.part === 4 && stone.id === STUDY_DIAMOND_ID
   return useMemo(() => {
     const picked = flowSettingFor(settingId)
     const metal = flowMetalFor(picked, settingMetal)
@@ -55,6 +56,8 @@ export function useFlowRingGallery() {
     // the front view the hero already shows with the shopper's stone, so it is left out (no repeated photo).
     const ellaPhotos: GalleryImage[] = galleryFor(picked, metal)
       .filter((m) => m.kind === "image")
+      // Full-flow study: photos badged "Shown in…" (another metal or stone shape) stay on the setting PDP only.
+      .filter((m) => !(study && m.badge))
       .slice(1, 5)
       .map((m) => ({ src: m.src, alt: m.alt, badge: m.badge, badgePosition: m.badge ? ("bottom" as const) : undefined }))
     const [, , source, sizeGuide] = FINISHING_GALLERY.tiles
@@ -76,5 +79,5 @@ export function useFlowRingGallery() {
       /** Ring Review: same images, the ring first. */
       review: [hero, ...stoneTile, ...ellaPhotos, source, sizeGuide],
     }
-  }, [setting.article, setting.name, setting.metal, stone, settingId, settingMetal, spin, band])
+  }, [setting.article, setting.name, setting.metal, stone, settingId, settingMetal, spin, band, study])
 }

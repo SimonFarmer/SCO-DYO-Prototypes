@@ -397,11 +397,11 @@ export function DiamondFilters({ value, onChange }: { value: DiamondFilterState;
   )
 }
 
-/** Certification as checkboxes (GIA, GSI, IGI), as the Cut filter's; ticking one says it isn't part of this test. */
+/** Certification as checkboxes (GIA, GSI, IGI), as the Cut filter's; ticking one says it isn't part of this test. Collapsed by default. */
 function CertificationFilter() {
   const notInTest = useNotInTest()
   return (
-    <FilterSection title="Certification">
+    <FilterSection title="Certification" defaultOpen={false}>
       <div className="flex flex-col gap-2">
         {["GIA", "GSI", "IGI"].map((lab) => (
           <label key={lab} htmlFor={`cert-${lab}`} className="flex cursor-pointer items-center gap-3 py-1">
@@ -427,6 +427,7 @@ function LwRatioFilter() {
   return (
     <FilterSection
       title="L/W Ratio"
+      defaultOpen={false}
       info="Length-to-width ratio helps define a diamond’s shape. Small differences can make a diamond appear longer, wider, or more evenly proportioned."
       onLearnMore={() => notInTest("L/W ratio education")}
     >
