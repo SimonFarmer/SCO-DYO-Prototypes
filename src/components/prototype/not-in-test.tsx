@@ -1,8 +1,11 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react"
 import { InfoIcon } from "@phosphor-icons/react"
 
-/** `scope`: "test" (the unmoderated tests) or "task" (the full-flow study's tasks). */
-type Notify = (what?: string, scope?: "test" | "task") => void
+/**
+ * `scope`: "test" (the unmoderated tests) or "task" (the full-flow study's tasks). `plural` reads "… aren’t part of"
+ * for a plural subject ("Ready to Ship rings").
+ */
+type Notify = (what?: string, scope?: "test" | "task", plural?: boolean) => void
 
 const NotInTestContext = createContext<Notify>(() => {})
 
@@ -14,9 +17,9 @@ export function NotInTestProvider({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState<string | null>(null)
   const timer = useRef<number | undefined>(undefined)
 
-  const notify = useCallback<Notify>((what, scope = "test") => {
+  const notify = useCallback<Notify>((what, scope = "test", plural = false) => {
     window.clearTimeout(timer.current)
-    setMessage(what ? `${what} isn’t part of this ${scope}` : `This isn’t part of this ${scope}`)
+    setMessage(what ? `${what} ${plural ? "aren’t" : "isn’t"} part of this ${scope}` : `This isn’t part of this ${scope}`)
     timer.current = window.setTimeout(() => setMessage(null), 2400)
   }, [])
 

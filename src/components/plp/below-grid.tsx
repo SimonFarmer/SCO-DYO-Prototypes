@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { CalendarBlankIcon, ChatTextIcon, PhoneIcon } from "@phosphor-icons/react"
 import { useNavigate } from "react-router"
-import { useFlowPath } from "@/flow/flow-context"
+import { useFlow, useFlowPath } from "@/flow/flow-context"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { useNotInTest } from "@/components/prototype/not-in-test"
@@ -100,6 +100,7 @@ export function BelowGridContent({ contained = true }: { contained?: boolean } =
   const notInTest = useNotInTest()
   const navigate = useNavigate()
   const flowPath = useFlowPath()
+  const flow = useFlow()
 
   return (
     <div className="flex flex-col bg-secondary">
@@ -173,7 +174,9 @@ export function BelowGridContent({ contained = true }: { contained?: boolean } =
                       <button
                         type="button"
                         onClick={() => {
-                          if (l === "Ready to Ship Diamond Engagement Rings") {
+                          // Full-flow study: Ready to Ship is outside the test.
+                          if (l === "Ready to Ship Diamond Engagement Rings" && flow?.study) notInTest("Ready to Ship rings", "test", true)
+                          else if (l === "Ready to Ship Diamond Engagement Rings") {
                             navigate(flowPath(RTS_PATH))
                             window.scrollTo({ top: 0 })
                           } else notInTest(l)

@@ -79,11 +79,12 @@ export function SiteHeader({
   const [menuOpen, setMenuOpen] = useState(false)
   // Prototype-only: in the full flows the logo returns to the index of prototypes (through the exit guard).
   // In the standalone tests it shows the not-in-test notice, so participants can't reach the list of every test.
+  // Full-flow study parts 2–4: the logo, like the menu, is site navigation, so it says it isn't part of the task.
   const flow = useFlow()
-  const toIndex = flow ? () => siteNavigate("/") : () => notInTest("The homepage")
+  const menuOn = useMenuNavigation()
+  const toIndex = !flow ? () => notInTest("The homepage") : menuOn ? () => siteNavigate("/") : () => notInTest("The homepage", "task")
   const closeTimer = useRef<number | undefined>(undefined)
   // Full-flow study parts 2–4: the menu is shown but doesn't open or navigate (not part of the task).
-  const menuOn = useMenuNavigation()
   const menuLocked = navigation && !menuOn
   const nav = navigation && !menuLocked
 
