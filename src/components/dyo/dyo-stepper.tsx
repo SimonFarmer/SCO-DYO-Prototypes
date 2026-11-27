@@ -130,12 +130,19 @@ export function DyoStepper({
     current = (ORDER.stone.indexOf(ORDER.setting[current - 1]) + 1) as StepNumber
     start = "stone"
   }
+  // Full-flow study part 1 (Choose a Setting): with no setting picked, a stone page is only reached from the
+  // header's Shop by Stone, so that journey starts with the stone: Stone is step 1 and the setting step 2.
+  if (flow?.study?.part === 1 && start === "setting" && current === 2 && !built.setting) {
+    start = "stone"
+    current = 1
+  }
 
   const order = ORDER[start]
-  // The tests mark steps by position. The full flows mark every step that already holds a choice as done, so going
-  // back a step (Edit Setting from the Review, the diamonds PLP) still shows the stone and finishing as done.
+  // The tests mark steps by position. The full flows mark a step done only when it holds a choice: going back a
+  // step (Edit Setting from the Review, the diamonds PLP) still shows the stone and finishing as done, and arriving
+  // on the diamonds PLP from Shop by Stone with no setting picked (the study's part 1) leaves the setting step open.
   const stateOf = (n: StepNumber) =>
-    n === current ? "current" : n < current || (flow && built[order[n - 1]]) ? "done" : "upcoming"
+    n === current ? "current" : (flow ? built[order[n - 1]] : n < current) ? "done" : "upcoming"
   // Full flows: the current step shows its choice too when it already has one (back on the diamonds PLP, the stone).
   const showsChoice = (n: StepNumber) => {
     const kind = order[n - 1]
