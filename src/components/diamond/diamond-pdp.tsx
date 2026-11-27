@@ -11,7 +11,7 @@ import { Breadcrumb } from "@/components/site/breadcrumb"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { diamondName, type Diamond } from "@/data/diamonds"
-import { storedStoneQuery, useFlow } from "@/flow/flow-context"
+import { storedPlpQuery, useFlow } from "@/flow/flow-context"
 import { FLOW_CRUMBS } from "@/flow/flow-paths"
 import { RECENTLY_VIEWED } from "@/data/products"
 import { formatPrice } from "@/lib/format"
@@ -58,7 +58,7 @@ export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false, s
         <div className="grid lg:grid-cols-[826fr_606fr] lg:gap-2">
           {flow ? (
             flow.config.crumbs && (
-              <Breadcrumb items={FLOW_CRUMBS.diamond(`/diamonds${storedStoneQuery(flow.base)}`, diamondName(diamond))} className="mx-2 bg-secondary" />
+              <Breadcrumb items={FLOW_CRUMBS.diamond(`/diamonds${storedPlpQuery(flow.base)}`, diamondName(diamond))} className="mx-2 bg-secondary" />
             )
           ) : (
             <Breadcrumb items={["Home", "Diamonds", diamondName(diamond)]} className="mx-2 bg-secondary" />

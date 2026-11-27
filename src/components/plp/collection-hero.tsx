@@ -37,6 +37,8 @@ const tilesFor = (key: ExploreKey, variant: PlpVariant) =>
 
 const DYO_COPY =
   "Create the perfect custom engagement ring, uniquely built for you. Start designing your own Gemstone or Diamond engagement ring by choosing a setting or a stone."
+/** Full-flow study (Flows A and B): the Ready to Ship copy from Figma "Hero Fix" (8265:101093). */
+const STUDY_RTS_COPY = "Beautiful engagement rings with the center stone already set. Ready to ship, or pick up in store."
 const RTS_COPY =
   "Beautiful engagement rings with the center stone already set, ready to ship or pick up in store. Prefer to choose every detail? Switch to Design Your Own."
 
@@ -290,11 +292,19 @@ export function CollectionHero({ listing }: { listing: Listing }) {
   const [readMore, setReadMore] = useState(false)
   const [drawer, setDrawer] = useState<ExploreKey | null>(null)
 
-  const title = mode === "rts" ? "Ready to Ship Engagement Rings" : (collection?.title ?? "Engagement Rings")
   const flow = useFlow()
+  // Full-flow study (Flows A and B): the header's Design Your Own and Ready to Ship pages follow Figma "Hero Fix"
+  // (8265:101093): "… Engagement Ring" titles, no eyebrow, the mode toggle under the title, then the copy.
+  const study = !!flow?.study
+  const title =
+    mode === "rts"
+      ? study
+        ? "Ready to Ship Engagement Ring"
+        : "Ready to Ship Engagement Rings"
+      : (collection?.title ?? (study ? "Design Your Own Engagement Ring" : "Engagement Rings"))
   const crumbs: Crumb[] = [{ label: "Home", to: "/shop" }]
   if (mode === "rts" || collection) crumbs.push({ label: "Engagement Rings", to: PLP_PATH })
-  crumbs.push(title)
+  crumbs.push(study && mode === "rts" ? "Ready to Ship" : title)
   // Full flow: DYO pages end the trail on "Design Your Own" (benchmarks); the moderator can hide it.
   const inFlowDyo = !!flow && mode === "dyo"
   if (inFlowDyo) {
@@ -302,13 +312,36 @@ export function CollectionHero({ listing }: { listing: Listing }) {
     crumbs.push("Design Your Own")
   }
   const showCrumbs = !inFlowDyo || flow.config.crumbs
-  const copy = mode === "rts" ? RTS_COPY : (collection?.description ?? DYO_COPY)
+  const copy = mode === "rts" ? (study ? STUDY_RTS_COPY : RTS_COPY) : (collection?.description ?? DYO_COPY)
+  const copyBlock = (
+    <div className="flex flex-col items-start gap-1">
+      <p className={cn("text-sm leading-5 text-primary lg:text-base lg:leading-6", !readMore && "max-lg:line-clamp-2")}>{copy}</p>
+      <button
+        type="button"
+        onClick={() => setReadMore((r) => !r)}
+        className="cursor-pointer type-label-xs text-primary underline underline-offset-4 lg:hidden"
+      >
+        {readMore ? "Read Less" : "Read More"}
+      </button>
+    </div>
+  )
 
   return (
     <section className="flex flex-col gap-8 bg-linear-to-b from-secondary from-32% to-secondary/0 px-page pt-5 pb-8 lg:bg-secondary lg:bg-none lg:pb-10">
       {showCrumbs && <Breadcrumb items={crumbs} className="p-0" />}
 
       <div className="flex flex-col lg:flex-row lg:gap-16">
+        {study ? (
+          // Figma "Hero Fix": title, the mode toggle, then the copy, 32px apart. Phones keep the toggle last.
+          <div className="flex flex-col gap-6 lg:w-guided-intent lg:shrink-0 lg:gap-8 lg:border-r lg:border-border-subtle lg:pr-16 lg:pb-7">
+            <h1 className="type-h2 text-primary">{title}</h1>
+            <ExplorePills filters={filters} onOpen={setDrawer} />
+            <div className="max-lg:order-last">
+              <ModeToggle mode={mode} shape={listing.filters.shape[0]} />
+            </div>
+            {copyBlock}
+          </div>
+        ) : (
         <div className="flex flex-col gap-6 lg:w-guided-intent lg:shrink-0 lg:gap-8 lg:border-r lg:border-border-subtle lg:pr-16 lg:pb-7">
           <div className="flex flex-col gap-6 lg:gap-4">
             <div className="flex flex-col gap-3">
@@ -321,21 +354,13 @@ export function CollectionHero({ listing }: { listing: Listing }) {
               <h1 className="type-h2 text-primary">{title}</h1>
             </div>
             <ExplorePills filters={filters} onOpen={setDrawer} />
-            <div className="flex flex-col items-start gap-1">
-              <p className={cn("text-sm leading-5 text-primary lg:text-base lg:leading-6", !readMore && "max-lg:line-clamp-2")}>{copy}</p>
-              <button
-                type="button"
-                onClick={() => setReadMore((r) => !r)}
-                className="cursor-pointer type-label-xs text-primary underline underline-offset-4 lg:hidden"
-              >
-                {readMore ? "Read Less" : "Read More"}
-              </button>
-            </div>
+            {copyBlock}
           </div>
           <div className="lg:pt-4">
             <ModeToggle mode={mode} shape={listing.filters.shape[0]} />
           </div>
         </div>
+        )}
 
         {/* Desktop carousel */}
         <div className="hidden min-w-0 flex-1 lg:flex">

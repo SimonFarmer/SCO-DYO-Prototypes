@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { useNavigate, useSearchParams } from "react-router"
+import { useLocation, useNavigate, useSearchParams } from "react-router"
 import { CaretLeftIcon } from "@phosphor-icons/react"
 import { DiamondGlpView } from "@/components/diamond/diamond-glp"
 import { FilterSection } from "@/components/diamond/diamond-filters"
@@ -34,8 +34,9 @@ import {
   type StoneTypeId,
 } from "@/data/stones"
 import type { DiamondFilterState } from "@/lib/diamond-filters"
-import { useFlow } from "@/flow/flow-context"
-import { FLOW_ROUTES } from "@/flow/flow-paths"
+import { Breadcrumb } from "@/components/site/breadcrumb"
+import { plpQueryKey, useFlow } from "@/flow/flow-context"
+import { FLOW_CRUMBS, FLOW_ROUTES } from "@/flow/flow-paths"
 import { formatPrice } from "@/lib/format"
 import { useFlowStonePrefs as useStonePrefs } from "./simulator"
 import { useFlowSelectDiamond } from "./use-flow-stone"
@@ -235,7 +236,8 @@ export function FlowDiamondsPlp() {
   }
   const [params] = useSearchParams()
   const { variant, filters: preset, href } = useStonePrefs()
-  const from = params.get("from") === "recs" ? "recs" : "prefs"
+  // "nav": the header's Shop by Stone (FlowLayout's flowGlpLink); the way back is the stone step on that shape.
+  const from = params.get("from") === "recs" ? "recs" : params.get("from") === "nav" ? "nav" : "prefs"
   const back = useMemo(
     () => ({
       label: from === "recs" ? "Back to your recommendations" : "Back to stone preferences",
@@ -246,11 +248,15 @@ export function FlowDiamondsPlp() {
   )
 
   const [type, setType] = useState<StoneTypeId>(preset.type)
-  const [state, setState] = useState(() => ({
-    filters: fromStoneFilters(preset, catalogFor(preset.type, back, () => {}).noFilters as PlpFilters),
-    sort: "popular" as GlpSort,
-    page: 1,
-  }))
+  const [state, setState] = useState(() => {
+    const none = catalogFor(preset.type, back, () => {}).noFilters as PlpFilters
+    // From Shop by Stone: only the shape; from the stone step: everything the shopper set there.
+    return {
+      filters: from === "nav" ? { ...none, shapes: preset.shapes.map(shapeLabel) } : fromStoneFilters(preset, none),
+      sort: "popular" as GlpSort,
+      page: 1,
+    }
+  })
   const [quickview, setQuickview] = useState<LooseStone | null>(null)
 
   // A new type has its own price, size and grade scales (carats vs millimetres): keep the shapes, reset the rest.
@@ -289,19 +295,35 @@ export function FlowDiamondsPlp() {
     window.scrollTo({ top: 0 })
   }, [])
 
+  // Remembered for the Diamond PDP's "Diamonds" crumb, so it returns to this listing the way the shopper came in.
+  const { search } = useLocation()
+  useEffect(() => {
+    if (!flow) return
+    try {
+      sessionStorage.setItem(plpQueryKey(flow.base), search)
+    } catch {
+      /* storage unavailable: the crumb returns to the stone preferences' listing */
+    }
+  }, [search, flow])
+
   const kind = type === "gemstone" ? "Gemstone" : "Diamond"
   return (
     <div data-variant={variant.id}>
       <DiamondGlpView
         listing={listing}
         catalog={catalog}
-        stepper={<DyoStepper current={2} mobileLabel="Stone" showTotal={false} mobileTone="plp" contained />}
+        // Full-flow study: the step bar as the settings PLP's (Figma "Hero Fix": no title, full-width steps).
+        stepper={<DyoStepper current={2} mobileLabel="Stone" showTotal={false} mobileTone="plp" contained columns={!!flow?.study} />}
         tileTitle={(d) => {
           const s = byId.get(d.id)
           return s ? stoneTitle(s) : d.id
         }}
         onOpen={(d) => (opensQuickview ? setQuickview(byId.get(d.id) ?? null) : toPdp(d.id))}
-        stickyBar={<BackBar label={back.label} onBack={back.onClick} />}
+        // From the header's Shop by Stone the shopper isn't in the stone step yet: the breadcrumb (as the setting PLP).
+        // From the stone step (View All on the preferences or recommendations): the way back to it.
+        stickyBar={
+          from === "nav" ? flow?.config.crumbs && <CrumbBar /> : <BackBar label={back.label} onBack={back.onClick} />
+        }
       />
       {/* The GLP's Quickview: selecting puts the stone in the build; Full Details opens the Diamond PDP. */}
       <DiamondQuickview
@@ -321,6 +343,15 @@ export function FlowDiamondsPlp() {
           if (picked) toPdp(picked.id)
         }}
       />
+    </div>
+  )
+}
+
+/** Shop by Stone's breadcrumb, in the back bar's place: Home › Diamonds. */
+function CrumbBar() {
+  return (
+    <div className="bg-secondary pt-2">
+      <Breadcrumb items={FLOW_CRUMBS.diamonds} className="h-10 px-page py-0" />
     </div>
   )
 }
