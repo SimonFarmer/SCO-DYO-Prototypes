@@ -1,4 +1,4 @@
-import { useRef } from "react"
+import { useRef, type ReactNode } from "react"
 import { DiamondBuyForm } from "@/components/diamond/diamond-buy-form"
 import { AboutDiamondBlock, DiamondGallery, FourCsReportCard } from "@/components/diamond/diamond-pdp-sections"
 import type { SpecLayout } from "@/components/diamond/diamond-specs"
@@ -25,13 +25,15 @@ interface DiamondPdpProps {
   stickyBar?: boolean
   /** DYO entry point; stone-first journeys show the stone as step 1. */
   start?: DyoStart
+  /** In place of the breadcrumb: the full-flow study's way back to where the shopper opened this stone. */
+  backBar?: ReactNode
 }
 
 /**
  * Diamond PDP — DYO step 2 (Figma “Diamond PDP — DYO Step 9”, 7375:129294 / 7375:134699).
  * Shared by Test 3.1 (full-details destination) and Test 3.2 (spec layouts).
  */
-export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false, start = "setting" }: DiamondPdpProps) {
+export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false, start = "setting", backBar }: DiamondPdpProps) {
   const flow = useFlow()
   const aboutRef = useRef<HTMLElement>(null)
   // Full flow, mobile: the sticky bar shows once the buy form (after the gallery) reaches the top.
@@ -56,7 +58,9 @@ export function DiamondPdp({ diamond, specLayout, onSelect, stickyBar = false, s
         {/* Gallery + buy form capped at 1680px (PAGE_MAX, as Test 2); the bands below use px-page. */}
         <div className={PAGE_MAX}>
         <div className="grid lg:grid-cols-[826fr_606fr] lg:gap-2">
-          {flow ? (
+          {backBar ? (
+            <div className="lg:col-span-2">{backBar}</div>
+          ) : flow ? (
             flow.config.crumbs && (
               <Breadcrumb items={FLOW_CRUMBS.diamond(`/diamonds${storedPlpQuery(flow.base)}`, diamondName(diamond))} className="mx-2 bg-secondary" />
             )

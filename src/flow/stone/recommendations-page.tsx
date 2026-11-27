@@ -276,7 +276,7 @@ export function FlowStoneRecommendations() {
   )
   const opensQuickview = flow?.config.t31 !== "A"
   const toPdp = (id: string) => {
-    navigate(flow ? flow.path(FLOW_ROUTES.diamond(id)) : FLOW_ROUTES.diamond(id))
+    navigate(flow ? flow.path(`${FLOW_ROUTES.diamond(id)}?from=recs`) : FLOW_ROUTES.diamond(id))
     window.scrollTo({ top: 0 })
   }
   // Matched as View All is: with Budget first, near the Preview Size as well as in the budget (simulator matchMode).
