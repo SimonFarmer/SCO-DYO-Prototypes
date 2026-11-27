@@ -137,17 +137,15 @@ export function useRingTaskEnd(): () => TaskEnd {
 }
 
 /**
- * Part 2's View All: shown, but clearly unavailable, and a click says it isn't part of this task (Lucid). Elsewhere
- * (the full flows, part 3) it works as usual.
+ * Part 2's View All: looks and clicks as usual, but the click shows the "not part of this test" notice (as the other
+ * out-of-scope controls) instead of opening the catalog. Elsewhere (the full flows, part 3) it works as usual.
  */
 export function useStudyViewAll() {
   const flow = useFlow()
   const notInTest = useNotInTest()
-  const unavailable = flow?.study?.part === 2
   return {
-    unavailable,
-    /** Wraps the View All action: in part 2 the "not part of this task" notice instead. */
-    guard: (action: () => void) => () => (unavailable ? notInTest("Viewing every stone", "task") : action()),
+    /** Wraps the View All action: in part 2 the "not part of this test" notice instead. */
+    guard: (action: () => void) => () => (flow?.study?.part === 2 ? notInTest("Viewing all stones") : action()),
   }
 }
 

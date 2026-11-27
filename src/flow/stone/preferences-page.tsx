@@ -156,7 +156,6 @@ export function FlowStonePreferences() {
           shape={prefs.shape}
           count={matching.length}
           onViewAll={viewAll.guard(() => navigate(href("diamonds", { from: "prefs" })))}
-          viewAllUnavailable={viewAll.unavailable}
         />
       </StoneStepLayout>
     </div>
