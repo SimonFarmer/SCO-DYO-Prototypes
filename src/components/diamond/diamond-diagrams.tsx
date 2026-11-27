@@ -1,4 +1,5 @@
 import type { Diamond } from "@/data/diamonds"
+import { SHAPE_DIAGRAMS } from "./diamond-shape-diagrams"
 
 /*
  * Proportion diagrams from the Diamond PDP gallery (Figma 7375:134713 / 7375:134768), exported
@@ -8,8 +9,64 @@ import type { Diamond } from "@/data/diamonds"
 
 const label = "fill-primary font-sans text-xxs font-semibold tracking-[1px] uppercase"
 
-/** Side profile: table %, depth %, girdle and culet. */
+/**
+ * Labels laid out as in the Figma frames (Figma text boxes: left x, top y, width; centred unless `left`). Two-line
+ * labels take a second line 12px down. Baseline sits 10px below the box top (11px type on a 12px line).
+ */
+type Label = { lines: string[]; x: number; y: number; w: number; left?: boolean }
+
+/** "Medium to Slightly Thick" on two lines ("Medium to" / "Slightly Thick"), so it stays clear of the outline. */
+const girdleLines = (g: string) => {
+  const i = g.indexOf(" to ")
+  return i > 0 ? [g.slice(0, i + 3), g.slice(i + 4)] : [g]
+}
+function Labels({ labels }: { labels: Label[] }) {
+  return labels.map((l) => (
+    <text key={l.lines[0]} className={label} x={l.left ? l.x : l.x + l.w / 2} y={l.y + 10} textAnchor={l.left ? "start" : "middle"}>
+      {l.lines.map((line, i) => (
+        <tspan key={line} x={l.left ? l.x : l.x + l.w / 2} dy={i === 0 ? 0 : 12}>
+          {line}
+        </tspan>
+      ))}
+    </text>
+  ))
+}
+
+/** Fancy shapes (Figma 8301:55152): the shape's own line art, with this stone's measurements. */
+function FancyDiagram({ diamond, view, className }: { diamond: Diamond; view: "top" | "side"; className?: string }) {
+  const art = SHAPE_DIAGRAMS[diamond.shape.toLowerCase()][view]
+  // The pear's diagrams point the other way, so their labels sit elsewhere (as in Figma).
+  const pear = diamond.shape === "Pear"
+  const depthMm = (diamond.depth / 100) * diamond.widthMm
+  const labels: Label[] =
+    view === "top"
+      ? [
+          { lines: [`Width: ${diamond.widthMm.toFixed(2)}mm`], x: 152.3, y: pear ? 252.5 : diamond.shape === "Heart" ? 144.2 : 196.8, w: 100 },
+          { lines: [`Length: ${diamond.lengthMm.toFixed(2)}mm`], x: 77.3, y: pear ? 146.2 : 279.9, w: 108 },
+        ]
+      : [
+          { lines: [`Table: ${diamond.table}%`], x: pear ? 155.8 : 143.8, y: 52, w: 74 },
+          { lines: [`Depth: ${diamond.depth}%`, `${depthMm.toFixed(2)}mm`], x: 267.3, y: 279, w: 78 },
+          { lines: ["Girdle:", ...girdleLines(diamond.girdle)], x: 32, y: 259, w: 90, left: true },
+          { lines: [`Culet: ${diamond.culet}`], x: pear ? 177.7 : 136.8, y: 340.4, w: 88 },
+        ]
+  const aria =
+    view === "top"
+      ? `${diamond.shape} diamond measurements: ${diamond.lengthMm.toFixed(2)} × ${diamond.widthMm.toFixed(2)} mm`
+      : `${diamond.shape} diamond profile: table ${diamond.table}%, depth ${diamond.depth}%, girdle ${diamond.girdle}, culet ${diamond.culet}`
+  return (
+    <svg viewBox="0 0 401 405" fill="none" className={className} role="img" aria-label={aria}>
+      <rect width="401" height="405" className="fill-background" />
+      {/* Exported line art (trusted, generated from Figma). */}
+      <g className="text-muted-foreground" dangerouslySetInnerHTML={{ __html: art }} />
+      <Labels labels={labels} />
+    </svg>
+  )
+}
+
+/** Side profile: table %, depth %, girdle and culet. Round has its own; other shapes their Figma line art. */
 export function ProfileDiagram({ diamond, className }: { diamond: Diamond; className?: string }) {
+  if (diamond.shape !== "Round" && SHAPE_DIAGRAMS[diamond.shape.toLowerCase()]) return <FancyDiagram diamond={diamond} view="side" className={className} />
   const s = { stroke: "currentColor", strokeWidth: 1.28, strokeLinecap: "round" as const }
   return (
     <svg viewBox="0 0 401 405" fill="none" className={className} role="img" aria-label={`Diamond profile: table ${diamond.table}%, depth ${diamond.depth}%, girdle ${diamond.girdle}, culet ${diamond.culet}`}>
@@ -37,14 +94,19 @@ export function ProfileDiagram({ diamond, className }: { diamond: Diamond; class
       <text className={label} x="180.8" y="61.9" textAnchor="middle">Table: {diamond.table}%</text>
       <text className={label} x="345" y="300.9" textAnchor="end">Depth: {diamond.depth}%</text>
       <text className={label} x="32" y="268.9">Girdle:</text>
-      <text className={label} x="32" y="280.9">{diamond.girdle}</text>
+      {girdleLines(diamond.girdle).map((line, i) => (
+        <text key={line} className={label} x="32" y={280.9 + i * 12}>
+          {line}
+        </text>
+      ))}
       <text className={label} x="180.8" y="350.4" textAnchor="middle">Culet: {diamond.culet}</text>
     </svg>
   )
 }
 
-/** Face-up view with length and width in mm. */
+/** Face-up view with length and width in mm. Round has its own; other shapes their Figma line art. */
 export function TopDiagram({ diamond, className }: { diamond: Diamond; className?: string }) {
+  if (diamond.shape !== "Round" && SHAPE_DIAGRAMS[diamond.shape.toLowerCase()]) return <FancyDiagram diamond={diamond} view="top" className={className} />
   const s = { stroke: "currentColor", strokeWidth: 1.66, strokeLinecap: "round" as const }
   return (
     <svg viewBox="0 0 401 405" fill="none" className={className} role="img" aria-label={`Diamond measurements: ${diamond.lengthMm.toFixed(2)} × ${diamond.widthMm.toFixed(2)} mm`}>
