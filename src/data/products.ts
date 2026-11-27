@@ -27,6 +27,8 @@ export interface GalleryMedia {
   kind: "image" | "video" | "size-guide"
   /** Annotation badge shown bottom-left of the tile */
   badge?: string
+  /** A "3D" stone (SpinViewer): the frames of its turntable and the one it rests on; `src` is that frame */
+  spin?: { frames: string[]; start: number }
 }
 
 /** Carat size guide — not metal-specific, shown in every metal's gallery. */

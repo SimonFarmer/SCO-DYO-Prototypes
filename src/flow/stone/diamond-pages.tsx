@@ -31,6 +31,7 @@ export function FlowDiamondPdp() {
     const fallback = recs ? flowStonePath("recommendations", storedStoneQuery(flow.base)) : `${FLOW_ROUTES.diamonds}${storedPlpQuery(flow.base)}`
     backBar = (
       <BackBar
+        page
         label={recs ? "Back to your recommendations" : "Back to diamonds"}
         // Back in history when there is one (the page as it was left); a direct visit goes to the page itself.
         onBack={() => (key !== "default" ? navigate(-1) : navigate(flow.path(fallback)))}

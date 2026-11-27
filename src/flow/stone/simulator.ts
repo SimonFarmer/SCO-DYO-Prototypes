@@ -187,6 +187,9 @@ export function simulate(shopBy: ShopBy, p: StonePrefs, settingPrice: number) {
   // Size + Budget: this size's prices inside the budget.
   const overlap = sizeRing && shopBy === "both" ? { lo: Math.max(sizeRing.lo, budgetLo), hi: Math.min(sizeRing.hi, budgetHi) } : null
   const fits = !overlap || overlap.hi >= overlap.lo
+  // Size + Budget past the top of the budget: how far the cheapest ring at this size is over it (Test 2 C,
+  // "Carat over-budget validation" option C). A size below the band is cheaper, not over.
+  const overBy = shopBy === "both" && !inBudget && sizeRing && sizeRing.lo > budgetHi ? sizeRing.lo - budgetHi : null
   // Nothing to show: none in the budget (budget first) or no stones at this size.
   const blocked = shopBy === "budget" ? !available : !row
 
@@ -205,6 +208,7 @@ export function simulate(shopBy: ShopBy, p: StonePrefs, settingPrice: number) {
     sizeRing,
     overlap: overlap && fits ? overlap : null,
     inBudget,
+    overBy,
     pickMode,
     blocked,
     stoneMin: Math.max(0, budgetLo - settingPrice),
@@ -293,7 +297,12 @@ export function useFlowStonePrefs() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const prefs = useMemo(() => parse(params, setting.price), [params, setting.price])
-  const sim = useMemo(() => simulate(variant.shopBy, prefs, setting.price), [variant.shopBy, prefs, setting.price])
+  // The over-budget display (red projection, pink run, red stone price and note) is the full-flow study's only.
+  const study = flow?.study != null
+  const sim = useMemo(() => {
+    const s = simulate(variant.shopBy, prefs, setting.price)
+    return study ? s : { ...s, overBy: null }
+  }, [variant.shopBy, prefs, setting.price, study])
   const filters = useMemo(() => prefsFilters(prefs, sim), [prefs, sim])
   const matching = useMemo(() => (sim.blocked ? [] : filterStones(filters)), [filters, sim.blocked])
   const prices = useMemo(() => matchingPrices(matching, setting.price), [matching, setting.price])
