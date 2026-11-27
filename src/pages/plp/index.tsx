@@ -11,7 +11,6 @@ import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { filterCount } from "@/data/plp"
-import { useFlow } from "@/flow/flow-context"
 import { ShapeChangeModal } from "@/flow/shape-change-modal"
 import { cn, PAGE_MAX } from "@/lib/utils"
 
@@ -24,7 +23,6 @@ export function EngagementRingPlp() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const { mode, collection } = listing
-  const flow = useFlow()
 
   useEffect(() => {
     const previous = document.title
@@ -40,8 +38,8 @@ export function EngagementRingPlp() {
       <main>
         <CollectionHero listing={listing} />
         {/* Ready to Ship is outside Design Your Own, so it has no progress stepper. */}
-        {/* Full-flow study: the bar as Figma "Hero Fix" (no title, full-width steps). */}
-        {mode === "dyo" && <DyoStepper current={1} showTotal={false} mobileTone="plp" columns={!!flow?.study} />}
+        {/* Full-flow study: the step bar's first divider lines up with the hero's (Figma "Hero Fix"). */}
+        {mode === "dyo" && <DyoStepper current={1} showTotal={false} mobileTone="plp" alignToHero />}
 
         {/* Results capped at 1680px (PAGE_MAX), as the Settings PDP and the GLPs. */}
         <div id="plp-results" className={cn("scroll-mt-(--header-offset)", PAGE_MAX)}>
