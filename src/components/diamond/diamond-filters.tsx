@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import { useGlpCatalog } from "@/components/diamond/glp-catalog"
+import { FourCsDrawer, type FourC } from "@/components/diamond/four-cs-drawer"
 import { shapeIcon, type CutGrade, type Shape } from "@/data/diamonds"
 import { PRESETS, type DiamondFilterState, type Preset } from "@/lib/diamond-filters"
 import { formatPrice } from "@/lib/format"
@@ -21,11 +22,14 @@ export function FilterSection({
   defaultOpen = true,
   children,
   info,
+  onLearnMore,
 }: {
   title: string
   defaultOpen?: boolean
   children?: ReactNode
   info?: string
+  /** Opens this filter's education drawer; without it, Learn More is "not part of this test". */
+  onLearnMore?: () => void
 }) {
   const [open, setOpen] = useState(defaultOpen)
   const notInTest = useNotInTest()
@@ -45,7 +49,7 @@ export function FilterSection({
         {open && info && (
           <div className="flex flex-col items-start gap-1 pb-1">
             <p className="text-xs tracking-[0.12px] text-muted-foreground">{info}</p>
-            <Button variant="link" className="h-6 gap-0.5 px-0" onClick={() => notInTest(`${title} education`)}>
+            <Button variant="link" className="h-6 gap-0.5 px-0" onClick={onLearnMore ?? (() => notInTest(`${title} education`))}>
               Learn More
               <InfoIcon />
             </Button>
@@ -240,8 +244,12 @@ export function DiamondFilters({ value, onChange }: { value: DiamondFilterState;
   const catalog = useGlpCatalog()
   const set = (patch: Partial<DiamondFilterState>) => onChange({ ...value, ...patch })
   const chips = catalog.chips(value)
+  // The topic stays set while the drawer animates closed.
+  const [learn, setLearn] = useState<{ topic: FourC; open: boolean }>({ topic: "carat", open: false })
+  const learnMore = (topic: FourC) => (catalog.education ? () => setLearn({ topic, open: true }) : undefined)
   return (
     <div className="flex flex-col">
+      {catalog.education && <FourCsDrawer topic={learn.topic} open={learn.open} onOpenChange={(open) => setLearn((l) => ({ ...l, open }))} />}
       {chips.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 border-b border-muted pb-5">
           {chips.map((chip) => (
@@ -297,7 +305,7 @@ export function DiamondFilters({ value, onChange }: { value: DiamondFilterState;
 
       {catalog.extraFilters?.(value, onChange)}
 
-      <FilterSection title={catalog.size.label} info={catalog.size.info}>
+      <FilterSection title={catalog.size.label} info={catalog.size.info} onLearnMore={learnMore("carat")}>
         <RangeFields
           label={catalog.size.label}
           value={value.carat}
@@ -341,7 +349,7 @@ export function DiamondFilters({ value, onChange }: { value: DiamondFilterState;
       </div>
       )}
 
-      <FilterSection title="Cut" info={catalog.info.cut}>
+      <FilterSection title="Cut" info={catalog.info.cut} onLearnMore={learnMore("cut")}>
         <div className="flex flex-col gap-2">
           {([...catalog.grades.cut].reverse() as CutGrade[]).map((cut) => {
             const id = `cut-${cut.replace(" ", "-").toLowerCase()}`
@@ -362,11 +370,11 @@ export function DiamondFilters({ value, onChange }: { value: DiamondFilterState;
         </div>
       </FilterSection>
 
-      <FilterSection title="Color" info={catalog.info.color}>
+      <FilterSection title="Color" info={catalog.info.color} onLearnMore={learnMore("color")}>
         <GradeSlider label="Color" grades={catalog.grades.color} value={value.color} onChange={(color) => set({ color, preset: null })} />
       </FilterSection>
 
-      <FilterSection title="Clarity" info={catalog.info.clarity}>
+      <FilterSection title="Clarity" info={catalog.info.clarity} onLearnMore={learnMore("clarity")}>
         <GradeSlider label="Clarity" grades={catalog.grades.clarity} value={value.clarity} onChange={(clarity) => set({ clarity, preset: null })} />
       </FilterSection>
 
