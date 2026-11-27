@@ -394,16 +394,20 @@ function useRingLines() {
 function useStep3Gallery() {
   const { crown } = useRingBuild()
   const { finishing } = useFlowRingGallery()
+  // Study part 4: the preselected classic crown stays out of the gallery; only an added upgrade shows.
+  const study = useFlow()?.study != null
   return useMemo<GalleryImage[]>(() => {
     const [hero, ...rest] = finishing
     return [
       hero,
       ...(crown
         ? [{ src: crown.image, alt: crown.name, fit: "contain" as const }]
-        : [{ src: FLOW_CLASSIC_CROWN.image, alt: FLOW_CLASSIC_CROWN.name, fit: "contain" as const, badge: "Crown on ring", badgePosition: "bottom" as const }]),
+        : study
+          ? []
+          : [{ src: FLOW_CLASSIC_CROWN.image, alt: FLOW_CLASSIC_CROWN.name, fit: "contain" as const, badge: "Crown on ring", badgePosition: "bottom" as const }]),
       ...rest,
     ]
-  }, [finishing, crown])
+  }, [finishing, crown, study])
 }
 
 /** Finishing Touches (Lucid "Step 3 – Finishing Touches: personalize & size"): Test 4 B's sections in the panel. */
