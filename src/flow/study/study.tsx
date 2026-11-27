@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react"
 import { Navigate, useNavigate, useParams } from "react-router"
+import { useNotInTest } from "@/components/prototype/not-in-test"
 import { diamondTitle, type Diamond } from "@/data/diamonds"
 import { flowMetalFor, flowSettingFor } from "@/data/flow-settings"
 import { METALS, galleryFor, type MetalId, type Setting } from "@/data/products"
@@ -136,14 +137,15 @@ export function useRingTaskEnd(): () => TaskEnd {
 }
 
 /**
- * Part 2's View All: looks and clicks as usual, but the click opens the "not part of this test" modal instead of the
- * catalog. Elsewhere (the full flows, part 3) it works as usual.
+ * Part 2's View All: looks and clicks as usual, but the click shows the "not part of this test" notice (as the other
+ * out-of-scope controls) instead of opening the catalog. Elsewhere (the full flows, part 3) it works as usual.
  */
 export function useStudyViewAll() {
-  const study = useFlow()?.study
+  const flow = useFlow()
+  const notInTest = useNotInTest()
   return {
-    /** Wraps the View All action: in part 2 the "not part of this test" modal instead. */
-    guard: (action: () => void) => () => (study?.part === 2 ? study.notInTest("Viewing all stones") : action()),
+    /** Wraps the View All action: in part 2 the "not part of this test" notice instead. */
+    guard: (action: () => void) => () => (flow?.study?.part === 2 ? notInTest("Viewing all stones") : action()),
   }
 }
 

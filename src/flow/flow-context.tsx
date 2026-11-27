@@ -7,7 +7,7 @@ import { useRingBuild } from "@/state/ring-build"
 import { findFlowDiamond } from "./stone/find-diamond"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { FlowExitModal } from "./exit-modal"
-import { CatalogGuideModal, NotInTestModal, TaskEndModal, type TaskEnd } from "./study/study-modals"
+import { CatalogGuideModal, TaskEndModal, type TaskEnd } from "./study/study-modals"
 
 /**
  * Full DYO flow (Test 5, moderated). Every flow page lives under /flow, so the unmoderated tests
@@ -140,8 +140,6 @@ export interface StudyState {
   endTask: (end: TaskEnd) => void
   /** Part 3: Select on the recommendations points to the full catalog instead (the View All button's label). */
   guideToCatalog: (viewAllLabel: string) => void
-  /** A control that works but is outside the task (part 2's View All): the "not part of this test" modal. */
-  notInTest: (what: string) => void
 }
 
 const partKey = (base: FlowBase) => `dyo-study-part${base}`
@@ -247,7 +245,6 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
   const [part, setPartState] = useState<StudyPart>(() => loadPart(base))
   const [ended, setEnded] = useState<TaskEnd | null>(null)
   const [guide, setGuide] = useState<string | null>(null)
-  const [outOfScope, setOutOfScope] = useState<string | null>(null)
 
   useEffect(() => {
     setConfig((c) => {
@@ -384,7 +381,6 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
           setPartState(next)
           setEnded(null)
           setGuide(null)
-          setOutOfScope(null)
           try {
             sessionStorage.setItem(partKey(base), String(next))
           } catch {
@@ -393,7 +389,6 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
         },
         endTask: setEnded,
         guideToCatalog: setGuide,
-        notInTest: setOutOfScope,
       },
     [studyFlow, part, base],
   )
@@ -410,7 +405,6 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
         <>
           <TaskEndModal end={ended} onClose={() => setEnded(null)} />
           <CatalogGuideModal viewAllLabel={guide} onClose={() => setGuide(null)} />
-          <NotInTestModal what={outOfScope} onClose={() => setOutOfScope(null)} />
         </>
       )}
       {/* Saved confirmation on the page the shopper went to (no Figma frame yet: the "not part of this test" notice style). */}
