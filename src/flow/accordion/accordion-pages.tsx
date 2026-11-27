@@ -131,6 +131,15 @@ export function AccordionSetting() {
   const shapeLabel = SHAPES.find((s) => s.id === previewShape)?.label ?? setting.previewStone.shape
   const media = galleryFor(setting, metal, previewShape)
   const total = formatPrice(built.price + (stoneFirst ? stone.price : 0))
+  // Full-flow study: the stone shape preview is a "Preview a Stone Shape" selector in the panel (as Test 1 G), every
+  // shape the setting takes, instead of the gallery's dropdown. On phones a pick glides back up to the new preview.
+  const shapeInForm = flow?.study != null
+  const previewShapeInForm = (next: string) => {
+    if (next === previewShape) return
+    setPreviewShape(next)
+    if (window.matchMedia("(min-width: 64rem)").matches) return
+    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" })))
+  }
 
   const next = () => {
     // Study part 1 ends here: the accordion's "Continue to Stone" is its "Select this Setting".
@@ -147,7 +156,12 @@ export function AccordionSetting() {
           key={metal}
           media={media}
           previewLabel={`Previewing: ${shapeLabel} ∙ ${carat.toFixed(2)} ct`}
-          previewMenu={<StonePreviewMenu shapes={setting.shapes} value={previewShape} onChange={setPreviewShape} mobileDetail={`${carat.toFixed(2)} ct`} />}
+          // The full-flow study previews the shape in the panel instead (below the metal).
+          previewMenu={
+            shapeInForm ? undefined : (
+              <StonePreviewMenu shapes={setting.shapes} value={previewShape} onChange={setPreviewShape} mobileDetail={`${carat.toFixed(2)} ct`} />
+            )
+          }
           previewShape={previewShape}
         />
       }
@@ -163,6 +177,7 @@ export function AccordionSetting() {
             total={total}
           >
             <MetalSelector compact options={setting.variants.map((v) => ({ metal: v.metal, price: v.price }))} value={metal} onChange={setSettingMetal} />
+            {shapeInForm && <ShapeSelector title="Preview a Stone Shape" shapes={setting.shapes} value={previewShape} onChange={previewShapeInForm} />}
             <Button className="w-full" onClick={next}>
               {stoneFirst ? "Continue to Finishing Touches" : "Continue to Stone"}
             </Button>

@@ -29,6 +29,8 @@ export function FlowSettingPdp() {
         onMetalChange: setSettingMetal,
         initialShape: shape,
         breadcrumb: flow.config.crumbs ? FLOW_CRUMBS.setting(settingId) : null,
+        // The full-flow study previews the stone shape in the buy form rather than the gallery's dropdown.
+        shapeInForm: flow.study != null,
         // On to step 2, stone preferences, in the shape the shopper came in with when this setting takes it,
         // otherwise the setting's own default shape (a marquise halo starts on marquise, not round).
         onSelect: () => {
