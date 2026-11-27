@@ -1,11 +1,11 @@
-import { EnvelopeSimpleIcon, HeartStraightIcon, InfoIcon } from "@phosphor-icons/react"
+import { EnvelopeSimpleIcon, HeartStraightIcon } from "@phosphor-icons/react"
 import { EllipsisVertical, MessageCircle } from "lucide-react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { SpecList, SpecTiles, type SpecLayout } from "@/components/diamond/diamond-specs"
 import { DeliveryOptions, DyoAssurances } from "@/components/pdp/setting-buy-form"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { PriceExplainedPopover } from "@/components/shared/price-explained-popover"
 import { Separator } from "@/components/ui/separator"
 import { diamondLab, diamondName, diamondTitle, type Diamond } from "@/data/diamonds"
 import { formatPrice } from "@/lib/format"
@@ -14,34 +14,14 @@ import { useRingBuild } from "@/state/ring-build"
 /** “Price explained” popover: setting + this stone = ring total (Figma 7336:167016). */
 export function PriceExplained({ diamond, stoneName }: { diamond: Diamond; /** Overrides the stone line (Test 2: lab-grown and gemstones) */ stoneName?: string }) {
   const { setting } = useRingBuild()
-  const rows = [
-    { label: "Setting", name: setting.name, price: setting.price },
-    { label: "Stone", name: stoneName ?? diamondTitle(diamond).replace(" ct ", " ct Brilliant "), price: diamond.price },
-  ]
   return (
-    <Popover>
-      <PopoverTrigger openOnHover delay={100} render={<Button variant="link" className="h-auto px-0 gap-0.5" />}>
-        Price explained
-        <InfoIcon />
-      </PopoverTrigger>
-      {/* Figma: 302px wide — closest width token is w-80 (320px). */}
-      <PopoverContent className="flex w-80 flex-col gap-3">
-        {rows.map((row) => (
-          <div key={row.label} className="flex flex-col gap-0.75">
-            <p className="type-label-xs font-semibold text-primary">{row.label}</p>
-            <div className="flex items-start gap-2 text-xs">
-              <p className="flex-1 tracking-[0.12px] text-muted-foreground">{row.name}</p>
-              <p className="font-semibold text-primary">{formatPrice(row.price)}</p>
-            </div>
-          </div>
-        ))}
-        <Separator className="bg-muted" />
-        <div className="flex items-start gap-2 text-sm font-semibold text-primary">
-          <p className="flex-1">Ring Total:</p>
-          <p>{formatPrice(setting.price + diamond.price)}</p>
-        </div>
-      </PopoverContent>
-    </Popover>
+    <PriceExplainedPopover
+      rows={[
+        { label: "Setting", name: setting.name, price: formatPrice(setting.price) },
+        { label: "Stone", name: stoneName ?? diamondTitle(diamond).replace(" ct ", " ct Brilliant "), price: formatPrice(diamond.price) },
+      ]}
+      total={formatPrice(setting.price + diamond.price)}
+    />
   )
 }
 
