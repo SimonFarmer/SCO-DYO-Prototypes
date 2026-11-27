@@ -4,7 +4,9 @@ import { DiamondQuickview } from "@/components/diamond/diamond-quickview"
 import { Button } from "@/components/ui/button"
 import { RadioGroup } from "@/components/ui/radio-group"
 import { stoneTitle, toQuickviewDiamond, type StonePick } from "@/data/stones"
+import { useFlow } from "@/flow/flow-context"
 import { PickTile, pickHeadline } from "@/flow/stone/recommendations-page"
+import { PickQuickview } from "@/flow/study/study-quickviews"
 
 /**
  * Full-flow study · Flow B: the recommendations inside the Stone step of the accordion, in place of the drawer. The
@@ -41,6 +43,8 @@ export function InlineRecommendations({
   viewAll: ReactNode
 }) {
   const [quickview, setQuickview] = useState<StonePick | null>(null)
+  // Part 3: the pick's own Quickview, saying why it was picked (Figma 8287:14562).
+  const whyPicked = useFlow()?.study?.part === 3
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-200">
       <div className="flex flex-col gap-4.5">
@@ -82,21 +86,37 @@ export function InlineRecommendations({
         </Button>
         {viewAll}
       </div>
-      <DiamondQuickview
-        diamond={quickview && toQuickviewDiamond(quickview.stone)}
-        title={quickview ? stoneTitle(quickview.stone) : undefined}
-        onOpenChange={(o) => !o && setQuickview(null)}
-        onSelect={() => {
-          const picked = quickview
-          setQuickview(null)
-          if (picked) onSelect(picked)
-        }}
-        onViewDetails={() => {
-          const picked = quickview
-          setQuickview(null)
-          if (picked) onFullDetails(picked)
-        }}
-      />
+      {whyPicked ? (
+        <PickQuickview
+          pick={quickview}
+          nearSize={bySize}
+          onClose={() => setQuickview(null)}
+          onSelect={(p) => {
+            setQuickview(null)
+            onSelect(p)
+          }}
+          onFullDetails={(p) => {
+            setQuickview(null)
+            onFullDetails(p)
+          }}
+        />
+      ) : (
+        <DiamondQuickview
+          diamond={quickview && toQuickviewDiamond(quickview.stone)}
+          title={quickview ? stoneTitle(quickview.stone) : undefined}
+          onOpenChange={(o) => !o && setQuickview(null)}
+          onSelect={() => {
+            const picked = quickview
+            setQuickview(null)
+            if (picked) onSelect(picked)
+          }}
+          onViewDetails={() => {
+            const picked = quickview
+            setQuickview(null)
+            if (picked) onFullDetails(picked)
+          }}
+        />
+      )}
     </div>
   )
 }

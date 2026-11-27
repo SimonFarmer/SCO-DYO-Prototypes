@@ -4,6 +4,7 @@ import { CaretLeftIcon } from "@phosphor-icons/react"
 import { DiamondGlpView } from "@/components/diamond/diamond-glp"
 import { FilterSection } from "@/components/diamond/diamond-filters"
 import { DiamondQuickview } from "@/components/diamond/diamond-quickview"
+import { CatalogQuickview } from "@/flow/study/study-quickviews"
 import {
   DIAMOND_COLOR_BANDS,
   DIAMOND_EXPLORE_WITH_PRESETS,
@@ -325,24 +326,41 @@ export function FlowDiamondsPlp() {
           from === "nav" ? flow?.config.crumbs && <CrumbBar /> : <BackBar label={back.label} onBack={back.onClick} />
         }
       />
-      {/* The GLP's Quickview: selecting puts the stone in the build; Full Details opens the Diamond PDP. */}
-      <DiamondQuickview
-        diamond={quickview && toQuickviewDiamond(quickview)}
-        title={quickview ? stoneTitle(quickview) : undefined}
-        noun={kind}
-        certificate={type === "gemstone" ? null : undefined}
-        onOpenChange={(open) => !open && setQuickview(null)}
-        onSelect={() => {
-          const picked = quickview
-          setQuickview(null)
-          if (picked) selectDiamond(toQuickviewDiamond(picked))
-        }}
-        onViewDetails={() => {
-          const picked = quickview
-          setQuickview(null)
-          if (picked) toPdp(picked.id)
-        }}
-      />
+      {/* The GLP's Quickview: selecting puts the stone in the build; Full Details opens the Diamond PDP. The full-flow
+          study has its own (Figma 8287:14466). */}
+      {flow?.study ? (
+        <CatalogQuickview
+          diamond={quickview && toQuickviewDiamond(quickview)}
+          title={quickview ? stoneTitle(quickview) : undefined}
+          onClose={() => setQuickview(null)}
+          onSelect={(d) => {
+            setQuickview(null)
+            selectDiamond(d)
+          }}
+          onFullDetails={(d) => {
+            setQuickview(null)
+            toPdp(d.id)
+          }}
+        />
+      ) : (
+        <DiamondQuickview
+          diamond={quickview && toQuickviewDiamond(quickview)}
+          title={quickview ? stoneTitle(quickview) : undefined}
+          noun={kind}
+          certificate={type === "gemstone" ? null : undefined}
+          onOpenChange={(open) => !open && setQuickview(null)}
+          onSelect={() => {
+            const picked = quickview
+            setQuickview(null)
+            if (picked) selectDiamond(toQuickviewDiamond(picked))
+          }}
+          onViewDetails={() => {
+            const picked = quickview
+            setQuickview(null)
+            if (picked) toPdp(picked.id)
+          }}
+        />
+      )}
     </div>
   )
 }
