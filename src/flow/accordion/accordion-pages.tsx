@@ -19,7 +19,7 @@ import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { ShapeSelector, StoneTypeToggle } from "@/components/stones/preference-parts"
 import { Button } from "@/components/ui/button"
-import { CLASSIC_CROWN, ENGRAVING, type GalleryImage } from "@/data/dyo"
+import { FLOW_CLASSIC_CROWN, ENGRAVING, type GalleryImage } from "@/data/dyo"
 import { SHAPES } from "@/data/plp"
 import { flowMetalFor, flowSettingFor } from "@/data/flow-settings"
 import { galleryFor } from "@/data/products"
@@ -394,16 +394,20 @@ function useRingLines() {
 function useStep3Gallery() {
   const { crown } = useRingBuild()
   const { finishing } = useFlowRingGallery()
+  // Study part 4: the preselected classic crown stays out of the gallery; only an added upgrade shows.
+  const study = useFlow()?.study != null
   return useMemo<GalleryImage[]>(() => {
     const [hero, ...rest] = finishing
     return [
       hero,
       ...(crown
         ? [{ src: crown.image, alt: crown.name, fit: "contain" as const }]
-        : [{ src: CLASSIC_CROWN.image, alt: CLASSIC_CROWN.name, fit: "contain" as const, badge: "Crown on ring", badgePosition: "bottom" as const }]),
+        : study
+          ? []
+          : [{ src: FLOW_CLASSIC_CROWN.image, alt: FLOW_CLASSIC_CROWN.name, fit: "contain" as const, badge: "Crown on ring", badgePosition: "bottom" as const }]),
       ...rest,
     ]
-  }, [finishing, crown])
+  }, [finishing, crown, study])
 }
 
 /** Finishing Touches (Lucid "Step 3 – Finishing Touches: personalize & size"): Test 4 B's sections in the panel. */

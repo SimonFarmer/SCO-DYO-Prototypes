@@ -3,6 +3,7 @@ import { ArrowLeftIcon, InfoIcon } from "@phosphor-icons/react"
 import {
   BAND_FROM_PRICE,
   CLASSIC_CROWN,
+  FLOW_CLASSIC_CROWN,
   CROWNS,
   CROWN_FROM_PRICE,
   FLOW_CROWNS,
@@ -189,7 +190,7 @@ export function PersonalizeSection({ onOpen }: { onOpen: (overlay: "engraving" |
         ) : (
           <OptionBlock
             label="Upgrade your Crown"
-            media={thumb(CLASSIC_CROWN.image)}
+            media={thumb((flow ? FLOW_CLASSIC_CROWN : CLASSIC_CROWN).image)}
             description={flow ? fromPrice(`${FLOW_CROWNS.length} available options`, FLOW_CROWN_FROM_PRICE) : fromPrice(`${CROWNS.length} available options`, CROWN_FROM_PRICE)}
             onClick={() => onOpen("crown")}
           />

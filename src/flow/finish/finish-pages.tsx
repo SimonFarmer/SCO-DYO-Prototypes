@@ -21,7 +21,7 @@ import { Breadcrumb, type Crumb } from "@/components/site/breadcrumb"
 import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
 import { SiteHeader } from "@/components/site/site-header"
 import { Button } from "@/components/ui/button"
-import { CLASSIC_CROWN, type GalleryImage } from "@/data/dyo"
+import { FLOW_CLASSIC_CROWN, type GalleryImage } from "@/data/dyo"
 import { useFlow } from "@/flow/flow-context"
 import { FLOW_CRUMBS, FLOW_ROUTES } from "@/flow/flow-paths"
 import { useStudyAddToBag } from "@/flow/study/study"
@@ -84,6 +84,8 @@ function FlowFinishingTouches() {
   const { open, sheets } = useFinishingOverlays(OVERLAYS.includes(requested) ? requested : null)
   const { ringSize, crown } = useRingBuild()
   const { finishing } = useFlowRingGallery()
+  // Study part 4: the preselected classic crown stays out of the gallery; only an added upgrade shows.
+  const study = useFlow()?.study != null
   const [triedProceed, setTriedProceed] = useState(false)
   const sizeError = triedProceed && !ringSize ? "Select a ring size to continue." : undefined
 
@@ -100,12 +102,12 @@ function FlowFinishingTouches() {
       hero,
       ...(crown ? [{ src: crown.image, alt: crown.name, fit: "contain" as const }] : []),
       ...rest,
-      ...(crown
+      ...(crown || study
         ? []
         : [
             {
-              src: CLASSIC_CROWN.image,
-              alt: CLASSIC_CROWN.name,
+              src: FLOW_CLASSIC_CROWN.image,
+              alt: FLOW_CLASSIC_CROWN.name,
               fit: "contain" as const,
               badgePosition: "bottom" as const,
               badge: (
@@ -119,7 +121,7 @@ function FlowFinishingTouches() {
             },
           ]),
     ]
-  }, [finishing, crown, open])
+  }, [finishing, crown, open, study])
 
   const proceed = () => {
     if (!ringSize) {
