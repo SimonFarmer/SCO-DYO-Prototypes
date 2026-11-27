@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
-import { diamondName, diamondTitle, type Diamond } from "@/data/diamonds"
+import { diamondLab, diamondName, diamondTitle, type Diamond } from "@/data/diamonds"
 import { formatPrice } from "@/lib/format"
 import { useRingBuild } from "@/state/ring-build"
 
@@ -90,8 +90,8 @@ export function DiamondBuyForm({ diamond, specLayout, onSelect, onViewDetails }:
               <SpecList diamond={diamond} order={["carat", "cut", "color", "clarity"]} />
             )}
             <div className="flex items-center gap-3">
-              <Button variant="link" className="h-auto px-0 py-2" onClick={() => notInTest("The GIA certificate")}>
-                GIA Certified
+              <Button variant="link" className="h-auto px-0 py-2" onClick={() => notInTest(`The ${diamondLab(diamond)} certificate`)}>
+                {diamondLab(diamond)} Certified
               </Button>
               <span aria-hidden className="type-label-xs text-primary">
                 ∙

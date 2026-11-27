@@ -32,7 +32,7 @@ import { BudgetSection, SizeSection, stoneName } from "@/flow/stone/preferences-
 import { Basis, picksHeading } from "@/flow/stone/recommendations-page"
 import { firstStoneQuery, flowStonePath, effectiveShape, useFlowStonePrefs } from "@/flow/stone/simulator"
 import { useFlowSelectDiamond } from "@/flow/stone/use-flow-stone"
-import { settingTaskEnd, useStudyAddToBag, useStudyViewAll } from "@/flow/study/study"
+import { settingTaskEnd, useFlowStoneTypes, useStudyAddToBag, useStudyViewAll } from "@/flow/study/study"
 import { formatPrice } from "@/lib/format"
 import { useElementHeight } from "@/lib/hooks"
 import { cn, PAGE_MAX } from "@/lib/utils"
@@ -221,10 +221,10 @@ export function AccordionStone() {
   const flow = useFlow()
   const navigate = useNavigate()
   const recommendations = useLocation().pathname.endsWith("/recommendations")
-  const notInTest = useNotInTest()
   const selectDiamond = useFlowSelectDiamond()
   const { variant, prefs, sim, update, setSize, matching, prices, picks: flowPicks, matchedBy, href, setting } = useFlowStonePrefs()
   const viewAll = useStudyViewAll()
+  const stoneTypes = useFlowStoneTypes()
   const { shopBy } = variant
   const set = setting.price
   const r5 = (n: number) => Math.round(n / 5) * 5
@@ -308,8 +308,8 @@ export function AccordionStone() {
               />
             ) : (
               <>
-                {/* This flow carries natural diamonds only for now. */}
-                <StoneTypeToggle value={prefs.type} onChange={(type) => (type === "natural" ? update({ type }) : notInTest("Lab-grown diamonds and gemstones"))} />
+                {/* Natural diamonds, plus lab-grown in the study; the rest show "not part of this test". */}
+                <StoneTypeToggle value={prefs.type} onChange={(type) => (stoneTypes.carries(type) ? update({ type }) : stoneTypes.notCarried())} />
                 <ShapeSelector value={sim.scope.shape} onChange={(shape) => update({ shape })} offered={shapesFor(prefs.type, prefs.gem)} />
                 {shopBy === "size" ? (
                   <>

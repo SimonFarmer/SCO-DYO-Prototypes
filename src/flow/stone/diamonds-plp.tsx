@@ -5,6 +5,7 @@ import { FilterSection } from "@/components/diamond/diamond-filters"
 import { DiamondQuickview } from "@/components/diamond/diamond-quickview"
 import { BackBar } from "@/flow/back-bar"
 import { CatalogQuickview } from "@/flow/study/study-quickviews"
+import { useFlowStoneTypes } from "@/flow/study/study"
 import {
   DIAMOND_COLOR_BANDS,
   DIAMOND_EXPLORE_WITH_PRESETS,
@@ -15,7 +16,6 @@ import {
 } from "@/components/diamond/glp-catalog"
 import { GLP_PAGE_SIZE, type DiamondListing, type GlpSort } from "@/components/diamond/use-diamond-listing"
 import { DyoStepper } from "@/components/dyo/dyo-stepper"
-import { useNotInTest } from "@/components/prototype/not-in-test"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { CutGrade, Shape } from "@/data/diamonds"
 import {
@@ -226,10 +226,10 @@ function matching(f: PlpFilters, type: StoneTypeId) {
  */
 export function FlowDiamondsPlp() {
   const navigate = useNavigate()
-  const notInTest = useNotInTest()
   const flow = useFlow()
   const selectDiamond = useFlowSelectDiamond()
   const opensQuickview = flow?.config.t31 !== "A"
+  const stoneTypes = useFlowStoneTypes()
   const toPdp = (id: string) => {
     navigate(flow ? flow.path(`${FLOW_ROUTES.diamond(id)}?from=plp`) : FLOW_ROUTES.diamond(id))
     window.scrollTo({ top: 0 })
@@ -261,8 +261,8 @@ export function FlowDiamondsPlp() {
 
   // A new type has its own price, size and grade scales (carats vs millimetres): keep the shapes, reset the rest.
   const switchType = (next: StoneTypeId) => {
-    // The flow carries natural diamonds only for now.
-    if (next !== "natural") return notInTest("Lab-grown diamonds and gemstones")
+    // Natural diamonds, plus lab-grown in the study; the rest show "not part of this test".
+    if (!stoneTypes.carries(next)) return stoneTypes.notCarried()
     const none = catalogFor(next, back, () => {}).noFilters as PlpFilters
     setType(next)
     setState((s) => ({ ...s, page: 1, filters: { ...none, shapes: s.filters.shapes } }))

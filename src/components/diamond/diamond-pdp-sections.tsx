@@ -4,7 +4,7 @@ import { useNotInTest } from "@/components/prototype/not-in-test"
 import { ProfileDiagram, TopDiagram } from "@/components/diamond/diamond-diagrams"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { Button } from "@/components/ui/button"
-import { diamondName, expertTake, fourCs, type Diamond } from "@/data/diamonds"
+import { diamondLab, diamondName, expertTake, fourCs, type Diamond } from "@/data/diamonds"
 import { cn } from "@/lib/utils"
 
 /** 2-column media grid (Figma 7375:134706): 360° video, top view, size guide, At the Source, diagrams. */
@@ -121,7 +121,7 @@ export const AboutDiamondBlock = forwardRef<HTMLElement, { diamond: Diamond }>(f
           <SectionHeading eyebrow="About this diamond" title={diamondName(diamond)} />
           <p className="max-w-2xl text-base text-primary">
             A {diamond.carat.toFixed(2)} carat round brilliant, graded {diamond.color} color and {diamond.clarity} clarity with {/^[AEIOU]/.test(diamond.cut) ? "an" : "a"}{" "}
-            {diamond.cut} cut by the GIA. Hand-selected by our buyers and sourced directly from our diamond partners, it comes
+            {diamond.cut} cut by the {diamondLab(diamond)}. Hand-selected by our buyers and sourced directly from our diamond partners, it comes
             with its grading certificate and our Lifetime Diamond Upgrade.
           </p>
           <ul className="max-w-2xl">

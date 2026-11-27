@@ -56,6 +56,8 @@ export const shapeIcon = (shape: Shape) => `/images/diamonds/shapes/${shape.toLo
 
 export interface Diamond {
   id: string
+  /** Lab-grown (IGI certified); natural (GIA) when unset. Test 2's and the full-flow study's lab-grown stock. */
+  lab?: boolean
   /** GIA report / serial number */
   serial: string
   shape: Shape
@@ -283,9 +285,13 @@ export const findDiamond = (id: string | undefined) => DIAMONDS.find((d) => d.id
 // ---------------------------------------------------------------------------
 // Copy
 
-export const diamondTitle = (d: Diamond) => `${d.carat.toFixed(2)} ct ${d.shape} Natural Diamond`
+/** "Natural" or "Lab-Grown". */
+export const diamondOrigin = (d: Diamond) => (d.lab ? "Lab-Grown" : "Natural")
+/** Who grades it: GIA for natural diamonds, IGI for lab-grown (as shaneco.com). */
+export const diamondLab = (d: Diamond) => (d.lab ? "IGI" : "GIA")
+export const diamondTitle = (d: Diamond) => `${d.carat.toFixed(2)} ct ${d.shape} ${diamondOrigin(d)} Diamond`
 /** PDP heading (Figma: “Brilliant Round Natural Diamond”) */
-export const diamondName = (d: Diamond) => (d.shape === "Round" ? "Brilliant Round Natural Diamond" : `${d.shape} Natural Diamond`)
+export const diamondName = (d: Diamond) => (d.shape === "Round" ? `Brilliant Round ${diamondOrigin(d)} Diamond` : `${d.shape} ${diamondOrigin(d)} Diamond`)
 
 /** Convert to the shared ring-build Stone (stepper, price summary). */
 export function toStone(d: Diamond): Stone {
@@ -295,7 +301,7 @@ export function toStone(d: Diamond): Stone {
     price: d.price,
     carat: d.carat,
     shape: d.shape,
-    origin: "Natural Diamond",
+    origin: `${diamondOrigin(d)} Diamond`,
     clarity: d.clarity,
     color: d.color,
     cut: d.cut,

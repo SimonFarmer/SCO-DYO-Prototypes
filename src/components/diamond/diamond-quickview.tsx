@@ -7,7 +7,7 @@ import { SpecList } from "@/components/diamond/diamond-specs"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { diamondTitle, type Diamond } from "@/data/diamonds"
+import { diamondLab, diamondTitle, type Diamond } from "@/data/diamonds"
 import { DELIVERY } from "@/data/dyo"
 import { formatPrice } from "@/lib/format"
 import { useFlow } from "@/flow/flow-context"
@@ -30,8 +30,10 @@ interface DiamondQuickviewProps {
 }
 
 /** Stone Quickview modal (Figma “Diamond Overlay”, 7375:133345) — Test 3.1 variant B. */
-export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetails, showRingTotal = true, title, noun = "Diamond", certificate = "GIA certificate" }: DiamondQuickviewProps) {
+export function DiamondQuickview({ diamond, onOpenChange, onSelect, onViewDetails, showRingTotal = true, title, noun = "Diamond", certificate: certificateProp }: DiamondQuickviewProps) {
   const notInTest = useNotInTest()
+  // GIA for natural diamonds, IGI for lab-grown; gemstones pass null (Shane Co. graded).
+  const certificate = certificateProp === undefined ? (diamond ? `${diamondLab(diamond)} certificate` : null) : certificateProp
   const { setting } = useRingBuild()
   // The full flows drop the overflow menu: selecting the diamond is the only action there.
   const flow = useFlow()
