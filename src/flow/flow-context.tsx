@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Outlet, useLocation, useNavigate } from "react-router"
 import { HeartStraightIcon } from "@phosphor-icons/react"
 import { diamondName } from "@/data/diamonds"
-import { GLP_PATH } from "@/data/plp"
+import { GLP_PATH, PLP_PATH } from "@/data/plp"
 import { useRingBuild } from "@/state/ring-build"
 import { findFlowDiamond } from "./stone/find-diamond"
 import { useNotInTest } from "@/components/prototype/not-in-test"
@@ -211,6 +211,12 @@ const flowGlpLink = (to: string) => {
   return `/diamonds?type=natural${shape ? `&shape=${encodeURIComponent(shape)}` : ""}&from=nav`
 }
 
+/** A Shop by Stone link's shape (/natural-diamonds?shape=oval → "oval"); null for any other link. */
+const shopByStoneShape = (to: string) => {
+  const url = new URL(to, "http://prototype")
+  return url.pathname === GLP_PATH ? url.searchParams.get("shape") : null
+}
+
 /**
  * The browser tab's title on the flow's own pages, as the PLPs set theirs ("Engagement Rings | Shane Co."), instead
  * of the prototype index's. The PLPs (settings and diamonds) set their own title, so they are left alone.
@@ -288,11 +294,17 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
     (to: string) => {
       // Shop by Stone stays in the build (the stone step's own catalog), so no exit warning and nothing is reset:
       // the study's fixed setting (parts 2 and 3) carries over.
+      // Full-flow study part 1 (Choose a Setting): Shop by Stone opens the settings PLP filtered to that shape,
+      // so the task stays on choosing a setting (the menu only navigates in part 1).
+      if (studyFlow && part === 1) {
+        const shape = shopByStoneShape(to)
+        if (shape) return go(`${PLP_PATH}?shape=${encodeURIComponent(shape)}`)
+      }
       const glp = flowGlpLink(to)
       if (glp) return go(glp)
       return inBuild && customized ? setPending(toFlowPath(to)) : go(to)
     },
-    [inBuild, customized, go, toFlowPath],
+    [inBuild, customized, go, toFlowPath, studyFlow, part],
   )
 
   /**

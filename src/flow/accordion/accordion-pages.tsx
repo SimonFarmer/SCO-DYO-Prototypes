@@ -170,6 +170,8 @@ export function AccordionSetting() {
           <BuildPanel
             current="setting"
             ringTotal={total}
+            // Full-flow study part 1: the popover's total reads "$690 + STONE" (as Flow A's PDP); the rest stays the setting price.
+            explainedTotal={flow?.study?.part === 1 && !stoneFirst ? `${formatPrice(built.price)} + STONE` : undefined}
             lines={[
               { label: "Setting", desc: setting.name, value: formatPrice(built.price) },
               stoneFirst ? { label: "Stone", desc: stone.title, value: formatPrice(stone.price) } : { label: "Stone", desc: "Select your stone" },
