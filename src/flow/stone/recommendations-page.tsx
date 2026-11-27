@@ -11,6 +11,7 @@ import { useFlow, useStepNumber } from "@/flow/flow-context"
 import { FLOW_ROUTES } from "@/flow/flow-paths"
 import { cn } from "@/lib/utils"
 import { useStudyViewAll } from "@/flow/study/study"
+import { PickQuickview } from "@/flow/study/study-quickviews"
 import { useRingBuild } from "@/state/ring-build"
 import { useFlowSelectDiamond } from "./use-flow-stone"
 import type { ShopBy } from "@/pages/test-2/variants"
@@ -55,7 +56,7 @@ export function picksHeading(type: StoneTypeId, shape: string, gem: string) {
  * Carat (Size for gemstones) · Clarity · Color · Cut in one row, a divider left of each cell (Figma 8173:188141);
  * the cells this pick optimises are lightly shaded.
  */
-function SpecStrip({ pick, plain = false }: { pick: StonePick; /** No shading (the headline tiles) */ plain?: boolean }) {
+export function SpecStrip({ pick, plain = false }: { pick: StonePick; /** No shading (the headline tiles) */ plain?: boolean }) {
   const specs = stoneSpecs(pick.stone)
   const cells: { key: SpecKey; label: string; value: string }[] = [
     pick.stone.type === "gemstone"
@@ -275,7 +276,7 @@ export function FlowStoneRecommendations() {
   )
   const opensQuickview = flow?.config.t31 !== "A"
   const toPdp = (id: string) => {
-    navigate(flow ? flow.path(FLOW_ROUTES.diamond(id)) : FLOW_ROUTES.diamond(id))
+    navigate(flow ? flow.path(`${FLOW_ROUTES.diamond(id)}?from=recs`) : FLOW_ROUTES.diamond(id))
     window.scrollTo({ top: 0 })
   }
   // Matched as View All is: with Budget first, near the Preview Size as well as in the budget (simulator matchMode).
@@ -339,23 +340,40 @@ export function FlowStoneRecommendations() {
       </StoneStepLayout>
       {/* The Diamond GLP's Quickview, for diamonds and gemstones (ring total = this setting + the stone). Selecting
           there picks the stone and moves on, as the page's Select button does; the full details page is Test 3. */}
-      <DiamondQuickview
-        diamond={quickview && toQuickviewDiamond(quickview.stone)}
-        title={quickview ? stoneTitle(quickview.stone) : undefined}
-        noun={kind}
-        certificate={prefs.type === "gemstone" ? null : undefined}
-        onOpenChange={(open) => !open && setQuickview(null)}
-        onSelect={() => {
-          const picked = quickview
-          setQuickview(null)
-          if (picked) selectDiamond(toQuickviewDiamond(picked.stone))
-        }}
-        onViewDetails={() => {
-          const picked = quickview
-          setQuickview(null)
-          if (picked) toPdp(picked.stone.id)
-        }}
-      />
+      {/* Part 3 of the full-flow study: the pick's own Quickview, saying why it was picked (Figma 8287:14562). */}
+      {flow?.study?.part === 3 ? (
+        <PickQuickview
+          pick={quickview}
+          nearSize={matchedBy === "size" || !sim.inBudget}
+          onClose={() => setQuickview(null)}
+          onSelect={(p) => {
+            setQuickview(null)
+            selectDiamond(toQuickviewDiamond(p.stone))
+          }}
+          onFullDetails={(p) => {
+            setQuickview(null)
+            toPdp(p.stone.id)
+          }}
+        />
+      ) : (
+        <DiamondQuickview
+          diamond={quickview && toQuickviewDiamond(quickview.stone)}
+          title={quickview ? stoneTitle(quickview.stone) : undefined}
+          noun={kind}
+          certificate={prefs.type === "gemstone" ? null : undefined}
+          onOpenChange={(open) => !open && setQuickview(null)}
+          onSelect={() => {
+            const picked = quickview
+            setQuickview(null)
+            if (picked) selectDiamond(toQuickviewDiamond(picked.stone))
+          }}
+          onViewDetails={() => {
+            const picked = quickview
+            setQuickview(null)
+            if (picked) toPdp(picked.stone.id)
+          }}
+        />
+      )}
     </div>
   )
 }

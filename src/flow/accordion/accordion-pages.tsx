@@ -278,7 +278,7 @@ export function AccordionStone() {
                 onEditPreferences={() => navigate(href("preferences"))}
                 onSelect={(p) => selectDiamond(toQuickviewDiamond(p.stone))}
                 onFullDetails={(p) => {
-                  navigate(flow ? flow.path(FLOW_ROUTES.diamond(p.stone.id)) : FLOW_ROUTES.diamond(p.stone.id))
+                  navigate(flow ? flow.path(`${FLOW_ROUTES.diamond(p.stone.id)}?from=recs`) : FLOW_ROUTES.diamond(p.stone.id))
                   window.scrollTo({ top: 0 })
                 }}
                 viewAll={
