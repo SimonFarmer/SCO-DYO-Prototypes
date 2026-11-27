@@ -4,7 +4,7 @@ import { useNotInTest } from "@/components/prototype/not-in-test"
 import { diamondTitle, type Diamond } from "@/data/diamonds"
 import { flowMetalFor, flowSettingFor } from "@/data/flow-settings"
 import { METALS, galleryFor, type MetalId, type Setting } from "@/data/products"
-import { STONES, stoneImage, toQuickviewDiamond } from "@/data/stones"
+import { STONES, stoneImage, toQuickviewDiamond, type StoneTypeId } from "@/data/stones"
 import { toStone } from "@/data/diamonds"
 import { plpQueryKey, stoneQueryKey, useFlow, type StudyPart } from "@/flow/flow-context"
 import { FLOW_ROUTES } from "@/flow/flow-paths"
@@ -146,6 +146,19 @@ export function useStudyViewAll() {
   return {
     /** Wraps the View All action: in part 2 the "not part of this test" notice instead. */
     guard: (action: () => void) => () => (flow?.study?.part === 2 ? notInTest("Viewing all stones") : action()),
+  }
+}
+
+/**
+ * Which stone types the flow carries: natural diamonds, plus lab-grown in the full-flow study (Test 2's lab-grown
+ * stock and prices). Gemstones, and lab-grown in the full flows, show "not part of this test".
+ */
+export function useFlowStoneTypes() {
+  const study = useFlow()?.study != null
+  const notInTest = useNotInTest()
+  return {
+    carries: (type: StoneTypeId) => type === "natural" || (study && type === "lab"),
+    notCarried: () => notInTest(study ? "Gemstones" : "Lab-grown diamonds and gemstones"),
   }
 }
 

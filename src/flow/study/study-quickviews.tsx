@@ -104,6 +104,7 @@ export function PickQuickview({
 }) {
   const notInTest = useNotInTest()
   const pick = useLast(current)
+  const cert = pick?.stone.type === "lab" ? "IGI" : "GIA"
   return (
     <Dialog open={current !== null} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
@@ -144,7 +145,7 @@ export function PickQuickview({
                 <div className="flex items-start gap-2 type-label-xs text-primary">
                   <TextLink onClick={() => onFullDetails(pick)}>View Full Details</TextLink>
                   <span aria-hidden>∙</span>
-                  <TextLink onClick={() => notInTest("The GIA certificate")}>GIA Certificate</TextLink>
+                  <TextLink onClick={() => notInTest(`The ${cert} certificate`)}>{cert} Certificate</TextLink>
                 </div>
               </div>
 

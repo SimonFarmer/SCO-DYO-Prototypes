@@ -427,6 +427,7 @@ function convert(s: LooseStone): Diamond {
   const width = s.type === "gemstone" ? s.size / ratio : (6.5 * Math.cbrt(s.carat)) / Math.sqrt(ratio)
   return {
     id: s.id,
+    lab: s.type === "lab" || undefined,
     serial: String(2200000000 + Math.floor(r() * 99999999)),
     shape: stoneShape(s.shape).label as Shape,
     carat: s.carat,

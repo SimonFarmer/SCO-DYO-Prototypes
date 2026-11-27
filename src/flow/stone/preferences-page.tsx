@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router"
 import { SectionDivider, StepIntro } from "@/components/dyo/finishing-sections"
-import { useNotInTest } from "@/components/prototype/not-in-test"
 import {
   BudgetLine,
   ConfigHeader,
@@ -14,7 +13,7 @@ import {
 } from "@/components/stones/preference-parts"
 import { StoneCtas } from "@/components/stones/stone-ctas"
 import { formatSize, gemById, shapesFor, snapSize, stoneShape, stoneType } from "@/data/stones"
-import { useStudyViewAll } from "@/flow/study/study"
+import { useFlowStoneTypes, useStudyViewAll } from "@/flow/study/study"
 import { formatPrice } from "@/lib/format"
 import type { ShopBy } from "@/pages/test-2/variants"
 import { useFlowStonePrefs, type StonePrefs, type StoneSim } from "./simulator"
@@ -85,8 +84,8 @@ export function BudgetSection({ sim, update, interactive, withBand }: { sim: Sto
  */
 export function FlowStonePreferences() {
   const navigate = useNavigate()
-  const notInTest = useNotInTest()
   const viewAll = useStudyViewAll()
+  const stoneTypes = useFlowStoneTypes()
   const { variant, prefs, sim, update, setSize, matching, prices, href, setting } = useFlowStonePrefs()
   const stoneStep = useStepNumber("stone")
   const { shopBy } = variant
@@ -108,8 +107,8 @@ export function FlowStonePreferences() {
           subtitle="Tell us what you're looking for and we'll recommend stones to suit your ring and budget."
         />
         <SectionDivider />
-        {/* The flow carries natural diamonds only for now (step 3 previews natural diamond renders). */}
-        <StoneTypeToggle value={prefs.type} onChange={(type) => (type === "natural" ? update({ type }) : notInTest("Lab-grown diamonds and gemstones"))} />
+        {/* Natural diamonds, plus lab-grown in the study; the rest show "not part of this test". */}
+        <StoneTypeToggle value={prefs.type} onChange={(type) => (stoneTypes.carries(type) ? update({ type }) : stoneTypes.notCarried())} />
         <ShapeSelector value={sim.scope.shape} onChange={(shape) => update({ shape })} offered={shapesFor(prefs.type, prefs.gem)} />
         {prefs.type === "gemstone" && <GemSelector value={prefs.gem} onChange={(gem) => update({ gem })} />}
         <SectionDivider />
