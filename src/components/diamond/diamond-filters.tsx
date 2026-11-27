@@ -378,12 +378,73 @@ export function DiamondFilters({ value, onChange }: { value: DiamondFilterState;
         <GradeSlider label="Clarity" grades={catalog.grades.clarity} value={value.clarity} onChange={(clarity) => set({ clarity, preset: null })} />
       </FilterSection>
 
-      <FilterSection title="Certification" defaultOpen={false}>
-        <p className="text-xs text-muted-foreground">{catalog.certification}</p>
-      </FilterSection>
-      <FilterSection title="L/W Ratio" defaultOpen={false}>
-        <p className="text-xs text-muted-foreground">Length-to-width ratio applies to fancy shapes. Every round diamond is 1.00–1.01.</p>
-      </FilterSection>
+      {catalog.inertFilters ? (
+        <>
+          <CertificationFilter />
+          <LwRatioFilter />
+        </>
+      ) : (
+        <>
+          <FilterSection title="Certification" defaultOpen={false}>
+            <p className="text-xs text-muted-foreground">{catalog.certification}</p>
+          </FilterSection>
+          <FilterSection title="L/W Ratio" defaultOpen={false}>
+            <p className="text-xs text-muted-foreground">Length-to-width ratio applies to fancy shapes. Every round diamond is 1.00–1.01.</p>
+          </FilterSection>
+        </>
+      )}
     </div>
+  )
+}
+
+/** Certification as checkboxes (GIA, GSI, IGI), as the Cut filter's; ticking one says it isn't part of this test. */
+function CertificationFilter() {
+  const notInTest = useNotInTest()
+  return (
+    <FilterSection title="Certification">
+      <div className="flex flex-col gap-2">
+        {["GIA", "GSI", "IGI"].map((lab) => (
+          <label key={lab} htmlFor={`cert-${lab}`} className="flex cursor-pointer items-center gap-3 py-1">
+            <Checkbox id={`cert-${lab}`} checked={false} onCheckedChange={() => notInTest("Filtering by certification")} />
+            <span className="text-sm leading-none font-medium text-foreground">{lab}</span>
+          </label>
+        ))}
+      </div>
+    </FilterSection>
+  )
+}
+
+/**
+ * L/W Ratio (Figma "Filters - LW Ratio", 8300:40301): the info line, Learn More, and the two fields over a range
+ * slider, as the carat filter. A visual only: the fields and slider stay put and say it isn't part of this test.
+ */
+const LW_BOUNDS: [number, number] = [0.9, 2.25]
+const LW_SHOWN: [number, number] = [1.14, 2.01]
+function LwRatioFilter() {
+  const notInTest = useNotInTest()
+  const notHere = () => notInTest("Filtering by L/W ratio")
+  const pos = (v: number) => Math.round(((v - LW_BOUNDS[0]) / (LW_BOUNDS[1] - LW_BOUNDS[0])) * 1000)
+  return (
+    <FilterSection
+      title="L/W Ratio"
+      info="Length-to-width ratio helps define a diamond’s shape. Small differences can make a diamond appear longer, wider, or more evenly proportioned."
+      onLearnMore={() => notInTest("L/W ratio education")}
+    >
+      <div className="flex flex-col gap-4 pb-1">
+        <div className="flex gap-6">
+          {LW_SHOWN.map((v, i) => (
+            <input
+              key={i}
+              readOnly
+              aria-label={`L/W ratio ${i === 0 ? "minimum" : "maximum"}`}
+              value={v.toFixed(2)}
+              onClick={notHere}
+              className="h-12 w-full min-w-0 cursor-pointer border border-border bg-bg-input-30 px-3 text-sm text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            />
+          ))}
+        </div>
+        <Slider aria-label="L/W ratio" min={0} max={1000} step={1} value={LW_SHOWN.map(pos)} onValueChange={() => {}} onValueCommitted={notHere} />
+      </div>
+    </FilterSection>
   )
 }

@@ -52,6 +52,11 @@ export interface GlpCatalog {
   extraFilters?: (value: DiamondFilterState, onChange: (f: DiamondFilterState) => void) => ReactNode
   /** Carat, Cut, Color and Clarity "Learn More" open the 4Cs drawers (full-flow study); otherwise "not part of this test". */
   education?: boolean
+  /**
+   * Certification (GIA, GSI, IGI) and L/W Ratio as filter controls (Figma 8300:40301) that only say "not part of this
+   * test" (full-flow study); otherwise the two closed notes.
+   */
+  inertFilters?: boolean
 }
 
 export const CUT_HINT: Record<string, string> = {
