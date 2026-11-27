@@ -21,7 +21,7 @@ import { Breadcrumb, type Crumb } from "@/components/site/breadcrumb"
 import { MobileBottomNav } from "@/components/site/mobile-bottom-nav"
 import { SiteHeader } from "@/components/site/site-header"
 import { Button } from "@/components/ui/button"
-import { CLASSIC_CROWN, type GalleryImage } from "@/data/dyo"
+import { FLOW_CLASSIC_CROWN, type GalleryImage } from "@/data/dyo"
 import { useFlow } from "@/flow/flow-context"
 import { FLOW_CRUMBS, FLOW_ROUTES } from "@/flow/flow-paths"
 import { useStudyAddToBag } from "@/flow/study/study"
@@ -104,8 +104,8 @@ function FlowFinishingTouches() {
         ? []
         : [
             {
-              src: CLASSIC_CROWN.image,
-              alt: CLASSIC_CROWN.name,
+              src: FLOW_CLASSIC_CROWN.image,
+              alt: FLOW_CLASSIC_CROWN.name,
               fit: "contain" as const,
               badgePosition: "bottom" as const,
               badge: (

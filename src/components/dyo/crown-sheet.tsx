@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { CLASSIC_CROWN, CROWN_OPTIONS, CROWN_PREVIEW_RING, FLOW_CROWNS, crownHolds } from "@/data/dyo"
+import { CLASSIC_CROWN, CROWN_OPTIONS, CROWN_PREVIEW_RING, FLOW_CLASSIC_CROWN, FLOW_CROWNS, crownHolds } from "@/data/dyo"
 import { useFlow } from "@/flow/flow-context"
 import { ellaPreview } from "@/flow/ring-images"
 import { useRingBuild } from "@/state/ring-build"
@@ -15,7 +15,7 @@ import { OverlaySheet } from "./overlay-sheet"
 export function CrownSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { crownId, setCrownId, setting, stone } = useRingBuild()
   const flow = useFlow()
-  const options = flow ? [CLASSIC_CROWN, ...FLOW_CROWNS].map((c) => ({ ...c, holds: crownHolds(stone) })) : CROWN_OPTIONS
+  const options = flow ? [FLOW_CLASSIC_CROWN, ...FLOW_CROWNS].map((c) => ({ ...c, holds: crownHolds(stone) })) : CROWN_OPTIONS
   const ring = flow
     ? { src: ellaPreview(setting.article, stone.shape, stone.carat), alt: `${setting.name} with a ${stone.title.toLowerCase()}, front view` }
     : { src: CROWN_PREVIEW_RING, alt: "Timeless Solitaire ring, front view" }
@@ -28,7 +28,9 @@ export function CrownSheet({ open, onOpenChange }: { open: boolean; onOpenChange
     if (open) setPending(current)
   }
 
-  const selected = options.find((c) => c.id === pending) ?? CLASSIC_CROWN
+  const selected = options.find((c) => c.id === pending) ?? options[0]
+  // Full flows: the classic crown is already on the ring, so there is nothing to add.
+  const alreadyOn = !!flow && pending === CLASSIC_CROWN.id && current === CLASSIC_CROWN.id
 
   return (
     <OverlaySheet
@@ -39,6 +41,7 @@ export function CrownSheet({ open, onOpenChange }: { open: boolean; onOpenChange
       description="Upgrade your crown to customise your ring’s look and styling."
       primaryLabel="Add"
       secondaryLabel="Close"
+      primaryDisabled={alreadyOn}
       onPrimary={() => {
         setCrownId(pending === CLASSIC_CROWN.id ? null : pending)
         onOpenChange(false)

@@ -7,6 +7,7 @@ import {
   ENGRAVING,
   SETTING,
   STONE,
+  STUDY_BANDS,
   WEDDING_BANDS,
   type Crown,
   type EngravingStyle,
@@ -187,7 +188,7 @@ export function RingBuildProvider({ children }: { children: ReactNode }) {
     const styleOf = (e: Engraving | null) => (e ? (ENGRAVING.styles.find((s) => s.id === e.styleId) ?? null) : null)
     const engravingStyle = styleOf(state.engraving)
     const setting = isFlow ? flowSetting(state.settingId, state.settingMetal) : SETTING
-    const pickedBand = WEDDING_BANDS.find((b) => b.id === state.bandId) ?? null
+    const pickedBand = [...WEDDING_BANDS, ...STUDY_BANDS].find((b) => b.id === state.bandId) ?? null
     // Full flows: the band is matched to the engagement ring's metal (as the band sheet says).
     const band = pickedBand && isFlow ? { ...pickedBand, metal: setting.metal } : pickedBand
     const bandEngraving = band ? state.bandEngraving : null

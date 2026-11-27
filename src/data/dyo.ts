@@ -115,6 +115,9 @@ export const CLASSIC_CROWN: Crown = {
   image: "/images/crowns/classic-prong.png",
 }
 
+/** The full flows' classic crown: same crown, shown with a plain 4-prong head (no pavé). */
+export const FLOW_CLASSIC_CROWN: Crown = { ...CLASSIC_CROWN, image: "/images/crowns/classic-4-prong.png" }
+
 /** Crown overlay options: the included classic crown first, then the paid upgrades. */
 export const CROWN_OPTIONS: Crown[] = [CLASSIC_CROWN, ...CROWNS]
 
@@ -156,10 +159,28 @@ export const WEDDING_BANDS: WeddingBand[] = [
 
 export const BAND_FROM_PRICE = Math.min(...WEDDING_BANDS.map((b) => b.price))
 
-/** The full-flow study's part 4 offers five matching bands (Lucid prototype notes), across the price range. */
-const STUDY_BAND_IDS = ["willow", "lace", "augusta", "louisa", "delicate"]
-/** The bands on offer: the study's five, otherwise every band. */
-export const bandsFor = (study: boolean) => (study ? WEDDING_BANDS.filter((b) => STUDY_BAND_IDS.includes(b.id)) : WEDDING_BANDS)
+/**
+ * The full-flow study's part 4 (Flows A and B) bands, in the order supplied: each with its own shot stacked
+ * with the engagement ring. Ids differ from Test 4's so a Willow or Lace picked here keeps these images.
+ */
+const studyBand = (id: string, name: string, price: number): WeddingBand => ({
+  id: `study-${id}`,
+  name,
+  price,
+  metal: SETTING.metal,
+  image: `/images/bands/flow/${id}.png`,
+  withRingImage: `/images/bands/flow/${id}-with-ring.png`,
+})
+export const STUDY_BANDS: WeddingBand[] = [
+  studyBand("zoe", "Zoe Stackable Diamond Ring", 490),
+  studyBand("ella", "Ella Diamond Pave Band", 1515),
+  studyBand("vista", "Vista Diamond Pave Band", 1195),
+  studyBand("willow", "Willow Diamond Pave Infinity Band", 1515),
+  studyBand("lace", "Lace Diamond Pave Infinity Band", 1690),
+  studyBand("caspian", "Caspian Sapphire & Diamond Band", 1425),
+]
+/** The bands on offer: the study's own list, otherwise Test 4's. */
+export const bandsFor = (study: boolean) => (study ? STUDY_BANDS : WEDDING_BANDS)
 
 export const ENGRAVING = {
   price: 60,

@@ -19,7 +19,7 @@ import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { ShapeSelector, StoneTypeToggle } from "@/components/stones/preference-parts"
 import { Button } from "@/components/ui/button"
-import { CLASSIC_CROWN, ENGRAVING, type GalleryImage } from "@/data/dyo"
+import { FLOW_CLASSIC_CROWN, ENGRAVING, type GalleryImage } from "@/data/dyo"
 import { SHAPES } from "@/data/plp"
 import { flowMetalFor, flowSettingFor } from "@/data/flow-settings"
 import { galleryFor } from "@/data/products"
@@ -400,7 +400,7 @@ function useStep3Gallery() {
       hero,
       ...(crown
         ? [{ src: crown.image, alt: crown.name, fit: "contain" as const }]
-        : [{ src: CLASSIC_CROWN.image, alt: CLASSIC_CROWN.name, fit: "contain" as const, badge: "Crown on ring", badgePosition: "bottom" as const }]),
+        : [{ src: FLOW_CLASSIC_CROWN.image, alt: FLOW_CLASSIC_CROWN.name, fit: "contain" as const, badge: "Crown on ring", badgePosition: "bottom" as const }]),
       ...rest,
     ]
   }, [finishing, crown])

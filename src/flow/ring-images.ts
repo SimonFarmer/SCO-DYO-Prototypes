@@ -34,7 +34,7 @@ const STUDY_DIAMOND_SPIN = {
  * then the stone, Ella's own photos in that metal and the shared Shane Co. tiles (source, size guide).
  */
 export function useFlowRingGallery() {
-  const { setting, stone, settingId, settingMetal } = useRingBuild()
+  const { setting, stone, settingId, settingMetal, band } = useRingBuild()
   // Full-flow study part 4: its preselected diamond turns in 3D instead of the still photo.
   const spin = useFlow()?.study?.part === 4 && stone.id === STUDY_DIAMOND_ID
   return useMemo(() => {
@@ -60,8 +60,14 @@ export function useFlowRingGallery() {
     const [, , source, sizeGuide] = FINISHING_GALLERY.tiles
     return {
       /** Finishing Touches: the hero spans the grid, with a "Previewing" badge (Test 4 B layout). */
+      // With a wedding band added, the hero shows that band stacked with the engagement ring.
       finishing: [
-        { ...hero, span: 2 as const, badge: `Previewing: ${stone.origin} ∙ ${stone.shape} ∙ ${stone.carat.toFixed(2)} ct`, badgePosition: "bottom" as const },
+        {
+          ...(band?.withRingImage ? { src: band.withRingImage, alt: `${band.name} stacked with the engagement ring` } : hero),
+          span: 2 as const,
+          badge: `Previewing: ${stone.origin} ∙ ${stone.shape} ∙ ${stone.carat.toFixed(2)} ct`,
+          badgePosition: "bottom" as const,
+        },
         ...stoneTile,
         ...ellaPhotos,
         source,
@@ -70,5 +76,5 @@ export function useFlowRingGallery() {
       /** Ring Review: same images, the ring first. */
       review: [hero, ...stoneTile, ...ellaPhotos, source, sizeGuide],
     }
-  }, [setting.article, setting.name, setting.metal, stone, settingId, settingMetal, spin])
+  }, [setting.article, setting.name, setting.metal, stone, settingId, settingMetal, spin, band])
 }
