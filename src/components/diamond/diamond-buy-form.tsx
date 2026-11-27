@@ -31,10 +31,14 @@ interface DiamondBuyFormProps {
   specLayout: SpecLayout
   onSelect: () => void
   onViewDetails: () => void
+  /** "Understand the 4Cs": scrolls to the Four C's report card below (the flows); without it, "not part of this test" (Test 3). */
+  onUnderstand4Cs?: () => void
+  /** The "More options" (⋯) menu beside Select; the flows drop it. */
+  moreMenu?: boolean
 }
 
 /** Right-hand column of the Diamond PDP (Figma 7375:134824 list / 7375:129294 tiles). */
-export function DiamondBuyForm({ diamond, specLayout, onSelect, onViewDetails }: DiamondBuyFormProps) {
+export function DiamondBuyForm({ diamond, specLayout, onSelect, onViewDetails, onUnderstand4Cs, moreMenu = true }: DiamondBuyFormProps) {
   const notInTest = useNotInTest()
   return (
     <div className="flex flex-col gap-8">
@@ -76,8 +80,8 @@ export function DiamondBuyForm({ diamond, specLayout, onSelect, onViewDetails }:
               <span aria-hidden className="type-label-xs text-primary">
                 ∙
               </span>
-              {/* 4Cs education is Test 3.3 (later), so it's inert here. */}
-              <Button variant="link" className="h-auto px-0 py-2" onClick={() => notInTest("4Cs education")}>
+              {/* The flows: down to the Four C's report card. Test 3: 4Cs education is Test 3.3 (later), so inert. */}
+              <Button variant="link" className="h-auto px-0 py-2" onClick={onUnderstand4Cs ?? (() => notInTest("4Cs education"))}>
                 Understand the 4Cs
               </Button>
             </div>
@@ -92,16 +96,18 @@ export function DiamondBuyForm({ diamond, specLayout, onSelect, onViewDetails }:
             <Button className="flex-1" onClick={onSelect}>
               Select this Diamond
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="outline" size="icon" aria-label="More options" />}>
-                <EllipsisVertical />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => notInTest("Editing ring size")}>Edit Ring Size</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => notInTest("Reviewing your design")}>Review your design</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => notInTest("Sharing")}>Share</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {moreMenu && (
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button variant="outline" size="icon" aria-label="More options" />}>
+                  <EllipsisVertical />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => notInTest("Editing ring size")}>Edit Ring Size</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => notInTest("Reviewing your design")}>Review your design</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => notInTest("Sharing")}>Share</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1 px-6" onClick={() => notInTest("Saving")}>

@@ -76,6 +76,7 @@ export function PdpStickyBar({ image, imageAlt, title, specs, price, onViewGalle
   return (
     <div
       ref={ref}
+      data-slot="pdp-sticky-bar"
       aria-hidden={!shown}
       inert={!shown}
       style={mobile ? ({ "--stepper-height": `${stepperHeight}px` } as CSSProperties) : undefined}
