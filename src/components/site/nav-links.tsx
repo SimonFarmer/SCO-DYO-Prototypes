@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
-import { useSiteNavigate } from "@/flow/flow-context"
+import { useFlow, useSiteNavigate } from "@/flow/flow-context"
 import { useNotInTest } from "@/components/prototype/not-in-test"
-import { NAV_PROMO, type NavGroup, type NavLink } from "@/data/plp"
+import { NAV_PROMO, RTS_PATH, type NavGroup, type NavLink } from "@/data/plp"
 import { cn } from "@/lib/utils"
 
 /**
@@ -11,9 +11,15 @@ import { cn } from "@/lib/utils"
 export function useOpenNavLink(onNavigate?: () => void) {
   const notInTest = useNotInTest()
   const siteNavigate = useSiteNavigate()
+  const flow = useFlow()
   return (link: NavLink) => {
     if (!link.to) {
       notInTest(link.label)
+      return
+    }
+    // Full-flow study: Ready to Ship is outside the test.
+    if (flow?.study && link.to === RTS_PATH) {
+      notInTest("Ready to Ship rings", "test", true)
       return
     }
     onNavigate?.()

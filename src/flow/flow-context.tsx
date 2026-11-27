@@ -281,15 +281,18 @@ export function FlowLayout({ base = FLOW_BASE }: { base?: FlowBase }) {
   }, [base, page, setting.name])
 
   const inBuild = BUILD_PAGES.test(page)
+  // Full-flow study: only a build with a choice in it (a selected setting or a picked stone) has a customization to
+  // lose, so an empty one (part 1 browsing Shop by Stone) leaves without the warning. The other flows always warn.
+  const customized = !studyFlow || chosen.setting || hasStone
   const leave = useCallback(
     (to: string) => {
       // Shop by Stone stays in the build (the stone step's own catalog), so no exit warning and nothing is reset:
       // the study's fixed setting (parts 2 and 3) carries over.
       const glp = flowGlpLink(to)
       if (glp) return go(glp)
-      return inBuild ? setPending(toFlowPath(to)) : go(to)
+      return inBuild && customized ? setPending(toFlowPath(to)) : go(to)
     },
-    [inBuild, go, toFlowPath],
+    [inBuild, customized, go, toFlowPath],
   )
 
   /**

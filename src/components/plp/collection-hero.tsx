@@ -3,6 +3,7 @@ import { useNavigate } from "react-router"
 import { useFlow, useFlowPath } from "@/flow/flow-context"
 import { ArrowLeftIcon, ArrowRightIcon, CaretRightIcon, HandbagIcon, MagicWandIcon, XIcon } from "@phosphor-icons/react"
 import { Breadcrumb, type Crumb } from "@/components/site/breadcrumb"
+import { useNotInTest } from "@/components/prototype/not-in-test"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { PLP_PATH, RTS_PATH, SHAPES, STYLES, settingImage, toggleFilter, type ListingFilters } from "@/data/plp"
@@ -51,7 +52,10 @@ function ModeToggle({ mode, shape }: { mode: Listing["mode"]; shape?: string }) 
   const flowPath = useFlowPath()
   // Full flows: the stone shape carries across Design Your Own / Ready to Ship, so switching back keeps it.
   const flow = useFlow()
+  const notInTest = useNotInTest()
   const go = (to: string) => {
+    // Full-flow study: Ready to Ship is outside the test, so the switch only says so.
+    if (flow?.study && to === RTS_PATH) return notInTest("Ready to Ship rings", "test", true)
     navigate(flowPath(flow && shape ? `${to}?shape=${shape}` : to))
     window.scrollTo({ top: 0 })
   }

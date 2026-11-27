@@ -1,6 +1,6 @@
 import { Fragment } from "react"
 import { useNavigate } from "react-router"
-import { useFlowPath, useSiteNavigate } from "@/flow/flow-context"
+import { useFlowPath, useMenuNavigation, useSiteNavigate } from "@/flow/flow-context"
 import { CaretRightIcon } from "@phosphor-icons/react"
 import { useNotInTest } from "@/components/prototype/not-in-test"
 import { cn } from "@/lib/utils"
@@ -14,6 +14,8 @@ export function Breadcrumb({ items, className }: { items: Crumb[]; className?: s
   const siteNavigate = useSiteNavigate()
   const navigate = useNavigate()
   const flowPath = useFlowPath()
+  // Full-flow study parts 2–4: like the menu and the logo, links out of the build aren't part of the task.
+  const siteNavOn = useMenuNavigation()
   return (
     <nav aria-label="Breadcrumb" className={cn("flex min-w-0 items-center gap-2 overflow-hidden p-4", className)}>
       {items.map((crumb, i) => {
@@ -31,7 +33,7 @@ export function Breadcrumb({ items, className }: { items: Crumb[]; className?: s
                 type="button"
                 onClick={() => {
                   if (typeof crumb === "string") return notInTest(crumb)
-                  if (!crumb.step) return siteNavigate(crumb.to)
+                  if (!crumb.step) return siteNavOn ? siteNavigate(crumb.to) : notInTest(undefined, "task")
                   navigate(flowPath(crumb.to))
                   window.scrollTo({ top: 0 })
                 }}
